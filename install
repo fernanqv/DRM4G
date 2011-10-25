@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if [ -z "${GLOBUS_LOCATION}" ]; then
+        cp bin/* ${GW_LOCATION}/bin/
+        cp etc/* ${GW_LOCATION}/etc/
+        cp -r libexec/* ${GW_LOCATION}/libexec/
+        echo "DRM4G successfully installed"
+else
+        echo "You must define the GW_LOCATION env variable"
+        exit 2
+fi
+
