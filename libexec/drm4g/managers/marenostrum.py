@@ -40,7 +40,7 @@ class Resource (drm4g.managers.Resource):
 
 
     def dynamicNodes(self):
-        out, err = self.Communicator.execCommand('%s --xml' % (MNQ))
+        out, err = self.Communicator.execCommand('LANC=POSIX %s --xml' % (MNQ))
         if err: 
             raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
         out_parser = xml.dom.minidom.parseString(out)
@@ -77,7 +77,7 @@ class Job (drm4g.managers.Job):
                 }                 
     
     def jobSubmit(self, path_script):
-        out, err = self.Communicator.execCommand('%s %s' % (MNSUBMIT, path_script))
+        out, err = self.Communicator.execCommand('LANC=POSIX %s %s' % (MNSUBMIT, path_script))
         re_job_id = re.compile(r'Submitted batch job (\d*)').search(err)
         if re_job_id:
             time.sleep(60)
@@ -86,7 +86,7 @@ class Job (drm4g.managers.Job):
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobStatus(self):
-        out, err = self.Communicator.execCommand('%s %s --xml' % (CHECKJOB, self.JobId))
+        out, err = self.Communicator.execCommand('LANC=POSIX %s %s --xml' % (CHECKJOB, self.JobId))
         if err:
             return 'DONE'
         else:
