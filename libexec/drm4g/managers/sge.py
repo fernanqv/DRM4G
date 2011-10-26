@@ -38,14 +38,14 @@ class Resource (drm4g.managers.Resource):
         }
 
     def dynamicNodes(self):
-        out, err = self.Communicator.execCommand('LANC=POSIX %s -xml' % (QHOST))
+        out, err = self.Communicator.execCommand('LANG=POSIX %s -xml' % (QHOST))
         if err: 
             raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
         out_parser = xml.dom.minidom.parseString(out)
         slots = [elem.getElementsByTagName('hostvalue')[1].firstChild.data \
             for elem in out_parser.getElementsByTagName('qhost')[0].getElementsByTagName('host')]
         self.total_cpu = sum([int(elem) for elem in slots if elem != '-']) 
-        out, err = self.Communicator.execCommand('LANC=POSIX %s -s r -xml' % (QSTAT))
+        out, err = self.Communicator.execCommand('LANG=POSIX %s -s r -xml' % (QSTAT))
         if err: 
             raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
         out_parser = xml.dom.minidom.parseString(out) 
@@ -58,7 +58,7 @@ class Resource (drm4g.managers.Resource):
         if Host.PROJECT and not Host.QUEUE_NAME:
             return self._queues_string([self.queue_default])
         else:
-            out, err = self.Communicator.execCommand('LANC=POSIX %s -sql' % (QCONF))
+            out, err = self.Communicator.execCommand('LANG=POSIX %s -sql' % (QCONF))
             #output line --> Queue Memory CPU_Time Walltime Node Run Que Lm State
             if err:
                 raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
@@ -67,7 +67,7 @@ class Resource (drm4g.managers.Resource):
                 if queue_name == Host.QUEUE_NAME or not Host.QUEUE_NAME:
                     queue = self.queue_default.copy()
                     queue['QUEUE_NAME'] = queue_name
-                    out, err = self.Communicator.execCommand('LANC=POSIX %s -sq %s' % (QCONF, queue_name))
+                    out, err = self.Communicator.execCommand('LANG=POSIX %s -sq %s' % (QCONF, queue_name))
                     if err:
                         raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
                     re_Walltime = re.compile(r'h_rt\s*(\d+):\d+:\d+')
@@ -99,14 +99,14 @@ class Job (drm4g.managers.Job):
         }
 
     def jobSubmit(self, path_script):
-        out, err = self.Communicator.execCommand('LANC=POSIX %s %s' % (QSUB, path_script))
+        out, err = self.Communicator.execCommand('LANG=POSIX %s %s' % (QSUB, path_script))
         if err: 
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
         re_job  = re.compile(r'^Your job (\d*) .*').search(out)
         return re_job.group(1)
 
     def jobStatus(self):
-        out, err = self.Communicator.execCommand('LANC=POSIX %s | grep %s' % (QSTAT, self.JobId))
+        out, err = self.Communicator.execCommand('LANG=POSIX %s | grep %s' % (QSTAT, self.JobId))
         if not out:
             return 'DONE'
         else:
@@ -114,7 +114,7 @@ class Job (drm4g.managers.Job):
             return self.states_sge.setdefault(state, 'UNKNOWN')
     
     def jobCancel(self):
-        out, err = self.Communicator.execCommand('LANC=POSIX %s %s' % (QDEL, self.JobId))
+        out, err = self.Communicator.execCommand('LANG=POSIX %s %s' % (QDEL, self.JobId))
         if err: 
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
