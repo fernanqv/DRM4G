@@ -9,6 +9,6 @@ ifdef GW_LOCATION
 	@echo "DRM4G MAD successfully installed"
 else
 	@echo "You must define the GW_LOCATION env variable"
-	exit 2
+	@exit 2
 endif
 
