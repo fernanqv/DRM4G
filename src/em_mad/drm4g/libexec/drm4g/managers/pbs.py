@@ -38,7 +38,7 @@ class Resource (drm4g.managers.Resource):
     
 
     def dynamicNodes(self):
-        out, err = self.Communicator.execCommand('%s -x' % (PBSNODES))
+        out, err = self.Communicator.execCommand('LANC=POSIX %s -x' % (PBSNODES))
         if err: 
             raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
         out_parser = xml.dom.minidom.parseString(out)
@@ -51,7 +51,7 @@ class Resource (drm4g.managers.Resource):
         else : self.free_cpu = self.total_cpu - auxCpu
 
     def queues(self, Host):
-        out, err = self.Communicator.execCommand('%s -q' % (QSTAT))
+        out, err = self.Communicator.execCommand('LANC=POSIX %s -q' % (QSTAT))
         #output line --> Queue Memory CPU_Time Walltime Node Run Que Lm State
         if err:
             raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
@@ -86,13 +86,13 @@ class Job (drm4g.managers.Job):
                 }
 
     def jobSubmit(self, path_script):
-        out, err = self.Communicator.execCommand('%s %s' % (QSUB, path_script))
+        out, err = self.Communicator.execCommand('LANC=POSIX %s %s' % (QSUB, path_script))
         if err: 
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
         return out.strip() #job_id
 
     def jobStatus(self):
-        out, err = self.Communicator.execCommand('%s %s -x' % (QSTAT, self.JobId))
+        out, err = self.Communicator.execCommand('LANC=POSIX %s %s -x' % (QSTAT, self.JobId))
         if 'qstat: Unknown Job Id' in err :
             return 'DONE'
         elif err:
@@ -103,7 +103,7 @@ class Job (drm4g.managers.Job):
             return self.states_pbs.setdefault(state, 'UNKNOWN')
     
     def jobCancel(self):
-        out, err = self.Communicator.execCommand('%s %s' % (QDEL, self.JobId))
+        out, err = self.Communicator.execCommand('LANC=POSIX %s %s' % (QDEL, self.JobId))
         if err: 
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
 

@@ -30,11 +30,11 @@ class Resource (drm4g.managers.Resource):
         }
 
     def dynamicNodes(self):
-        out, err = self.Communicator.execCommand('grep -c processor /proc/cpuinfo')
+        out, err = self.Communicator.execCommand('LANC=POSIX grep -c processor /proc/cpuinfo')
         if err: 
             raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
         self.total_cpu = int(out.rstrip('\n')) 
-        out, err = self.Communicator.execCommand('ps -ef | grep .wrapper | grep -v grep | wc -l') 
+        out, err = self.Communicator.execCommand('LANC=POSIX ps -ef | grep .wrapper | grep -v grep | wc -l') 
         if err: 
             raise drm4g.managers.ResourceException(' '.join(err.split('\n')))        
         self.free_cpu = self.total_cpu - int(out.rstrip('\n'))
@@ -64,9 +64,9 @@ class Job (drm4g.managers.Job):
         jobs_to_kill = [self.JobId]
         while jobs_to_kill:
             for job in jobs_to_kill:
-                 out, err = self.Communicator.execCommand('ps ho pid --ppid %s' % (job)) 
+                 out, err = self.Communicator.execCommand('LANC=POSIX ps ho pid --ppid %s' % (job)) 
                  jobs_to_kill = [line.lstrip() for line in out.splitlines()] + jobs_to_kill
-                 out, err = self.Communicator.execCommand('kill -9 %s' % (job))
+                 out, err = self.Communicator.execCommand('LANC=POSIX kill -9 %s' % (job))
                  if err:
                      raise drm4g.managers.JobException('Could not kill %s : %s' % (job, ' '.join(err.split('\n'))))
                  jobs_to_kill.remove(job)
