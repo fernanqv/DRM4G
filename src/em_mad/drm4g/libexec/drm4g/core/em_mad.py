@@ -86,7 +86,7 @@ class GwEmMad (object):
                 com.workDirectory = val.GW_RUNDIR
 		com.connect()
                 if val.GW_RUNDIR == r'~':
-                    out, err = com.execCommand('LANC=POSIX echo $HOME')
+                    out, err = com.execCommand('LANG=POSIX echo $HOME')
                     if err: 
                         raise "Couldn't obtain home directory : %s" % (' '.join(err.split('\n')))
                     self._host_list_configuration[key].GW_RUNDIR = out.strip('\n')      
