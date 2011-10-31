@@ -6,7 +6,7 @@ __version__ = '0.1'
 __author__  = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-SH = '/bin/bash'
+SH = 'LANG=POSIX /bin/bash'
 
 class Resource (drm4g.managers.Resource):    
 
@@ -54,7 +54,7 @@ class Job (drm4g.managers.Job):
         return job_id          
 
     def jobStatus(self):
-        out, err = self.Communicator.execCommand('ps -e')
+        out, err = self.Communicator.execCommand('LANG=POSIX /bin/bash ps -e')
         if [line for line in out.splitlines() if self.JobId in line]:
             return 'ACTIVE'
         else:   
