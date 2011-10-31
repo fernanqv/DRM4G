@@ -11,11 +11,10 @@ __revision__ = "$Id$"
 
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.
-MNSUBMIT = 'mnsubmit' #mnsubmit - submits a job script to the queue system 
-CHECKJOB = 'checkjob' #checkjob - obtains detailed information about a specific job
-MNCANCEL = 'mncancel' #mncancel - removes his/her job from the queue system, 
-                      #           canceling the execution of the job if it was already running
-MNQ      = 'mnq'      #mnq      - shows all the jobs submitted
+MNSUBMIT = 'LANG=POSIX mnsubmit' #mnsubmit - submits a job script to the queue system 
+CHECKJOB = 'LANG=POSIX checkjob' #checkjob - obtains detailed information about a specific job
+MNCANCEL = 'LANG=POSIX mncancel' #mncancel - removes his/her job from the queue system, canceling the execution of the job if it was already running
+MNQ      = 'LANG=POSIX mnq'      #mnq      - shows all the jobs submitted
 
 class Resource (drm4g.managers.Resource):
 
@@ -40,7 +39,7 @@ class Resource (drm4g.managers.Resource):
 
 
     def dynamicNodes(self):
-        out, err = self.Communicator.execCommand('LANG=POSIX %s --xml' % (MNQ))
+        out, err = self.Communicator.execCommand('%s --xml' % (MNQ))
         if err: 
             raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
         out_parser = xml.dom.minidom.parseString(out)
@@ -77,7 +76,7 @@ class Job (drm4g.managers.Job):
                 }                 
     
     def jobSubmit(self, path_script):
-        out, err = self.Communicator.execCommand('LANG=POSIX %s %s' % (MNSUBMIT, path_script))
+        out, err = self.Communicator.execCommand('%s %s' % (MNSUBMIT, path_script))
         re_job_id = re.compile(r'Submitted batch job (\d*)').search(err)
         if re_job_id:
             time.sleep(60)
@@ -86,7 +85,7 @@ class Job (drm4g.managers.Job):
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobStatus(self):
-        out, err = self.Communicator.execCommand('LANG=POSIX %s %s --xml' % (CHECKJOB, self.JobId))
+        out, err = self.Communicator.execCommand('%s %s --xml' % (CHECKJOB, self.JobId))
         if err:
             return 'DONE'
         else:
