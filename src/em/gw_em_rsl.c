@@ -63,11 +63,13 @@ char* gw_generate_wrapper_rsl (gw_job_t *job)
             "(stderr=\".gw_%s_%i/stderr.wrapper\")"
             "(environment=%s)"
             "(count=%d)",
+            "(hostcount=%d)",
             jobtype,
             job->owner, job->id,
             job->owner, job->id,
             job->owner, job->id,
             job_environment,
+            job->template.np,
             job->template.np);
 
     if ( print_queue )
