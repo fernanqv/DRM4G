@@ -40,6 +40,7 @@ const char * usage =
 "  -o            hold\n"
 "  -l            release\n"
 "  -s            re-schedule\n"
+"  -p <priority> fixed priority for the job\n"
 "  -9            hard kill, removes the job from the system without synchronizing"
 "                remote job execution or cleaning remote host\n"
 "  job_id [job_id2 ...] job identification as provided by gwps\n"
