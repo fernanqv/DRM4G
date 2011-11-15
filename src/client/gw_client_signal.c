@@ -94,9 +94,17 @@ gw_return_code_t gw_client_job_signal (int                job_id,
 			break;		
 		case GW_CLIENT_SIGNAL_RELEASE: msg.msg_type = GW_MSG_RELEASE;
 			break;		
-		case GW_CLIENT_SIGNAL_RESCHEDULE: msg.msg_type = GW_MSG_RESCHEDULE;
+		case GW_CLIENT_SIGNAL_RESCHEDULE:
+			msg.msg_type = GW_MSG_RESCHEDULE;
+            break;
+		case GW_CLIENT_SIGNAL_PRIORITY:
+			//new_code
+			msg.msg_type = GW_MSG_PRIORITY;
+			msg.fixed_priority=blocking;
+			async = 1;
+			//end_new_code
 			break;
-		default: 
+        default:
 			return GW_RC_FAILED;
     }
     

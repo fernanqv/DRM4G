@@ -762,7 +762,10 @@ void gw_scheduler_job_policies (gw_scheduler_t * sched)
     float wdeadline;    
     float wshare;
     float C_half;
-    
+
+    gw_msg_job_t   job_status;
+    gw_return_code_t      gwrc;  
+  
     the_time  = time(NULL);
     C_half    = -1.5 * sched->sch_conf.dl_half * 86400;
 
@@ -788,6 +791,11 @@ void gw_scheduler_job_policies (gw_scheduler_t * sched)
         else
             sched->jobs[i].deadline = 0;
 	
+        //new_code
+        gwrc = gw_client_job_status(sched->jobs[i].jid, &job_status);
+        if ( gwrc == GW_RC_SUCCESS )
+             sched->jobs[i].fixed  = job_status.fixed_priority;
+
     	if (sched->jobs[i].fixed > max_fixed)
 	    	max_fixed = sched->jobs[i].fixed;
 	    	

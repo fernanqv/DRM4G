@@ -290,7 +290,7 @@ void gw_scheduler_loop(gw_scheduler_function_t scheduler, void *user_arg)
         	}
 
           	gwrc = gw_client_job_status(jid, &job_status);
-          	
+
             if ( gwrc == GW_RC_SUCCESS )
             {
                 fixed_priority = job_status.fixed_priority;

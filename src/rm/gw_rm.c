@@ -618,6 +618,8 @@ void gw_rm_connection(void *_msg)
     int *        job_id;
     gw_msg_t *   msg;
     gw_boolean_t in_list;
+    //new_code
+    gw_job_t *   job;
 
     msg = (gw_msg_t *) _msg;
 
@@ -793,7 +795,7 @@ void gw_rm_connection(void *_msg)
 			free(msg);
 		  	break;
 
-	  	case GW_MSG_RESCHEDULE:
+		case GW_MSG_RESCHEDULE:
 
 		  	if (gw_rm_auth_user(msg->job_id, msg->owner, msg->proxy_path) == GW_FALSE)
 		  	{
@@ -802,21 +804,32 @@ void gw_rm_connection(void *_msg)
 	  			free (msg);
 	  			break;
 		  	}
-	  
-	  		gw_connection_list_add(&(gw_rm.connection_list),
-	  						   msg->client_socket,
-	  						   msg->msg_type,
-	  						   msg->wait_type,	  						   
-	  						   msg->job_id);
 
-	  		job_id  = (int *) malloc(sizeof(int));
-	  		*job_id = msg->job_id;
-	  		
+		  	gw_connection_list_add(&(gw_rm.connection_list),
+		  	                   msg->client_socket,
+		  					   msg->msg_type,
+		  					   msg->wait_type,
+		  					   msg->job_id);
+			job_id  = (int *) malloc(sizeof(int));
+			*job_id = msg->job_id;
 			gw_am_trigger(gw_rm.dm_am, "GW_DM_RESCHEDULE", (void *) job_id);
-			
 			free(msg);
 		  	break;
-		  	
+
+		case GW_MSG_PRIORITY:
+			//new_code
+			if ( gw_rm_check_priority(&(msg)) == GW_TRUE )
+			{
+			    gw_log_print("RM",'I',"Priority Signal received %i, job %i\n",msg->fixed_priority,msg->job_id);
+			    job = gw_job_pool_get(msg->job_id, GW_TRUE);
+			    job->fixed_priority = msg->fixed_priority;
+			    pthread_mutex_unlock(&(job->mutex));
+			}
+
+			//end_new_code
+			free(msg);
+		    break;
+
 	  	case GW_MSG_JOB_STATUS:
 	  	
 			gw_rm_job_status(msg->client_socket, msg->job_id);

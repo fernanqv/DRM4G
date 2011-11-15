@@ -109,7 +109,7 @@ void gw_dm_zombie ( void *_job_id )
 			
 			/* -------- Update other jobs dependencies -------- */
 			
-			gw_job_pool_dep_check(job_id);			
+			gw_job_pool_dep_check(job_id, job->exit_code);
             break;
                     
         case GW_JOB_STATE_KILL_EPILOG:

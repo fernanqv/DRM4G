@@ -143,7 +143,7 @@ void gw_job_pool_dep_set(int job_id, int *deps)
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-void gw_job_pool_dep_check(int job_id)
+void gw_job_pool_dep_check(int job_id, int exit_code)
 {
 	int i=0;
 	int j=0;
@@ -177,7 +177,7 @@ void gw_job_pool_dep_check(int job_id)
 
 				if ( job != NULL )
 				{
-					if ( job->job_state == GW_JOB_STATE_HOLD )
+					if ( (job->job_state == GW_JOB_STATE_HOLD ) && (exit_code == 0))
 					{
 						gw_log_print("DM",'I',"Dependencies of job %i satisfied, releasing job.\n",i);
 						
@@ -255,7 +255,7 @@ void gw_job_pool_dep_consistency()
     		if ( all_done == GW_TRUE ) /* release the job */
     		{
 				job = gw_job_pool.pool[i];
-				
+
 				if (job != NULL)
 				{
 					pthread_mutex_lock(&(job->mutex));
@@ -531,6 +531,27 @@ gw_job_t* gw_job_pool_get (int job_id, int lock)
 
     return (job);
 }
+
+
+void gw_job_pool_priority (int job_id, int priority)
+{
+     gw_job_t *job;
+
+    if ( ( job_id >= 0 ) && ( job_id < gw_conf.number_of_jobs ) )
+    {
+   	    pthread_mutex_lock(&(gw_job_pool.mutex));
+
+   	    pthread_mutex_lock(&(job->mutex));
+
+        gw_job_pool.pool[job_id]->fixed_priority = priority;
+
+        pthread_mutex_unlock(&(job->mutex));
+
+        pthread_mutex_unlock(&(gw_job_pool.mutex));
+    }
+}
+
+
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */

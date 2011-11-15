@@ -46,7 +46,7 @@ const char * usage =
 " -A <array_id>  array identification as provided by gwps\n";
 
 const char * susage =
-"usage: gwkill [-h] [-a] [-k | -t | -o | -s | -r | -l | -9] <job_id | -A array_id>\n";
+"usage: gwkill [-h] [-a] [-k | -t | -o | -s | -r | -p <priority> | -l | -9] <job_id | -A array_id>\n";
 
 extern char *optarg;
 extern int   optind, opterr, optopt;
@@ -66,7 +66,7 @@ int main(int argc, char **argv)
     int                job_id   = -1;
     int                array_id = -1;
   	char               opt;
-  	int                a = 0, k = 0, t = 0, o = 0, s = 0, r = 0, l = 0, A = 0, hard=0;
+  	int                a = 0, k = 0, t = 0, o = 0, s = 0, r = 0, l = 0, A = 0, hard=0,p=0;
   	gw_client_t *      gw_session;
 	gw_boolean_t       blocking = GW_TRUE;
 	gw_client_signal_t signal = GW_CLIENT_SIGNAL_KILL;
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     opterr = 0;
     optind = 1;
 	
-    while((opt = getopt(argc, argv, ":haktosrl9A:")) != -1)
+    while((opt = getopt(argc, argv, ":haktosrl9A:p:")) != -1)
         switch(opt)
         {
             case 'a': a = 1; blocking = GW_FALSE;
@@ -98,6 +98,16 @@ int main(int argc, char **argv)
             case 'l': l = 1; signal   = GW_CLIENT_SIGNAL_RELEASE;
                 break;
             case 'k': k = 1; signal   = GW_CLIENT_SIGNAL_KILL;
+                break;
+            case 'p': p = 1; signal   = GW_CLIENT_SIGNAL_PRIORITY;
+                //new_code
+            	blocking = atoi(optarg);
+                if ( ( blocking < 0 ) || ( blocking > 20 ) )
+            	{
+         	    	fprintf(stderr,"error: priority must be in range [0,20]\n");
+           	    	return -1;
+            	}
+            	//end_new_code
                 break;
             case '9': hard = 1; signal   = GW_CLIENT_SIGNAL_KILL_HARD;
                 break;                
