@@ -177,6 +177,7 @@ void gw_job_pool_dep_check(int job_id, int exit_code)
 
 				if ( job != NULL )
 				{
+                                        gw_log_print("DM",'I',"Dependencies of job %i with exit code %i.\n",job_id,exit_code);
 					if ( (job->job_state == GW_JOB_STATE_HOLD ) && (exit_code == 0))
 					{
 						gw_log_print("DM",'I',"Dependencies of job %i satisfied, releasing job.\n",i);
