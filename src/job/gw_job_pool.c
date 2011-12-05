@@ -100,7 +100,7 @@ void gw_job_pool_dep_cp (const int * src, int **dst)
 		return;
 	}
 	
-	while (src[i]!=-1)
+	while (src[i] > -1)
     	i++;
 
 	if ( i == 0 )
@@ -110,13 +110,13 @@ void gw_job_pool_dep_cp (const int * src, int **dst)
 		*dst = (int *) malloc (sizeof(int)*(i+1));
 		
 		i = 0;		
-		while (src[i] != -1)
+		while (src[i] > -1)
 		{
 			(*dst)[i] = src[i];
 			i++;
 		}
-		
-		(*dst)[i] = -1;
+
+		(*dst)[i] = src[i];
 	}	
 }
 
@@ -147,6 +147,7 @@ void gw_job_pool_dep_check(int job_id, int exit_code)
 {
 	int i=0;
 	int j=0;
+	int k=0;
 	gw_boolean_t all_done;
 	gw_job_t *   job;
 	
@@ -154,51 +155,47 @@ void gw_job_pool_dep_check(int job_id, int exit_code)
 
 	for ( i=0; i<gw_conf.number_of_jobs; i++)
 	{
-    	if ( gw_job_deps.deps[i] != NULL )
-    	{
-    		all_done = GW_TRUE;
-    		j = 0;
-    		
-	    	while ( gw_job_deps.deps[i][j] != -1 )
-	    	{
-	    		if ( gw_job_deps.deps[i][j] == job_id )
-	    		{
-	    			gw_job_deps.deps[i][j] = -2;
-	    		}
-	    		else if ( gw_job_deps.deps[i][j] != -2 )
-	    			all_done = GW_FALSE;
-	    			
-	    		j++;
-	    	}
-    		
-    		if ( all_done == GW_TRUE ) /* release the job */
-    		{
-				job = gw_job_pool_get(i, GW_TRUE);
+		if ( gw_job_deps.deps[i] != NULL )
+		{
+			all_done = GW_TRUE;
+			j = 0;
+			k = 0;
 
-				if ( job != NULL )
+			while ( gw_job_deps.deps[i][j] > -1)
+			{
+				if ( gw_job_deps.deps[i][j] == job_id )
 				{
-                                        gw_log_print("DM",'I',"Dependencies of job %i with exit code %i.\n",job_id,exit_code);
-					if ( (job->job_state == GW_JOB_STATE_HOLD ) && (exit_code == 0))
+					job = gw_job_pool_get(i, GW_TRUE);
+
+					if ( job != NULL )
 					{
-						gw_log_print("DM",'I',"Dependencies of job %i satisfied, releasing job.\n",i);
-						
-						gw_job_set_state(job, GW_JOB_STATE_PENDING, GW_FALSE);
-						
-                        gw_dm_mad_job_schedule(&gw_dm.dm_mad[0],
-                                               job->id,
-                                               job->array_id,
-                                               job->user_id,
-                                               GW_REASON_NONE);
+						if (job->job_state == GW_JOB_STATE_HOLD)
+						{
+							while ( gw_job_deps.deps[i][k] > -1 )
+								k++;
+
+							if ((gw_job_deps.deps[i][k] == -1) || ((gw_job_deps.deps[i][k] == -3) && (exit_code == 0)) || ((gw_job_deps.deps[i][k] == -4) && (exit_code != 0)))
+							{
+								gw_log_print("DM",'I',"Dependencies of job %i satisfied with job %i (exit code %i), releasing job.\n",i,job_id,exit_code);
+								gw_job_set_state(job, GW_JOB_STATE_PENDING, GW_FALSE);
+								gw_dm_mad_job_schedule(&gw_dm.dm_mad[0],
+												job->id,
+                                                job->array_id,
+                                                job->user_id,
+                                                GW_REASON_NONE);
+								gw_job_deps.deps[i][j] = -2;
+							}
+						}
+						pthread_mutex_unlock(&(job->mutex));
 					}
-					
-					pthread_mutex_unlock(&(job->mutex));
 				}
-    		}
-    	}
+				j++;
+			}
+		}
 	}
-	    	    		
 	pthread_mutex_unlock(&(gw_job_deps.mutex));
 }
+
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */

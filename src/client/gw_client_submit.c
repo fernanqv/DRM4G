@@ -389,7 +389,7 @@ static void gw_client_dep_cp (const int * src, int dst[])
 		return;
 	}
 	
-	while (src[i]!=-1)
+	while (src[i] > -1)
     	i++;
 
 	if ( i == 0 )
@@ -397,13 +397,12 @@ static void gw_client_dep_cp (const int * src, int dst[])
 	else
 	{		
 		i = 0;		
-		while ((src[i] != -1) && (i<(GW_JT_DEPS -1)))
+		while ((src[i] > -1) && (i<(GW_JT_DEPS -1)))
 		{
 			dst[i] = src[i];
 			i++;
 		}
-		
-		dst[i] = -1;
+		dst[i] = src[i];
 	}	
 }
 

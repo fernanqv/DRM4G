@@ -28,7 +28,7 @@
 /* ------------------------------------------------------------------------- */
 
 const char * usage =
-"USAGE\n gwkill [-h] [-a] [-k|-t|-o|-s|-r|-l|-9] <job_id [job_id2 ...]|-A array_id>\n\n"
+"USAGE\n gwkill [-h] [-a] [-k | -t | -o | -s | -r | -p <priority> | -l | -9] <job_id [job_id2 ...]|-A array_id>\n\n"
 "SYNOPSIS\n"
 "  Sends a signal to a job\n\n"
 "OPTIONS\n"

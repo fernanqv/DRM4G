@@ -28,27 +28,28 @@
 /* ------------------------------------------------------------------------- */
 
 const char * usage =
-"USAGE\n gwsubmit [-h] [-v] [-o] [-d \"id1 id2 ...\"] [-p priotity] [-n tasks [-s start] [-i increment]] <[-t] template>\n\n"
+"USAGE\n gwsubmit [-h] [-v] [-o] [-d \"id1 id2 ...\"] [-r afterok|afternotok|afterany][-p priotity] [-n tasks [-s start] [-i increment]] <[-t] template>\n\n"
 "SYNOPSIS\n"
 "  Submits a job or an array job (if the number of tasks is defined) to gwd\n\n"
 "OPTIONS\n"
-"  -h                  print this help\n"
-"  -v                  print to stdout the job ids returned by gwd\n"
-"  -o                  hold job on submission\n"
-"  -d  \"id1 id2 ...\" job dependencies. Submit the job on hold state, and\n"
-"                      release it once the jobs with id1, id2, ... have finished\n"
-"  -p   <priority>     initial priority for the job\n" 
-"  -n   <tasks>        submit an array job with the given number of tasks\n"
-"                      all the jobs in the array will use the same template\n"
-"  -s   <start>        start value for custom param in array jobs. Default 0\n"
-"  -i   <increment>    increment value for custom param in array jobs.\n"
-"                      Each task has associated the value\n"
-"                      PARAM = <start> + <increment> * TASK_ID, and\n"
-"                      MAX_PARM = <start> + <increment> * (<tasks> - 1). Default 1\n"
-"  -t   <template>     template file describing the job\n\n";
+"  -h                  				 print this help\n"
+"  -v                  				 print to stdout the job ids returned by gwd\n"
+"  -o                  				 hold job on submission\n"
+"  -d  \"id1 id2 ...\" 				 job dependencies. Submit the job on hold state, and\n"
+"                      				 release it once the jobs with id1, id2, ... have finished\n"
+"  -r  <afterok|afternotok|afterany> relationship between job dependencies\n"
+"  -p  <priority>     				 initial priority for the job\n"
+"  -n  <tasks>                       submit an array job with the given number of tasks\n"
+"                      				 all the jobs in the array will use the same template\n"
+"  -s  <start>        				 start value for custom param in array jobs. Default 0\n"
+"  -i  <increment>    				 increment value for custom param in array jobs.\n"
+"                      				 Each task has associated the value\n"
+"                      				 PARAM = <start> + <increment> * TASK_ID, and\n"
+"                      				 MAX_PARM = <start> + <increment> * (<tasks> - 1). Default 1\n"
+"  -t  <template>     				 template file describing the job\n\n";
 
 const char * susage =
-"usage: gwsubmit <[-t] template> [-n tasks] [-h] [-v] [-o] [-d \"id1 id2 ...\"] [-p priotity]\n";
+"usage: gwsubmit <[-t] template> [-n tasks] [-h] [-v] [-o] [-d \"id1 id2 ...\"] [-r <afterok|afternotok|afterany>][-p priotity]\n";
 
 extern char *optarg;
 extern int   optind, opterr, optopt;
@@ -66,11 +67,12 @@ int main(int argc, char **argv)
     int              start, inc;
     char *           template = NULL;
     char *           deps_str;
+    char *			 type_dep_str;
     char *           num;
     int              deps[GW_JT_DEPS];
     char             opt;
     char             rpath[PATH_MAX+1];
-    int              t = 0, v = 0, n = 0, o = 0, d = 0, fp=-1, fpset=0;
+    int              t = 0, v = 0, n = 0, o = 0, d = 0, r= 0, fp=-1, fpset=0;
     int              i;
     gw_client_t *    gw_session;
     gw_job_state_t   init_state;
@@ -89,7 +91,7 @@ int main(int argc, char **argv)
     start  = 0;
     inc    = 1;
 
-    while((opt = getopt(argc, argv, ":vhot:n:d:s:i:p:")) != -1)
+    while((opt = getopt(argc, argv, ":vhot:n:d:s:i:p:r:")) != -1)
         switch(opt)
         {
             case 't': t  = 1;
@@ -104,6 +106,9 @@ int main(int argc, char **argv)
                 break;          
             case 'd': d = 1;
                 deps_str= strdup(optarg);
+                break;
+            case 'r': r = 1;
+            	type_dep_str = strdup(optarg);
                 break;
             case 's':
                 start = atoi(optarg);
@@ -180,7 +185,20 @@ int main(int argc, char **argv)
     		num = strtok (NULL," ");
 		}
 			
-		deps[i] = -1;
+
+		if (r)
+		{
+			if (strcmp("afterok",type_dep_str)==0)
+				deps[i] = -3;
+			else if (strcmp("afternotok",type_dep_str)==0)
+				deps[i] = -4;
+			else
+				deps[i] = -1;
+		}
+		else
+			deps[i] = -1;
+
+        free(type_dep_str);
 		free(deps_str);    	
     }
     else
