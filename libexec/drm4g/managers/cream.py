@@ -3,7 +3,7 @@ import re
 
 __version__ = '0.1'
 __author__  = 'Santander Meteorology Group'
-__revision__ = "$Id:$"
+__revision__ = "$Id$"
 
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.
