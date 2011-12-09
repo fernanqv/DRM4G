@@ -159,22 +159,22 @@ void gw_job_pool_dep_check(int job_id, int exit_code)
 		{
 			all_done = GW_TRUE;
 			j = 0;
-			k = 0;
 
 			while ( gw_job_deps.deps[i][j] > -1)
 			{
 				if ( gw_job_deps.deps[i][j] == job_id )
 				{
-					job = gw_job_pool_get(i, GW_TRUE);
+					job = gw_job_pool_get(i, GW_FALSE);
 
 					if ( job != NULL )
 					{
 						if (job->job_state == GW_JOB_STATE_HOLD)
 						{
+							k = 0;
 							while ( gw_job_deps.deps[i][k] > -1 )
 								k++;
 
-							if ((gw_job_deps.deps[i][k] == -1) || ((gw_job_deps.deps[i][k] == -3) && (exit_code == 0)) || ((gw_job_deps.deps[i][k] == -4) && (exit_code != 0)))
+							if ((gw_job_deps.deps[i][k] == -1) || ((gw_job_deps.deps[i][k] == -2) && (exit_code == 0)) || ((gw_job_deps.deps[i][k] == -3) && (exit_code != 0)))
 							{
 								gw_log_print("DM",'I',"Dependencies of job %i satisfied with job %i (exit code %i), releasing job.\n",i,job_id,exit_code);
 								gw_job_set_state(job, GW_JOB_STATE_PENDING, GW_FALSE);
@@ -183,10 +183,9 @@ void gw_job_pool_dep_check(int job_id, int exit_code)
                                                 job->array_id,
                                                 job->user_id,
                                                 GW_REASON_NONE);
-								gw_job_deps.deps[i][j] = -2;
+								gw_job_deps.deps[i][j] = -4;
 							}
 						}
-						pthread_mutex_unlock(&(job->mutex));
 					}
 				}
 				j++;
@@ -235,17 +234,17 @@ void gw_job_pool_dep_consistency()
 						
 						if ( (gw_job_pool.pool[jid])->job_state 
 								== GW_JOB_STATE_ZOMBIE )
-							gw_job_deps.deps[i][j] = -2;
+							gw_job_deps.deps[i][j] = -4;
 						else 
 							all_done = GW_FALSE;
 							
 						pthread_mutex_unlock(&((gw_job_pool.pool[jid])->mutex));
 						
       				} else if (gw_job_pool.pool[jid] == NULL)
-      					gw_job_deps.deps[i][j] = -2;
+      					gw_job_deps.deps[i][j] = -4;
 	    		}
 	    		else
-	    			gw_job_deps.deps[i][j] = -2;
+	    			gw_job_deps.deps[i][j] = -4;
 
 	    		j++;
 	    	}

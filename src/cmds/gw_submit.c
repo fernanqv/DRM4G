@@ -189,9 +189,9 @@ int main(int argc, char **argv)
 		if (r)
 		{
 			if (strcmp("afterok",type_dep_str)==0)
-				deps[i] = -3;
+				deps[i] = -2;
 			else if (strcmp("afternotok",type_dep_str)==0)
-				deps[i] = -4;
+				deps[i] = -3;
 			else
 				deps[i] = -1;
 		}
