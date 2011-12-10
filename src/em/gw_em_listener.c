@@ -138,9 +138,10 @@ void gw_em_listener(void *arg)
                        result, 
                        info);
 
-                gw_log_print("EM",'I',"MAD message received:\"%s %s %s %s\".\n",
+#ifdef GWEMDEBUG
+                gw_log_print("EM",'D',"MAD message received:\"%s %s %s %s\".\n",
                              action, s_job_id, result, info);
-
+#endif
                 if (s_job_id[0] == '-')
                     continue;
 
