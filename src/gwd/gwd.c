@@ -98,7 +98,7 @@ void gw_recover_state();
 
 void print_license()
 {
-  printf(GW_VERSION"\n");
+  //printf(GW_VERSION"\n");
   printf("Copyright 2002-2011 GridWay Project Leads\n");
   printf("GridWay is distributed and licensed for use under the terms of the\n"); 
   printf("Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).\n");
@@ -790,7 +790,7 @@ void gw_recover_state()
 			        rc  = gw_job_recover(job);			        
 			        
 			        if (rc == 0)
-				        gw_job_pool_dep_cp (job->template.job_deps, &deps);
+				        gw_job_pool_dep_cp (job->template.job_deps, &deps, -1);
 				        
 					pthread_mutex_unlock(&(job->mutex));
 					
@@ -814,7 +814,7 @@ void gw_recover_state()
 	}
 
     gw_job_pool_dep_consistency();
-    
+
     free(var_name);
     closedir(dir);
 }

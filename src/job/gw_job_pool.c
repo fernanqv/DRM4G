@@ -90,7 +90,7 @@ static void gw_job_dep_destroy()
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-void gw_job_pool_dep_cp (const int * src, int **dst)
+void gw_job_pool_dep_cp (const int * src, int **dst, int finally)
 {
 	int i = 0;
 	
@@ -116,7 +116,14 @@ void gw_job_pool_dep_cp (const int * src, int **dst)
 			i++;
 		}
 
-		(*dst)[i] = src[i];
+		if (finally == 0)
+		{
+			(*dst)[i] = src[i];
+		}
+		else
+		{
+			(*dst)[i] = finally;
+		}
 	}	
 }
 
@@ -133,7 +140,7 @@ void gw_job_pool_dep_set(int job_id, int *deps)
     	if ( gw_job_deps.deps[job_id] != NULL )
     		free(gw_job_deps.deps[job_id]);
     
-	    gw_job_pool_dep_cp (deps, &(gw_job_deps.deps[job_id]));
+	    gw_job_pool_dep_cp (deps, &(gw_job_deps.deps[job_id]), 0);
     }
 	
 	pthread_mutex_unlock(&(gw_job_deps.mutex));
