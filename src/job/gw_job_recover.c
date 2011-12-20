@@ -33,6 +33,9 @@
 #include "gw_log.h"
 #include "gw_user_pool.h"
 #include "gw_host_pool.h"
+#include "gw_file_parser.h"
+
+static int gw_job_recover_exit_code(gw_job_t *job);
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
@@ -204,6 +207,15 @@ int gw_job_recover(gw_job_t *job)
         
         job_state = gw_job_get_state_code(job_state_name);
 
+        if (job_state == GW_JOB_STATE_ZOMBIE)
+        {
+        	rc = gw_job_recover_exit_code(job);
+        	if (rc == 0)
+        		gw_log_print("DM",'I',"Exit code of job %d is %d.\n",job->id,job->exit_code);
+        	else
+        		gw_log_print("DM",'E',"Unable to find exit code.\n");
+        }
+
         /* Re-construct job lifecycle (states, history & statistics) */
 
         rc = gw_job_recover_state_transition(job, 
@@ -265,7 +277,7 @@ int gw_job_recover(gw_job_t *job)
                 gw_job_get_state_name(previous_job_state),
                 gw_job_get_state_name(job_state), job->id);
     }
-    
+
     /* ----- Update user stats ------- */
     
 	gw_user_pool_inc_jobs(user_id,1);
@@ -431,8 +443,8 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
                                GW_REASON_NONE);
     case GW_JOB_STATE_HOLD:
     case GW_JOB_STATE_STOPPED:
-    case GW_JOB_STATE_ZOMBIE:
     case GW_JOB_STATE_FAILED:
+    case GW_JOB_STATE_ZOMBIE:
         free(id);
         gw_job_set_state(job, job_state, GW_TRUE);
         break;
@@ -742,3 +754,35 @@ char * gw_job_recover_get_contact(gw_job_t *job)
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
+
+int gw_job_recover_exit_code(gw_job_t *job)
+{
+    char         stdout_wrapper[512];
+    int          rc;
+    char *       exit_code;
+
+
+    snprintf(stdout_wrapper,sizeof(char)*512,"%s/stdout.wrapper.%i",
+                        job->directory, job->restarted);
+
+    rc = gw_parse_file(stdout_wrapper, EXIT_STATUS, &exit_code);
+
+    if ( ( rc != -1) && ( exit_code != NULL ) )
+    {
+    	switch ( exit_code[0] )
+        {
+            case 'S':
+            case 'P':
+                break;
+            default:
+            	job->exit_code = atoi(exit_code);
+            	break;
+        }
+        free (exit_code);
+        return 0;
+    }
+    else
+    {
+    	return -1;
+    }
+}
