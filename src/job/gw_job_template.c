@@ -187,7 +187,7 @@ void gw_job_template_init (gw_job_template_t *jt, const gw_template_t *ct)
     gw_job_template_set_str(&(jt->wrapper), ct->wrapper);
     gw_job_template_set_str(&(jt->monitor), ct->monitor);
 
-    gw_job_pool_dep_cp (ct->job_deps, &(jt->job_deps), 0);
+    gw_job_pool_dep_cp (ct->job_deps, &(jt->job_deps));
 
     jt->type = ct->type;
     jt->np = ct->np;

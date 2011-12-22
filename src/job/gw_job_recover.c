@@ -106,13 +106,13 @@ int gw_job_recover(gw_job_t *job)
         return -1;
     }
 
-    rc = fscanf(file, "%ld %s %s %s %i %i %i", &timestamp, user_name, proxy_path, job_home,
-            &pstart, &pinc, &(job->fixed_priority));
+    rc = fscanf(file, "%ld %s %s %s %i %i %i %i", &timestamp, user_name, proxy_path, job_home,
+            &pstart, &pinc, &(job->fixed_priority),&(job->type_dep));
 
     if (proxy_path[0] == '-' && proxy_path[1] == '\0')
         proxy_path[0] = '\0';
     
-    if (rc != 7)
+    if (rc != 8)
     {
         gw_log_print("DM",'E',"Bad filed number (%d) in job %d configuration file.\n",
                      rc,

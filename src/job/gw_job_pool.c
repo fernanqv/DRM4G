@@ -25,6 +25,7 @@
 #include "gw_acct.h"
 #endif
 
+
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
@@ -90,7 +91,7 @@ static void gw_job_dep_destroy()
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-void gw_job_pool_dep_cp (const int * src, int **dst, int finally)
+void gw_job_pool_dep_cp (const int * src, int **dst)
 {
 	int i = 0;
 	
@@ -116,14 +117,8 @@ void gw_job_pool_dep_cp (const int * src, int **dst, int finally)
 			i++;
 		}
 
-		if (finally == 0)
-		{
-			(*dst)[i] = src[i];
-		}
-		else
-		{
-			(*dst)[i] = finally;
-		}
+		(*dst)[i] = -1;
+
 	}	
 }
 
@@ -140,7 +135,7 @@ void gw_job_pool_dep_set(int job_id, int *deps)
     	if ( gw_job_deps.deps[job_id] != NULL )
     		free(gw_job_deps.deps[job_id]);
     
-	    gw_job_pool_dep_cp (deps, &(gw_job_deps.deps[job_id]), 0);
+	    gw_job_pool_dep_cp (deps, &(gw_job_deps.deps[job_id]));
     }
 	
 	pthread_mutex_unlock(&(gw_job_deps.mutex));
@@ -154,8 +149,8 @@ void gw_job_pool_dep_check(int job_id, int exit_code)
 {
 	int i=0;
 	int j=0;
-	int k=0;
 	gw_boolean_t all_done;
+	gw_boolean_t dep;
 	gw_job_t *   job;
 	
 	pthread_mutex_lock(&(gw_job_deps.mutex));
@@ -164,44 +159,52 @@ void gw_job_pool_dep_check(int job_id, int exit_code)
 	{
 		if ( gw_job_deps.deps[i] != NULL )
 		{
+			job = gw_job_pool_get(i, GW_TRUE);
+
 			all_done = GW_TRUE;
+			dep = GW_FALSE;
+
 			j = 0;
 
-			while ( gw_job_deps.deps[i][j] > -1)
+			if ( job != NULL )
 			{
-				if ( gw_job_deps.deps[i][j] == job_id )
+				if (job->job_state == GW_JOB_STATE_HOLD)
 				{
-					job = gw_job_pool_get(i, GW_FALSE);
-
-					if ( job != NULL )
+					while ( gw_job_deps.deps[i][j] != -1)
 					{
-						if (job->job_state == GW_JOB_STATE_HOLD)
+						if ( gw_job_deps.deps[i][j] == job_id )
 						{
-							k = 0;
-							while ( gw_job_deps.deps[i][k] > -1 )
-								k++;
-
-							if ((gw_job_deps.deps[i][k] == -1) || ((gw_job_deps.deps[i][k] == -2) && (exit_code == 0)) || ((gw_job_deps.deps[i][k] == -3) && (exit_code != 0)))
+							dep = GW_TRUE;
+							if ( (job->type_dep == -1) ||
+							   ( (job->type_dep == -2) && (exit_code == 0)) ||
+                               ( (job->type_dep == -3) && (exit_code != 0)) )
 							{
-								gw_log_print("DM",'I',"Dependencies of job %i satisfied with job %i (exit code %i), releasing job.\n",i,job_id,exit_code);
-								gw_job_set_state(job, GW_JOB_STATE_PENDING, GW_FALSE);
-								gw_dm_mad_job_schedule(&gw_dm.dm_mad[0],
-												job->id,
-                                                job->array_id,
-                                                job->user_id,
-                                                GW_REASON_NONE);
 								gw_job_deps.deps[i][j] = -4;
 							}
+							else 
+							{
+								all_done = GW_FALSE;
+							}
+						}else if (gw_job_deps.deps[i][j] != -4)
+						{
+							all_done = GW_FALSE;
 						}
+						j++;
+					}
+					if ( (all_done == GW_TRUE) && (dep == GW_TRUE))
+					{
+						gw_log_print("DM",'I',"Dependencies of job %i satisfied with job %i (exit code %i), releasing job.\n",i,job_id,exit_code);
+						gw_job_set_state(job, GW_JOB_STATE_PENDING, GW_FALSE);
+						gw_dm_mad_job_schedule(&gw_dm.dm_mad[0],job->id,job->array_id,job->user_id,GW_REASON_NONE);
 					}
 				}
-				j++;
 			}
+
+			pthread_mutex_unlock(&(job->mutex));
 		}
 	}
 	pthread_mutex_unlock(&(gw_job_deps.mutex));
 }
-
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
@@ -210,7 +213,8 @@ void gw_job_pool_dep_check(int job_id, int exit_code)
 void gw_job_pool_dep_consistency()
 {
 	int          i,j;
-	gw_boolean_t all_done;	
+	gw_boolean_t all_done;
+	gw_boolean_t dep;
 	gw_job_t *   job;
 	int          jid;
 	
@@ -226,60 +230,56 @@ void gw_job_pool_dep_consistency()
 	{
     	if ( gw_job_deps.deps[i] != NULL )
     	{
+    		job = gw_job_pool.pool[i];
+
     		all_done = GW_TRUE;
+    		dep = GW_FALSE;
     		j = 0;
     		
-	    	while ( gw_job_deps.deps[i][j] != -1 )
-	    	{
-	    		jid = gw_job_deps.deps[i][j];
-	    		
-	    		if ((jid >= 0) && (jid < gw_conf.number_of_jobs))
-	    		{
-					if (gw_job_pool.pool[jid] != NULL)
-      				{
-						pthread_mutex_lock(&((gw_job_pool.pool[jid])->mutex));
-						
-						if ( (gw_job_pool.pool[jid])->job_state 
-								== GW_JOB_STATE_ZOMBIE )
-							gw_job_deps.deps[i][j] = -4;
-						else 
-							all_done = GW_FALSE;
-							
-						pthread_mutex_unlock(&((gw_job_pool.pool[jid])->mutex));
-						
-      				} else if (gw_job_pool.pool[jid] == NULL)
-      					gw_job_deps.deps[i][j] = -4;
-	    		}
-	    		else
-	    			gw_job_deps.deps[i][j] = -4;
-
-	    		j++;
-	    	}
-    		
-    		if ( all_done == GW_TRUE ) /* release the job */
+    		if ( job != NULL )
     		{
-				job = gw_job_pool.pool[i];
+    			pthread_mutex_lock(&(job->mutex));
 
-				if (job != NULL)
-				{
-					pthread_mutex_lock(&(job->mutex));
-				
-					if ( job->job_state == GW_JOB_STATE_HOLD )
-					{
-						gw_log_print("DM",'I',"Dependencies of job %i satisfied, releasing job.\n",i);
-						
-						gw_job_set_state(job, GW_JOB_STATE_PENDING, GW_FALSE);
-						
-                        gw_dm_mad_job_schedule(&gw_dm.dm_mad[0],
-                                               job->id,
-                                               job->array_id,
-                                               job->user_id,
-                                               GW_REASON_NONE);
-					}
+    			if (job->job_state == GW_JOB_STATE_HOLD)
+    			{
+    				while ( gw_job_deps.deps[i][j] != -1 )
+    				{
+    					jid = gw_job_deps.deps[i][j];
 
-					pthread_mutex_unlock(&(job->mutex));					
-				}
-			}
+    					if ((jid >= 0) && (jid < gw_conf.number_of_jobs))
+    					{
+    						if (gw_job_pool.pool[jid] != NULL)
+    						{
+    							dep = GW_TRUE;
+    							pthread_mutex_lock(&((gw_job_pool.pool[jid])->mutex));
+    							if ( ((gw_job_pool.pool[jid])->job_state == GW_JOB_STATE_ZOMBIE) && 
+    								(( job->type_dep == -1) ||
+    								(( job->type_dep == -2) && ((gw_job_pool.pool[jid])->exit_code == 0)) ||
+    								(( job->type_dep == -3) && ((gw_job_pool.pool[jid])->exit_code != 0))) )
+    								gw_job_deps.deps[i][j] = -4;
+    							else
+    								all_done = GW_FALSE;
+
+    							pthread_mutex_unlock(&((gw_job_pool.pool[jid])->mutex));
+
+    						} else if (gw_job_pool.pool[jid] == NULL)
+    							gw_job_deps.deps[i][j] = -4;
+    					}
+    					else
+    						gw_job_deps.deps[i][j] = -4;
+
+    					j++;
+    				}
+    			}
+
+    			pthread_mutex_unlock(&(job->mutex));
+    		}
+    		if ( (all_done == GW_TRUE) && (dep == GW_TRUE) ) /* release the job */
+    		{
+    			gw_log_print("DM",'I',"Dependencies of job %i satisfied, releasing job.\n",i);
+    			gw_job_set_state(job, GW_JOB_STATE_PENDING, GW_FALSE);
+				gw_dm_mad_job_schedule(&gw_dm.dm_mad[0],job->id,job->array_id,job->user_id,GW_REASON_NONE);
+    		}
     	}
 	}
 
@@ -304,8 +304,7 @@ gw_job_pool_t * gw_job_pool_init()
 
   pthread_mutex_lock(&(gw_job_pool.mutex));
 
-  gw_job_pool.pool = (gw_job_t**) malloc(gw_conf.number_of_jobs
-                                                           * sizeof(gw_job_t*));
+  gw_job_pool.pool = (gw_job_t**) malloc(gw_conf.number_of_jobs * sizeof(gw_job_t*));
   gw_job_pool.number_of_jobs = 0;
   gw_job_pool.last_job_id    = -1;
 
@@ -535,27 +534,6 @@ gw_job_t* gw_job_pool_get (int job_id, int lock)
 
     return (job);
 }
-
-
-void gw_job_pool_priority (int job_id, int priority)
-{
-     gw_job_t *job;
-
-    if ( ( job_id >= 0 ) && ( job_id < gw_conf.number_of_jobs ) )
-    {
-   	    pthread_mutex_lock(&(gw_job_pool.mutex));
-
-   	    pthread_mutex_lock(&(job->mutex));
-
-        gw_job_pool.pool[job_id]->fixed_priority = priority;
-
-        pthread_mutex_unlock(&(job->mutex));
-
-        pthread_mutex_unlock(&(gw_job_pool.mutex));
-    }
-}
-
-
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */

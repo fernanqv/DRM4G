@@ -176,15 +176,15 @@ int main(int argc, char **argv)
     if (d)
     {
    		i = 0;
-    	deps[0] = -1;	
+    	deps[0] = -1;
    		num = strtok (deps_str," ");
-			
+
 		while ( (num != NULL) && (i<(GW_JT_DEPS -1)) )
 		{
 			deps[i++] = atoi(num);
     		num = strtok (NULL," ");
 		}
-			
+
 
 		if (r)
 		{

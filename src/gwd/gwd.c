@@ -790,7 +790,7 @@ void gw_recover_state()
 			        rc  = gw_job_recover(job);			        
 			        
 			        if (rc == 0)
-				        gw_job_pool_dep_cp (job->template.job_deps, &deps, -1);
+				        gw_job_pool_dep_cp (job->template.job_deps, &deps);
 				        
 					pthread_mutex_unlock(&(job->mutex));
 					

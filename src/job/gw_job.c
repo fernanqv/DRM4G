@@ -40,7 +40,7 @@
 
 int gw_job_fill(gw_job_t *job, const gw_msg_submit_t *msg_submit)
 {
-    int    rc;
+    int    rc, i;
     FILE   *log, *template_file, *file;
     char   str_buffer[PATH_MAX];
     char   sh_command[PATH_MAX];
@@ -117,13 +117,18 @@ int gw_job_fill(gw_job_t *job, const gw_msg_submit_t *msg_submit)
         return -1;
     }
 
+    i=0;
+    while (msg_submit->jt.job_deps[i] > -1)
+    	i++;
+    job->type_dep = msg_submit->jt.job_deps[i];
+
     if (msg_submit->msg.proxy_path[0] == '\0'){
-        fprintf(file, "%ld %s - %s %i %i %i\n", job->start_time, job->owner,
-                job->template.job_home, msg_submit->msg.pstart, msg_submit->msg.pinc,msg_submit->msg.fixed_priority);
+        fprintf(file, "%ld %s - %s %i %i %i %i\n", job->start_time, job->owner,
+                job->template.job_home, msg_submit->msg.pstart, msg_submit->msg.pinc,msg_submit->msg.fixed_priority,job->type_dep);
 	}
     else {
-        fprintf(file, "%ld %s %s %s %i %i %i\n", job->start_time, job->owner, msg_submit->msg.proxy_path,
-                job->template.job_home, msg_submit->msg.pstart, msg_submit->msg.pinc,msg_submit->msg.fixed_priority);
+        fprintf(file, "%ld %s %s %s %i %i %i %i\n", job->start_time, job->owner, msg_submit->msg.proxy_path,
+                job->template.job_home, msg_submit->msg.pstart, msg_submit->msg.pinc,msg_submit->msg.fixed_priority,job->type_dep);
 	}
     
     fclose(file);

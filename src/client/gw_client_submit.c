@@ -95,7 +95,7 @@ gw_return_code_t gw_client_job_submit(char *         template,
 		if ( deps[0] != -1 )
 		{
 			msg.init_state = GW_JOB_STATE_HOLD;
-                        gw_client_dep_cp (deps, jt.job_deps);
+			gw_client_dep_cp (deps, jt.job_deps);
 		}
 	}
 
