@@ -1,4 +1,4 @@
-all: 
+install: 
 ifdef GW_LOCATION
 	@cp bin/* $(GW_LOCATION)/bin/
 	@cp etc/* $(GW_LOCATION)/etc/
