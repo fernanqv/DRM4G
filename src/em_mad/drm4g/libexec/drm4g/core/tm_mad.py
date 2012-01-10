@@ -6,8 +6,8 @@ import time
 from drm4g.utils.url import urlparse
 from drm4g.utils.dynamic import ThreadPool
 from drm4g.utils.logger import *
+from drm4g.core.configure import readHostList, parserHost
 from drm4g.utils.message import Send
-from drm4g.core.configure import hostparse
 from drm4g.global_settings import COMMUNICATOR, Debug
 from drm4g.utils.importlib import import_module
 
@@ -78,13 +78,15 @@ class GwTmMad (object):
         @type args : string 
         """
         try:
-            for key, val in hostparse().items():
-                com = getattr(import_module(COMMUNICATOR[val.SCHEME]), 'Communicator')()
-                com.hostName = val.HOST
-                com.userName = val.USERNAME
-                com.workDirectory = val.GW_RUNDIR
+            hostList = readHostList()
+            for hostname, url in hostList.items():
+                hostConf = parserHost(hostname, url)
+                com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
+                com.hostName      = hostConf.HOST
+                com.userName      = hostConf.USERNAME
+                com.workDirectory = hostConf.GW_RUNDIR
                 com.connect()
-                self._com_list[key] = com
+                self._com_list[hostname] = com
             out = 'INIT - - SUCCESS -'
         except Exception, e:
             out = 'INIT - - FAILURE %s' % (str(e))
