@@ -124,7 +124,7 @@ class Job (drm4g.managers.Job):
             args += '#$ -l mem_free=%sM\n' % (parameters['maxMemory'])
         if parameters.has_key('tasksPerNode'):
             cpus = int(parameters['tasksPerNode']) * int(parameters['count']) 
-            args += '#$ -l num_proc=%s\n' % (cpus)
+            args += '#$ -l num_proc=%d\n' % (cpus)
         else:
             args += '#$ -l num_proc=$count\n'
         args += '#$ -v %s\n' % (','.join(['%s=%s' %(k, v) for k, v in parameters['environment'].items()]))
