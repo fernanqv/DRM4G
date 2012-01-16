@@ -100,6 +100,9 @@ class Job (drm4g.managers.Job):
             walltime = self.walltime_default
         args += '# @ wall_clock_limit = %s\n' % (walltime)
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
-        args += 'srun $executable\n'
+        if parameters['jobType'] == "mpi":
+            args += 'srun $executable\n'
+        else:
+            args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 

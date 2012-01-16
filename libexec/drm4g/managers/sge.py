@@ -122,10 +122,17 @@ class Job (drm4g.managers.Job):
             args += '#$ -l cput=%s\n' % (sec_to_H_M_S(parameters['maxCpuTime']))
         if parameters.has_key('maxMemory'): 
             args += '#$ -l mem_free=%sM\n' % (parameters['maxMemory'])
-        args += '#$ -l num_proc=$count\n'
+        if parameters.has_key('tasksPerNode'):
+            cpus = int(parameters['tasksPerNode']) * int(parameters['count']) 
+            args += '#$ -l num_proc=%s\n' % (cpus)
+        else:
+            args += '#$ -l num_proc=$count\n'
         args += '#$ -v %s\n' % (','.join(['%s=%s' %(k, v) for k, v in parameters['environment'].items()]))
         args += 'cd $directory\n'
-        args += '$executable\n'
+        if parameters['jobType'] == "mpi":
+            args += 'mpi -np $count $executable\n'
+        else:
+            args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 
    
