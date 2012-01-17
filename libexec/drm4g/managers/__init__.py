@@ -65,7 +65,7 @@ class Resource (object):
         
     def hostProperties(self): 
         try:
-            out, err = self.Communicator.execCommand('LANG=POSIX uname -n -r -p -o')
+            out, err = self.Communicator.execCommand('LANG=POSIX uname -n -r -m -o')
             if not err:
                 return out.split() #hostname,os_version,arch,os_name 
         except Exception, e:
