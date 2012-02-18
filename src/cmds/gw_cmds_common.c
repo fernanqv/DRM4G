@@ -821,8 +821,8 @@ void gw_client_print_host_status_header()
 {
     char head_string[210];
     
-    sprintf(head_string,"%-3s %-4s %-15s %-6s %-4s %%%-3s %11s %13s %13s %-18s %-30s",
-    "HID","PRIO","OS","ARCH","MHZ","CPU","MEM(F/T)","DISK(F/T)","NODES(U/F/T)","LRMS","HOSTNAME");
+    sprintf(head_string,"%-3s %-4s %-15s %-6s %-4s %%%-3s %18s %18s %13s %-18s %-30s",
+    "HID","PRI","OS","ARCH","MHZ","CPU","MEM(F/T)","DISK(F/T)","NODES(U/F/T)","LRMS","HOSTNAME");
     
     bold();
     underline(); 
@@ -854,7 +854,7 @@ void gw_client_print_host_status(gw_msg_host_t * msg)
     printf("%4i ",msg->cpu_free);
 
     snprintf(buffer,sizeof(char)*string_short,"%iM/%iM",msg->free_mem_mb,msg->size_mem_mb);    
-    printf("%11s ",buffer);
+    printf("%18s ",buffer);
 
     if (msg->size_disk_mb >= 10000)
         if (msg->free_disk_mb >= 10000)
@@ -863,7 +863,7 @@ void gw_client_print_host_status(gw_msg_host_t * msg)
             snprintf(buffer,sizeof(char)*string_short,"%liM/%liG",msg->free_disk_mb,msg->size_disk_mb/1024);
     else
         snprintf(buffer,sizeof(char)*string_short,"%liM/%liM",msg->free_disk_mb,msg->size_disk_mb);
-    printf("%13s ",buffer);    
+    printf("%18s ",buffer);    
 
     freenodecount = 0;
     for (i=0; i<msg->number_of_queues; i++)
