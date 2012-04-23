@@ -152,8 +152,7 @@ int gw_array_pool_array_allocate (const gw_msg_t * msg,
         return -1;
     }
     
-    *array_id = ( gw_array_pool.last_array_id + 1 )
-                                           % gw_conf.number_of_arrays;
+    *array_id = gw_array_pool.last_array_id + 1;
     found = 0;
     tries = 0;
     
@@ -163,7 +162,7 @@ int gw_array_pool_array_allocate (const gw_msg_t * msg,
       if(!found)
       {
         tries++;
-        *array_id = (*array_id+1) % gw_conf.number_of_arrays;
+        *array_id = *array_id+1;
       }  
     } 
     

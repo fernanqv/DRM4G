@@ -371,7 +371,7 @@ int gw_job_pool_allocate ()
     
     pthread_mutex_lock(&(gw_job_pool.mutex));
 
-    job_id = (gw_job_pool.last_job_id+1)% gw_conf.number_of_jobs;
+    job_id = gw_job_pool.last_job_id+1;
 
     found = 0;
     tries = 0;
@@ -383,7 +383,7 @@ int gw_job_pool_allocate ()
         if(!found)
         {
             tries++;
-            job_id = (job_id + 1) % gw_conf.number_of_jobs;
+            job_id = job_id + 1;
         }
     }
 
@@ -431,6 +431,8 @@ int gw_job_pool_allocate_by_id (int job_id)
     
     gw_job_pool.number_of_jobs++;
     
+    gw_job_pool.last_job_id = gw_job_pool.last_job_id+1;
+
     gw_job_init (gw_job_pool.pool[job_id], job_id);
 
     pthread_mutex_unlock(&(gw_job_pool.mutex));
