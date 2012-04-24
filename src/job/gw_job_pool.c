@@ -489,7 +489,7 @@ void gw_job_pool_free (int job_id)
 #endif
             gw_user_pool_dec_jobs(job->user_id);        	         
 
-	        gw_job_pool.number_of_jobs--;
+	        //gw_job_pool.number_of_jobs--;
         
 	        gw_job_pool.pool[job_id] = NULL;
                                         
