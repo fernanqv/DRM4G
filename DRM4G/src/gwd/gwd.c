@@ -295,13 +295,6 @@ void gwd_main()
     gw_rm_set_dm_am(&(dm->am));    
     
     /* ----------------------------------------------------------- */
-    /* Recover state (Warning! After thread start???)              */
-    /* ----------------------------------------------------------- */
-
-    gw_log_print("GW",'I',"Recovering GW state.\n");
-    gw_recover_state();
-
-    /* ----------------------------------------------------------- */
     /* Start threads                                               */
     /* ----------------------------------------------------------- */
     
@@ -312,9 +305,15 @@ void gwd_main()
     pthread_create(&(tm->thread_id),&pattr,(void *)gw_tm_start,(void *)NULL);
     pthread_create(&(em->thread_id),&pattr,(void *)gw_em_start,(void *)NULL);
     pthread_create(&(im->thread_id),&pattr,(void *)gw_im_start,(void *)NULL);
-    pthread_create(&(um->thread_id),&pattr,(void *)gw_um_start,(void *)NULL);    
-    pthread_create(&(rm->thread_id),&pattr,(void *)gw_rm_start,(void *)NULL);
+    pthread_create(&(um->thread_id),&pattr,(void *)gw_um_start,(void *)NULL);       pthread_create(&(rm->thread_id),&pattr,(void *)gw_rm_start,(void *)NULL);
     
+    /* ----------------------------------------------------------- */
+    /* Recover state                                               */
+    /* ----------------------------------------------------------- */
+
+    gw_log_print("GW",'I',"Recovering GW state.\n");
+    gw_recover_state();
+
     pthread_mutex_lock(&mutex);
     pthread_cond_wait(&cond, &mutex);
     
