@@ -197,11 +197,9 @@ void gw_em_listener(void *arg)
                     }
                     else /* Save persistent job contact */
                     {
-                        snprintf(contact_file, 
-                                 PATH_MAX-1, 
+                        snprintf(contact_file,PATH_MAX-1,
                                  "%s/" GW_VAR_DIR "/%i/job.contact",
-                                 gw_conf.gw_location, 
-                                 job->id);
+                                 gw_conf.gw_location,job->id);
                                  
                         file = fopen(contact_file, "w");
                         
@@ -217,15 +215,28 @@ void gw_em_listener(void *arg)
                 }                
                 else if (strcmp(action, "CANCEL") == 0)
                 {
-                    if (strcmp(result, "FAILURE") == 0)
+                    if (strcmp(result, "SUCCESS") == 0)
                     {
-                        gw_job_print(job, "EM",'E',"Job cancel failed (%s), assuming the job is done.\n",info);
-                        gw_log_print("EM",'E',"Cancel of job %d failed: %s.\n",job->id, info);
-
-                        gw_am_trigger(&(gw_em.am), "GW_EM_STATE_DONE",(void *) job_id);
+                        gw_job_print(job, "EM",'E',"Job cancel succeeded (%s), assuming the job is done.\n",info);
+                        gw_log_print("EM",'E',"Cancel of job %d succeeded %s.\n",job->id, info);
                     }
                     else
-                        free(job_id);
+                    {
+                    	gw_job_print(job, "EM",'E',"Job cancel failed (%s).\n",info);
+                    	gw_log_print("EM",'E',"Cancel of job %d failed: %s.\n",job->id, info);
+                    	job->history->failed_cancels++;
+                    	// Will retry cancel in next poll, if there are retries left
+                    	if (job->history->failed_cancels >= 2)
+                    	{
+                    		gw_log_print("EM",'I',"Max number of cancel failures for job %i reached, considering it done\n", *job_id);
+                    		gw_job_print(job, "EM",'I',"Max number of cancel failures reached, considering it done\n");
+
+                    		gw_am_trigger(&(gw_em.am),"GW_EM_STATE_DONE", (void *) job_id);
+                    	}
+
+
+                    }
+
                 }
                 else if (strcmp(action, "POLL") == 0)
                 {
