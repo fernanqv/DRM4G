@@ -172,25 +172,45 @@ void gw_em_cancel(void *_job_id)
 	if ( _job_id != NULL )
 	{
 		job_id = *( (int *) _job_id );
-		free(_job_id);
 		
 		job = gw_job_pool_get(job_id, GW_TRUE);
 	
 		if ( job == NULL )
 		{
 			gw_log_print("EM",'E',"Job %s no longer exists (CANCEL).\n", job_id);
+			free(_job_id);
 			return;
 		}
 	}
 	else
 		return;
     
-    /* -------------------------------------------------------------------- */
+    if (job->history->tries >= job->template.number_of_retries)
+    {
+    	gw_log_print("EM",'I',"Max number of cancel retries (%d) for job %i reached, considering it done\n",
+              job->history->tries, job_id);
+    	gw_job_print(job,"EM",'I',"Max number of cancel retries reached, considering it done\n");
+
+    	job->history->tries = 0;
+
+    	gw_am_trigger(&(gw_em.am),"GW_EM_STATE_DONE", _job_id);
+
+    	pthread_mutex_unlock(&(job->mutex));
+
+    	return;
+    }
+
+    free(_job_id);
+
+
+	/* -------------------------------------------------------------------- */
             
     current_em_state = job->em_state;
         
     if ( issubmitted(current_em_state) )
     {
+
+    	gw_log_print ("EM",'I',"Cancelling job %i.\n", job_id);
         gw_job_print (job,"EM",'I',"Cancelling job.\n");
         
         mad = job->history->em_mad;
@@ -216,6 +236,8 @@ void gw_em_cancel(void *_job_id)
     else
         gw_log_print ("EM",'W',"Ignoring cancel request for job %i, will re-try.\n",
                 job_id);    
+
+    job->history->tries++;
 
     /* -------------------------------------------------------------------- */
             
