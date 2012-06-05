@@ -49,6 +49,7 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <time.h>
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES                                                          */
@@ -150,7 +151,9 @@ void gwd_main()
     fcntl(2,F_SETFD,0);
 
     srand(time(NULL));
-	        
+
+    umask(S_IWGRP | S_IWOTH);
+
     /* ----------------------------------------------------------- */
     /* Capture SIGTERM signal, and ignore SIGPIPE                  */
     /* ----------------------------------------------------------- */
@@ -767,10 +770,17 @@ void gw_recover_state()
         	(strcmp(pdir->d_name,"..")==0))
 			continue;
       
+
+
+
     	length = strlen(pdir->d_name)+strlen(var_name)+2;
 	    name   = malloc( length * sizeof(char));
 
 	    sprintf(name,"%s/%s",var_name,pdir->d_name);
+
+	    gw_log_print("GW",'I',"directory %s.\n",name);
+
+	    sleep(1);
 
 	    rc = stat(name,&buf);
 
@@ -788,9 +798,11 @@ void gw_recover_state()
 			        job = gw_job_pool_get(job_id, GW_TRUE);
 			        rc  = gw_job_recover(job);			        
 			        
+			        gw_log_print("GW",'I',"before deps.\n");
 			        if (rc == 0)
 				        gw_job_pool_dep_cp (job->template.job_deps, &deps);
-				        
+
+			        gw_log_print("GW",'I',"after deps.\n");
 					pthread_mutex_unlock(&(job->mutex));
 					
 			        if (rc != 0)
@@ -809,7 +821,7 @@ void gw_recover_state()
 	        }
 	    }
 	    
-    	free(name);    
+    	free(name);
 	}
 
     gw_job_pool_dep_consistency();
