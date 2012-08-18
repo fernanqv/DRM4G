@@ -8,12 +8,13 @@ COMMUNICATOR = {
     }
                   
 RESOURCE_MANAGER = {
-    "pbs"     : "drm4g.managers.pbs",
-    "sge"     : "drm4g.managers.sge",
-    "mnslurm" : "drm4g.managers.marenostrum",
-    "fork"    : "drm4g.managers.fork",
-    "none"    : "drm4g.managers.fork",
-    "cream"   : "drm4g.managers.cream",
+    "pbs"        : "drm4g.managers.pbs",
+    "sge"        : "drm4g.managers.sge",
+    "mnslurm"    : "drm4g.managers.marenostrum",
+    "fork"       : "drm4g.managers.fork",
+    "none"       : "drm4g.managers.fork",
+    "cream"      : "drm4g.managers.cream",
+    "loadleveler": "drm4g.managers.loadleveler",
     }
 
 #########
