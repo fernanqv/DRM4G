@@ -5,6 +5,7 @@ import traceback
 try:
     import paramiko
 except ImportError:
+if True:
     try:
         GW_LOCATION = os.environ['GW_LOCATION']
     except Exception:
@@ -42,22 +43,49 @@ class Communicator (drm4g.communicators.Communicator):
     """
     Create a SSH session to remote resources.  
     """
- 
+    PRIVATE_KEYS = (
+        ("rsa", r"~/.ssh/id_rsa"),
+        ("dsa", r"~/.ssh/id_dsa"),
+        )
+    timeout = 20 # second   
+
+
     def __init__(self):
         self._lock = __import__('threading').Lock()
  
     def connect(self):
         self._lock.acquire()
         try:
-            try:
-                ssh = paramiko.SSHClient()
-                ssh.connect(self.hostName, username=self.userName, timeout = 20, allow_agent=True, look_for_keys=True)
-                self._trans = ssh.get_transport()
-            except Exception, e:
-                raise drm4g.communicators.ComException('Authentication failed to ' + self.hostName: + e )  
-        finally: 
-            self._lock.release()            
-        
+            agent = paramiko.Agent()
+            keys = agent.get_keys()
+            for key, path in self.PRIVATE_KEYS:
+                try:
+                    privatekeyfile = os.path.expanduser(path)
+                    if key == 'rsa':
+                        ki_rsa = paramiko.RSAKey.from_private_key_file(privatekeyfile)
+                        keys = keys + (ki_rsa,)
+                    if key == 'dsa':
+                        ki_dsa = paramiko.DSSKey.from_private_key_file(privatekeyfile)
+                        keys = keys + (ki_dsa,)
+                except Exception: pass
+            for key in keys:
+                try:
+                    sock = socket.socket()
+                    try:
+                        sock.settimeout(self.timeout)
+                    except:
+                        pass
+                    sock.connect((self.hostName, 22))
+                    self._trans = paramiko.Transport(sock)
+                    self._trans.connect(username = self.userName, pkey = key)
+                    if self._trans.is_authenticated(): break
+                except socket.gaierror:
+                    raise drm4g.communicators.ComException('Could not resolve hostname ' + self.hostName)
+                except Exception: pass
+        finally: self._lock.release()
+        if not self._isAuthenticated():
+            raise drm4g.communicators.ComException('Authentication failed to ' + self.hostName)
+ 
     def execCommand(self, command):
         if not self._isAuthenticated(): 
             self.connect()
