@@ -63,9 +63,9 @@ class Resource (drm4g.managers.Resource):
 class Job (drm4g.managers.Job):
    
     #loadleveler job status <--> GridWay job status
-    states_pbs = {'CA': 'DONE',
+    states_loadleveler = {'CA': 'DONE',
                   'CK': 'ACTIVE',
-                  'C' : 'DONE',
+                  'C' : 'PENDING',
                   'CP': 'ACTIVE',
                   'D' : 'PENDING',
                   'I' : 'PENDING',
@@ -92,14 +92,13 @@ class Job (drm4g.managers.Job):
 
     def jobSubmit(self, path_script):
         out, err = self.Communicator.execCommand('%s %s' % (LLSUBMIT, path_script))
-        if err: 
-            raise drm4g.managers.JobException(' '.join(err.split('\n')))
         job_id = self.re_submit.search(out).group(1)
         return job_id
 
     def jobStatus(self):
-        out, err = self.Communicator.execCommand('%s -f %st %s' % (LLQ, self.JobId))
-        if err :
+        command = LLQ + ' -f %st ' + self.JobId
+        out, err = self.Communicator.execCommand(command)
+        if "There is currently no job status to report" in out :
             return 'DONE'
         else:
             status = out.split('\n')[2].strip()
@@ -112,27 +111,27 @@ class Job (drm4g.managers.Job):
 
     def jobTemplate(self, parameters):
         args  = '#!/bin/bash\n'
-        args += '# @ job_name = JID_%s\n' % (parameters['environment']['GW_JOB_ID'])
-        if parameters.has_key('queue') != 'default':
-            args += '# @ class    = $queue\n'
-        args += '# @ output   = $stdout\n'
-        args += '# @ error    = $stderr\n'
+        args += '#@ job_name = JID_%s\n' % (parameters['environment']['GW_JOB_ID'])
+        if parameters['queue'] != 'default':
+            args += '#@ class    = $queue\n'
+        args += '#@ output   = $stdout\n'
+        args += '#@ error    = $stderr\n'
         if int(parameters['count']) > 1 :
-            args += '# @ job_type  = parallel'
+            args += '#@ job_type  = parallel\n'
         else:
-            args += '# @ job_type  = serial'
-        args += '# @ node = $count\n'
+            args += '#@ job_type  = serial\n'
+        args += '#@ node = $count\n'
         if parameters.has_key('maxWallTime'): 
-            args += '# @ wall_clock_limit = %s\n' % (sec_to_H_M_S(parameters['maxWallTime']))
+            args += '#@ wall_clock_limit = %s\n' % (sec_to_H_M_S(parameters['maxWallTime']))
         if parameters.has_key('maxCpuTime'):
-            args += '# @ job_cpu_limit = %s\n' % (sec_to_H_M_S(parameters['maxCpuTime']))
+            args += '#@ job_cpu_limit = %s\n' % (sec_to_H_M_S(parameters['maxCpuTime']))
         if parameters.has_key('maxMemory'):
-            args += '# @ resources = ConsumableMemory(%s)\n' % (parameters['maxMemory'])
+            args += '#@ resources = ConsumableMemory(%s)\n' % (parameters['maxMemory'])
         if parameters.has_key('tasksPerNode'):
-            args += '# @ tasks_per_node = $tasksPerNode\n' % (parameters['tasksPerNode'])
+            args += '#@ tasks_per_node = $tasksPerNode\n' % (parameters['tasksPerNode'])
         if parameters.has_key('PROJECT'):
             args += '#@ account_no = $PROJECT\n'
-        args  = '#@ queue\n'
+        args += '#@ queue\n'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
         args += 'cd $directory\n'
         if parameters['jobType'] == "mpi":
