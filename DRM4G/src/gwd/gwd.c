@@ -308,7 +308,8 @@ void gwd_main()
     pthread_create(&(tm->thread_id),&pattr,(void *)gw_tm_start,(void *)NULL);
     pthread_create(&(em->thread_id),&pattr,(void *)gw_em_start,(void *)NULL);
     pthread_create(&(im->thread_id),&pattr,(void *)gw_im_start,(void *)NULL);
-    pthread_create(&(um->thread_id),&pattr,(void *)gw_um_start,(void *)NULL);       pthread_create(&(rm->thread_id),&pattr,(void *)gw_rm_start,(void *)NULL);
+    pthread_create(&(um->thread_id),&pattr,(void *)gw_um_start,(void *)NULL);       
+    pthread_create(&(rm->thread_id),&pattr,(void *)gw_rm_start,(void *)NULL);
     
     /* ----------------------------------------------------------- */
     /* Recover state                                               */
