@@ -5,7 +5,7 @@ import re
 
 __version__ = '0.1'
 __author__  = 'Carlos Blanco'
-__revision__ = "$Id: pbs.py 1547 2012-06-05 08:12:05Z carlos $"
+__revision__ = "$Id:$"
 
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.
