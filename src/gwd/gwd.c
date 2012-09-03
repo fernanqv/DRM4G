@@ -799,11 +799,9 @@ void gw_recover_state()
 			        job = gw_job_pool_get(job_id, GW_TRUE);
 			        rc  = gw_job_recover(job);			        
 			        
-			        gw_log_print("GW",'I',"before deps.\n");
 			        if (rc == 0)
 				        gw_job_pool_dep_cp (job->template.job_deps, &deps);
 
-			        gw_log_print("GW",'I',"after deps.\n");
 					pthread_mutex_unlock(&(job->mutex));
 					
 			        if (rc != 0)
