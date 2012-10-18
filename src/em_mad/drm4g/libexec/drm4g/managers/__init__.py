@@ -48,7 +48,7 @@ class Resource (object):
     TotalCpu     = property(getTotalCpu, setTotalCpu)    
 
     def staticNodes(self, hid, total_cpu):
-        command_proc = subprocess.Popen('LANG=POSIX gwhost -x %s' % (hid),
+        command_proc = subprocess.Popen('gwhost -x %s' % (hid),
                 shell = True,
                 stdout = subprocess.PIPE,
                 stderr = subprocess.PIPE,
@@ -59,14 +59,14 @@ class Resource (object):
         out_parser = xml.dom.minidom.parseString(stdout)
         busy = int(out_parser.getElementsByTagName('USED_SLOTS')[0].firstChild.data)
         if busy > int (total_cpu) :
-            return (total_cpu , "0")
+           return (total_cpu , "0")
         else:
-            free_cpu = str(int(total_cpu) - busy)
-            return (total_cpu , free_cpu)
+           free_cpu = str(int(total_cpu) - busy)
+           return (total_cpu , free_cpu)
         
     def hostProperties(self): 
         try:
-            out, err = self.Communicator.execCommand('LANG=POSIX uname -n -r -m -o')
+            out, err = self.Communicator.execCommand('uname -n -r -m -o')
             if not err:
                 return out.split() #hostname,os_version,arch,os_name 
         except Exception, e:
@@ -75,7 +75,7 @@ class Resource (object):
 
     def cpuProperties(self): 
         try:
-            out, err = self.Communicator.execCommand('LANG=POSIX grep -e \"model name\" -e \"cpu MHz\" /proc/cpuinfo')
+            out, err = self.Communicator.execCommand('grep -e \"model name\" -e \"cpu MHz\" /proc/cpuinfo')
             if not err:
                 re_cpu = re.compile(r'^model name\s*:\s*(.+)\s*cpu MHz\s*:\s*(\d+).*').match(out) 
                 if re_cpu:
@@ -88,7 +88,7 @@ class Resource (object):
       
     def memProperties(self):
         try:
-            out, err = self.Communicator.execCommand('LANG=POSIX grep -e MemTotal -e MemFree /proc/meminfo')
+            out, err = self.Communicator.execCommand('grep -e MemTotal -e MemFree /proc/meminfo')
             if not err:
                 re_mem = re.compile(r'MemTotal:\s*(\d+).*\s*MemFree:\s*(\d+)').search(out)
                 if re_mem: 
@@ -101,7 +101,7 @@ class Resource (object):
      
     def diskProperties(self):
         try:
-            out, err = self.Communicator.execCommand('LANG=POSIX df -B 1K $HOME')
+            out, err = self.Communicator.execCommand('df -B 1K $HOME')
             if not err:
                 line_elements = out.strip().split()
                 return (line_elements[-5] , line_elements[-3])
