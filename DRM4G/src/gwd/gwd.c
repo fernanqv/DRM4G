@@ -763,30 +763,21 @@ void gw_recover_state()
 	if ( dir == NULL )
 	{
 		gw_log_print("GW",'E',"Could not open directory %s.\n",var_name);
-		
 		free(var_name);
     	return;
 	}
 
 	while((pdir=readdir(dir))!=NULL)
 	{
-		if ((strcmp(pdir->d_name,".")==0)||
-		   (strcmp(pdir->d_name,"..")==0))
-			continue;
-
 		length = strlen(pdir->d_name)+strlen(var_name)+2;
 	    jobs_name   = malloc( length * sizeof(char));
+
 	    sprintf(jobs_name,"%s/%s",var_name,pdir->d_name);
 
 	    dir1=opendir(jobs_name);
 
-	    	if ( dir1 == NULL )
-	    	{
-	    		gw_log_print("GW",'E',"Could not open directory %s.\n",var_name);
-
-	    		free(jobs_name);
-	        	return;
-	    	}
+	    if ( dir1 == NULL )
+	    	continue;
 
 	    while((pdir1=readdir(dir1))!=NULL)
 	    {
