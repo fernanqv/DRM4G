@@ -738,8 +738,10 @@ int gw_clear_state()
 void gw_recover_state()
 {
  	DIR *           dir;
+ 	DIR *           dir1;
   	char *          name;
   	char *          var_name;
+  	char *          jobs_name;
   	int             length;
 	int             rc;
 	int             job_id;
@@ -747,6 +749,7 @@ void gw_recover_state()
 
 	struct stat     buf;
 	struct dirent * pdir;
+	struct dirent * pdir1;
     
     gw_job_t *      job;
   
@@ -767,60 +770,68 @@ void gw_recover_state()
 
 	while((pdir=readdir(dir))!=NULL)
 	{
-    	if ((strcmp(pdir->d_name,".")==0)||
-        	(strcmp(pdir->d_name,"..")==0))
+		if ((strcmp(pdir->d_name,".")==0)||
+		   (strcmp(pdir->d_name,"..")==0))
 			continue;
-      
 
+		length = strlen(pdir->d_name)+strlen(var_name)+2;
+	    jobs_name   = malloc( length * sizeof(char));
+	    sprintf(jobs_name,"%s/%s",var_name,pdir->d_name);
 
+	    dir1=opendir(jobs_name);
 
-    	length = strlen(pdir->d_name)+strlen(var_name)+2;
-	    name   = malloc( length * sizeof(char));
+	    	if ( dir1 == NULL )
+	    	{
+	    		gw_log_print("GW",'E',"Could not open directory %s.\n",var_name);
 
-	    sprintf(name,"%s/%s",var_name,pdir->d_name);
+	    		free(jobs_name);
+	        	return;
+	    	}
 
-	    gw_log_print("GW",'I',"directory %s.\n",name);
-
-	    sleep(1);
-
-	    rc = stat(name,&buf);
-
-	    if ( rc == 0 )
+	    while((pdir1=readdir(dir1))!=NULL)
 	    {
-			if (S_ISDIR(buf.st_mode) && isdigit(pdir->d_name[0]))
-	        {
-				job_id = atoi(pdir->d_name);
-	        		          
-	          	rc     = gw_job_pool_allocate_by_id (job_id);
-		    	deps   = NULL;
-		    	
-	          	if ( rc == job_id )
-	          	{
-			        job = gw_job_pool_get(job_id, GW_TRUE);
-			        rc  = gw_job_recover(job);			        
-			        
-			        if (rc == 0)
-				        gw_job_pool_dep_cp (job->template.job_deps, &deps);
+	    	if ((strcmp(pdir1->d_name,".")==0)||
+	        (strcmp(pdir1->d_name,"..")==0))
+			continue;
 
-					pthread_mutex_unlock(&(job->mutex));
-					
-			        if (rc != 0)
-			            gw_job_pool_free(job_id);
-			        else 
-			        {
-			        	if ( deps != NULL )
-			        	{
-			        		if ( deps[0] != -1 )
-				    			gw_job_pool_dep_set(job_id, deps);
+	    	length = strlen(pdir1->d_name)+strlen(jobs_name)+2;
+	    	name   = malloc( length * sizeof(char));
+
+	    	sprintf(name,"%s/%s",jobs_name,pdir1->d_name);
+	    	gw_log_print("GW",'I',"directory %s.\n",name);
 	    	
-				    		free(deps);
-			        	}
-			        }				        
-	          	}
-	        }
+	    	rc = stat(name,&buf);
+	    	if ( rc == 0 )
+	    	{
+	    		if (S_ISDIR(buf.st_mode) && isdigit(pdir1->d_name[0]))
+	    		{
+	    			job_id = atoi(pdir1->d_name);
+	    			rc     = gw_job_pool_allocate_by_id (job_id);
+	    			deps   = NULL;
+	    			if ( rc == job_id )
+	    			{
+	    				job = gw_job_pool_get(job_id, GW_TRUE);
+	    				rc  = gw_job_recover(job);
+	    				if (rc == 0)
+	    					gw_job_pool_dep_cp (job->template.job_deps, &deps);
+	    				pthread_mutex_unlock(&(job->mutex));
+	    				if (rc != 0)
+	    					gw_job_pool_free(job_id);
+	    				else
+	    				{
+	    					if ( deps != NULL )
+	    					{
+	    						if ( deps[0] != -1 )
+	    							gw_job_pool_dep_set(job_id, deps);
+	    						free(deps);
+	    					}
+	    				}
+	    			}
+	    		}
+	    	}
+	    	free(name);
 	    }
-	    
-    	free(name);
+	    	free(jobs_name);
 	}
 
     gw_job_pool_dep_consistency();

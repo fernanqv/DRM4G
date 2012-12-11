@@ -70,24 +70,24 @@ char* gw_generate_wrapper_jdl(gw_job_t *job)
     snprintf(jdl_buffer, sizeof(char) * GW_RSL_LENGTH,
             "[JobType = \"%s\";"
             "Executable = \"%s\";"
-            "Arguments=\"%s/%s/" GW_VAR_DIR "/%d/job.env\";"
+            "Arguments=\"%s/%s/" GW_VAR_DIR "/%d00-%d00/%d/job.env\";"
             "StdOutput = \"stdout.wrapper.%d\";"
             "StdError = \"stderr.wrapper.%d\";"
             "InputSandbox = {\"%s/%s\"};"
             "OutputSandbox = {\"stdout.wrapper.%d\", \"stderr.wrapper.%d\"};"
-            "OutputSandboxBaseDestURI = \"%s/%s/" GW_VAR_DIR "/%d/\";"
+            "OutputSandboxBaseDestURI = \"%s/%s/" GW_VAR_DIR "/%d00-%d00/%d/\";"
             "BatchSystem = \"%s\";"
             "QueueName = \"%s\";"
             "CpuNumber = %d;",
             jobtype, 
             basename(job->template.wrapper),
-            staging_url, gw_conf.gw_location, job->id,
+            staging_url, gw_conf.gw_location, job->id/100, job->id/100+1, job->id,
             job->restarted,
             job->restarted,
             staging_url, job->template.wrapper,
             job->restarted,
             job->restarted,
-            staging_url, gw_conf.gw_location, job->id,
+            staging_url, gw_conf.gw_location, job->id/100, job->id/100+1,job->id,
             job->history->host->lrms_type,
             job->history->queue,
             job->template.np);
