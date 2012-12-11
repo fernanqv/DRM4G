@@ -113,7 +113,7 @@ class GwEmMad (object):
                 rsl_var[k] = "%s/%s" % (hostConf.GW_RUNDIR, rsl_var[k])
 
             # Create and copy wrapper_drm4g 
-            local_wrapper_directory  = '%s/wrapper_drm4g.%s' % (RSL.rsplit('/',1) , RSL.split('.')[-1])
+            local_wrapper_directory  = '%s/wrapper_drm4g.%s' % (RSL.rsplit('/',1)[0] , RSL.split('.')[-1])
             remote_wrapper_directory = '%s/.wrapper_drm4g' % (rsl_wrapper_directory)
             string_template = job.jobTemplate(rsl_var)
             job.createWrapper(local_wrapper_directory, string_template)
