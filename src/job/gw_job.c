@@ -149,11 +149,11 @@ int gw_job_init(gw_job_t *job, int job_id)
     pthread_mutex_lock(&(job->mutex));
 
 /* -------------------------------------------------------------------------- */
-       
+
 	snprintf(str_buffer, 
              PATH_MAX -1 , 
-             "%s/" GW_VAR_DIR "/%i", 
-             gw_conf.gw_location,
+             "%s/" GW_VAR_DIR "/%i00-%i00/%i",
+             gw_conf.gw_location, job_id/100, job_id/100+1,
              job_id);
                       
     job->directory = strdup(str_buffer);
