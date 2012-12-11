@@ -140,9 +140,7 @@ class GwTmMad (object):
         try:
             if not self._com_list.has_key(urlparse(SRC_URL).host):
                 self._create_com(urlparse(SRC_URL).host)
-            clean = self._com_list[urlparse(SRC_URL).host].checkOutLock(SRC_URL)
-            if not clean: 
-                self._com_list[urlparse(SRC_URL).host].rmDirectory(SRC_URL)
+            self._com_list[urlparse(SRC_URL).host].rmDirectory(SRC_URL)
             out = 'RMDIR %s - SUCCESS -' % (JID)
         except Exception, e:
             out = 'RMDIR %s - FAILURE %s' % (JID, str(e))
