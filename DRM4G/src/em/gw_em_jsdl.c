@@ -89,8 +89,8 @@ char* gw_generate_wrapper_jsdl (gw_job_t *job)
 
     gw_conf.gw_location = getenv("GW_LOCATION");
     snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-            "    <jsdl-posix:Argument>%s%s/" GW_VAR_DIR "/%d00-%d00/%d/job.env</jsdl-posix:Argument>\n",
-            staging_url, gw_conf.gw_location, job->id/100, job->id/100+1, job->id);
+            "    <jsdl-posix:Argument>%s%s/" GW_VAR_DIR "/%d00-%d99/%d/job.env</jsdl-posix:Argument>\n",
+            staging_url, gw_conf.gw_location, job->id/100, job->id/100, job->id);
     strcat(jsdl_buffer, tmp_buffer);
 
     snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
@@ -154,11 +154,11 @@ char* gw_generate_wrapper_jsdl (gw_job_t *job)
             "   <jsdl:FileName>stdout.wrapper.%d</jsdl:FileName>\n"
             "   <jsdl:CreationFlag>overwrite</jsdl:CreationFlag>\n"
             "   <jsdl:Target>\n"
-            "    <jsdl:URI>%s/%s" GW_VAR_DIR "/%d00-%d00/%d/stdout.wrapper.%d</jsdl:URI>\n"
+            "    <jsdl:URI>%s/%s" GW_VAR_DIR "/%d00-%d99/%d/stdout.wrapper.%d</jsdl:URI>\n"
             "   </jsdl:Target>\n"
             "  </jsdl:DataStaging>\n",
             job->restarted,
-            staging_url, gw_conf.gw_location, job->id/100, job->id/100+1,job->id, job->restarted);
+            staging_url, gw_conf.gw_location, job->id/100, job->id/100,job->id, job->restarted);
     strcat(jsdl_buffer, tmp_buffer);
 
     snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
@@ -166,13 +166,13 @@ char* gw_generate_wrapper_jsdl (gw_job_t *job)
             "   <jsdl:FileName>stderr.wrapper.%d</jsdl:FileName>\n"
             "   <jsdl:CreationFlag>overwrite</jsdl:CreationFlag>\n"
             "   <jsdl:Target>\n"
-            "    <jsdl:URI>%s/%s" GW_VAR_DIR "/%d00-%d00/%d/stderr.wrapper.%d</jsdl:URI>\n"
+            "    <jsdl:URI>%s/%s" GW_VAR_DIR "/%d00-%d99/%d/stderr.wrapper.%d</jsdl:URI>\n"
             "   </jsdl:Target>\n"
             "  </jsdl:DataStaging>\n"
             " </jsdl:JobDescription>\n"
             "</jsdl:JobDefinition>\n",
             job->restarted,
-            staging_url, gw_conf.gw_location,job->id/100, job->id/100+1 ,job->id, job->restarted);
+            staging_url, gw_conf.gw_location,job->id/100, job->id/100 ,job->id, job->restarted);
     strcat(jsdl_buffer, tmp_buffer);
 
     if (strlen(jsdl_buffer) + 6 > GW_RSL_LENGTH)
