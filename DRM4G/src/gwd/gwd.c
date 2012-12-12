@@ -769,6 +769,9 @@ void gw_recover_state()
 
 	while((pdir=readdir(dir))!=NULL)
 	{
+		if ((strcmp(pdir1->d_name,".")==0)||
+			(strcmp(pdir1->d_name,"..")==0))
+			continue;
 		length = strlen(pdir->d_name)+strlen(var_name)+2;
 	    jobs_name   = malloc( length * sizeof(char));
 
