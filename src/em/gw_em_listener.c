@@ -190,8 +190,8 @@ void gw_em_listener(void *arg)
                     else /* Save persistent job contact */
                     {
                         snprintf(contact_file, PATH_MAX-1, 
-                                 "%s/" GW_VAR_DIR "/%i00-%i00/%i/job.contact",
-                                 gw_conf.gw_location, job->id/100, job->id/100+1,job->id);
+                                 "%s/" GW_VAR_DIR "/%i00-%i99/%i/job.contact",
+                                 gw_conf.gw_location, job->id/100, job->id/100,job->id);
                                  
                         file = fopen(contact_file, "w");
                         

@@ -99,8 +99,8 @@ int gw_job_fill(gw_job_t *job, const gw_msg_submit_t *msg_submit)
     {
         snprintf(str_buffer,
                  PATH_MAX-1,
-                 "file://%s/" GW_VAR_DIR "/%i00-%i00/%i",
-                 gw_conf.gw_location, job->id/100, job->id/100+1,
+                 "file://%s/" GW_VAR_DIR "/%i00-%i99/%i",
+                 gw_conf.gw_location, job->id/100, job->id/100,
                  job->id);
                  
         job->template.checkpoint_url = strdup(str_buffer);
@@ -152,8 +152,8 @@ int gw_job_init(gw_job_t *job, int job_id)
 
 	snprintf(str_buffer, 
              PATH_MAX -1 , 
-             "%s/" GW_VAR_DIR "/%i00-%i00/%i",
-             gw_conf.gw_location, job_id/100, job_id/100+1,
+             "%s/" GW_VAR_DIR "/%i00-%i99/%i",
+             gw_conf.gw_location, job_id/100, job_id/100,
              job_id);
                       
     job->directory = strdup(str_buffer);
