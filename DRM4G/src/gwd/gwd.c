@@ -745,13 +745,13 @@ void gw_recover_state()
   	int             length;
 	int             rc;
 	int             job_id;
-    int *           deps;
+        int *           deps;
 
 	struct stat     buf;
 	struct dirent * pdir;
 	struct dirent * pdir1;
     
-    gw_job_t *      job;
+        gw_job_t *      job;
   
   	length   = strlen(gw_conf.gw_location) + 2 + sizeof(GW_VAR_DIR);
   	var_name = malloc(sizeof(char)*length);
@@ -769,10 +769,10 @@ void gw_recover_state()
 
 	while((pdir=readdir(dir))!=NULL)
 	{
-		if ((strcmp(pdir1->d_name,".")==0)||
-			(strcmp(pdir1->d_name,"..")==0))
-			continue;
-		length = strlen(pdir->d_name)+strlen(var_name)+2;
+            if ((strcmp(pdir->d_name,".")==0)||
+		(strcmp(pdir->d_name,"..")==0))
+		continue;
+	    length = strlen(pdir->d_name)+strlen(var_name)+2;
 	    jobs_name   = malloc( length * sizeof(char));
 
 	    sprintf(jobs_name,"%s/%s",var_name,pdir->d_name);
