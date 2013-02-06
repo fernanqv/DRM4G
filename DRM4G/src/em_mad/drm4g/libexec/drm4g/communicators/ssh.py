@@ -5,7 +5,6 @@ import traceback
 try:
     import paramiko
 except ImportError:
-if True:
     try:
         GW_LOCATION = os.environ['GW_LOCATION']
     except Exception:
@@ -43,13 +42,17 @@ class Communicator (drm4g.communicators.Communicator):
     """
     Create a SSH session to remote resources.  
     """
+    ##################
+    # AUTHENTICATION #
+    ##################
+
     PRIVATE_KEYS = (
         ("rsa", r"~/.ssh/id_rsa"),
         ("dsa", r"~/.ssh/id_dsa"),
         )
-    timeout = 20 # second   
-
-
+    port    = 22
+    timeout = 20 # seconds
+ 
     def __init__(self):
         self._lock = __import__('threading').Lock()
  
@@ -64,7 +67,7 @@ class Communicator (drm4g.communicators.Communicator):
                     if key == 'rsa':
                         ki_rsa = paramiko.RSAKey.from_private_key_file(privatekeyfile)
                         keys = keys + (ki_rsa,)
-                    if key == 'dsa':
+                    if key == 'dsa':        
                         ki_dsa = paramiko.DSSKey.from_private_key_file(privatekeyfile)
                         keys = keys + (ki_dsa,)
                 except Exception: pass
@@ -74,18 +77,18 @@ class Communicator (drm4g.communicators.Communicator):
                     try:
                         sock.settimeout(self.timeout)
                     except:
-                        pass
-                    sock.connect((self.hostName, 22))
+                        pass 
+                    sock.connect((self.hostName, self.port))  
                     self._trans = paramiko.Transport(sock)
                     self._trans.connect(username = self.userName, pkey = key)
                     if self._trans.is_authenticated(): break
                 except socket.gaierror:
                     raise drm4g.communicators.ComException('Could not resolve hostname ' + self.hostName)
                 except Exception: pass
-        finally: self._lock.release()
+        finally: self._lock.release()            
         if not self._isAuthenticated():
-            raise drm4g.communicators.ComException('Authentication failed to ' + self.hostName)
- 
+            raise drm4g.communicators.ComException('Authentication failed to ' + self.hostName)        
+        
     def execCommand(self, command):
         if not self._isAuthenticated(): 
             self.connect()
@@ -138,7 +141,25 @@ class Communicator (drm4g.communicators.Communicator):
         else: self._rmdirRecursive(to_dir,sftp)
     	try: sftp.close()
         except Exception: pass
-        
+
+    def checkOutLock(self, url):
+        if not self._isAuthenticated():
+            self.connect()
+        self._lock.acquire()
+        try: sftp = paramiko.SFTPClient.from_transport(self._trans)
+        finally: self._lock.release()
+        to_dir = self._setDir(urlparse(url).path)
+        try:
+            file = sftp.open('%s/.lock' % (to_dir))
+        except Exception:
+            output = False
+        else:
+            file.close()
+            output = True        
+        try: sftp.close()
+        except Exception: pass
+        return output
+
     def close(self):
         self._lock.acquire()
         try:
