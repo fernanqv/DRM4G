@@ -20,17 +20,7 @@ class Resource (drm4g.managers.Resource):
 
     def lrmsProperties(self):
         return ('MNSLRUM', 'MNSLURM')
-
-    def dynamicNodes(self):
-        out, err = self.Communicator.execCommand('%s --xml' % (MNQ))
-        if err: 
-            raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
-        out_parser = xml.dom.minidom.parseString(out)
-        cluster = out_parser.getElementsByTagName('Data')[0].getElementsByTagName('cluster')[0]
-        total_cpu = int(cluster.getAttribute('LocalUpProcs'))
-        free_cpu  = total_cpu - int(cluster.getAttribute('LocalAllocProcs'))
-        return (str(total_cpu), str(free_cpu))
-     
+    
     def queuesProperties(self, searchQueue, project):
         queue              = drm4g.managers.Queue()
         queue.Name         = 'default'

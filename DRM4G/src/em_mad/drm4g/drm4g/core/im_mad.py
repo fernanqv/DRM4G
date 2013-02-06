@@ -2,7 +2,7 @@ import sys
 import os
 import threading
 import logging
-from drm4g.core.configure import readHostList, parserHost
+from drm4g.core.configure import readHostList, parserHost, CheckConfigFile
 from drm4g.managers import HostInformation
 from drm4g.utils.dynamic import ThreadPool
 from drm4g.utils.message import Send
@@ -59,7 +59,11 @@ class GwImMad (object):
         @param args : arguments of operation
         @type args : string
         """
-        out = 'INIT - SUCCESS -'
+        try:
+            self.configurationFileTime = CheckConfigFile()
+            out = 'INIT - SUCCESS -'
+        except Exception, e:
+            out = 'INIT - FAILURE %s' % (str(e))
         self.message.stdout(out)
         self.logger.debug(out)
         
@@ -86,7 +90,7 @@ class GwImMad (object):
         """
         OPERATION, HID, HOST, ARGS = args.split()
         try:
-            if not self._host_list_conf.has_key(HOST):
+            if not self._host_list_conf.has_key(HOST) or self.configurationFileTime.test():
                 hostList = readHostList()
                 for hostname, url in hostList.items():
                     if HOST == hostname:
@@ -103,11 +107,8 @@ class GwImMad (object):
             hostConf = self._host_list_conf[HOST]
             if self._resource_list.has_key(HOST):
                 resource = self._resource_list[HOST]
-                if hostConf.NODECOUNT:
-                    resource.TotalCpu, resource.FreeCpu  = resource.staticNodes(HID, hostConf.NODECOUNT)
-                else:
-                    resource.TotalCpu, resource.FreeCpu  = resource.dynamicNodes()
-                hostInfo = HostInformation()
+                resource.TotalCpu, resource.FreeCpu  = resource.staticNodes(HID, hostConf.NODECOUNT)
+                hostInfo  = HostInformation()
                 hostInfo.Name, hostInfo.OsVersion, hostInfo.Arch, hostInfo.Os  = resource.hostProperties()
                 hostInfo.NodeCount                       = resource.TotalCpu
                 hostInfo.CpuModel  , hostInfo.CpuMhz     = resource.cpuProperties()

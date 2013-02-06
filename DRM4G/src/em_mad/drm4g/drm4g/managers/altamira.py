@@ -20,14 +20,6 @@ class Resource (drm4g.managers.Resource):
 
     def lrmsProperties(self):
         return ('ALTAMIRA', 'ALTAMIRA')
-
-    def dynamicNodes(self):
-        out, err = self.Communicator.execCommand('%s -h | wc -l' % (MNQ))
-        if err: 
-            raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
-        busy_cpu = int(out)
-        free_cpu = self.MAX_RESOURCES - busy_cpu 
-        return (str(self.MAX_RESOURCES), str(free_cpu))
      
     def queuesProperties(self, searchQueue, project):
         queue              = drm4g.managers.Queue()

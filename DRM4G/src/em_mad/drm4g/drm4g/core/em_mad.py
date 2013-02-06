@@ -8,7 +8,7 @@ import logging
 from string import Template
 from drm4g.utils.rsl2 import Rsl2Parser
 from drm4g.utils.list import List 
-from drm4g.core.configure import readHostList, parserHost
+from drm4g.core.configure import readHostList, parserHost, CheckConfigFile
 from drm4g.utils.dynamic import ThreadPool
 from drm4g.utils.message import Send
 from drm4g.global_settings import COMMUNICATOR, RESOURCE_MANAGER
@@ -63,28 +63,32 @@ class GwEmMad (object):
     message = Send()
 
     def __init__(self):
-	self._callback_interval    = 30 #seconds
-	self._max_thread           = 100
-	self._min_thread           = 5
+        self._callback_interval    = 30 #seconds
+        self._max_thread           = 100
+        self._min_thread           = 5
         self._JID_list             = List()
         self._host_list_conf       = { } 
         self._com_list             = { }
         self._resource_module_list = { }
 	        
     def do_INIT(self, args):
-	"""
-	Initializes the MAD (i.e. INIT - - -)
-	@param args : arguments of operation
+        """
+        Initializes the MAD (i.e. INIT - - -)
+        @param args : arguments of operation
         @type args : string
-	"""
-	out = 'INIT - SUCCESS -'
-	self.message.stdout(out)
-	self.logger.debug(out)
-    
+        """
+        try:
+            self.configurationFileTime = CheckConfigFile()
+            out = 'INIT - SUCCESS -'
+        except Exception, e:
+            out = 'INIT - FAILURE %s' % (str(e))
+        self.message.stdout(out)
+        self.logger.debug(out)
+  
     def do_SUBMIT(self, args):
         """
         Submits a job(i.e. SUBMIT JID HOST/JM RSL).
-	@param args : arguments of operation
+        @param args : arguments of operation
         @type args : string
         """
         OPERATION, JID, HOST_JM, RSL = args.split()
@@ -92,7 +96,7 @@ class GwEmMad (object):
             HOST, JM = HOST_JM.rsplit('/',1)
  
             # Init ResourceManager class
-            if not self._resource_module_list.has_key(HOST):
+            if not self._resource_module_list.has_key(HOST) or self.configurationFileTime.test():
                 self._create_com(HOST) 
             job = getattr(self._resource_module_list[HOST], 'Job')()
             job.Communicator = self._com_list[HOST]
@@ -165,7 +169,7 @@ class GwEmMad (object):
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
             host, remoteJobId = HOST_JM.split(':')
-            if not self._resource_module_list.has_key(host):
+            if not self._resource_module_list.has_key(host) or self.configurationFileTime.test():
                 self._create_com(host)
             job = getattr(self._resource_module_list[host], 'Job')()
             job.Communicator = self._com_list[host]
