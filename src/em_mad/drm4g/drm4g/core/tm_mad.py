@@ -6,7 +6,7 @@ import time
 import logging
 from drm4g.utils.url import urlparse
 from drm4g.utils.dynamic import ThreadPool
-from drm4g.core.configure import readHostList, parserHost
+from drm4g.core.configure import readHostList, parserHost, CheckConfigFile
 from drm4g.utils.message import Send
 from drm4g.global_settings import COMMUNICATOR
 from drm4g.utils.importlib import import_module
@@ -77,7 +77,11 @@ class GwTmMad (object):
         @param args : arguments of operation
         @type args : string 
         """
-        out = 'INIT - - SUCCESS -'
+        try:
+            self.configurationFileTime = CheckConfigFile()
+            out = 'INIT - - SUCCESS -'
+        except Exception, e:
+            out = 'INIT - - FAILURE %s' % (str(e))
         self.message.stdout(out)
         self.logger.debug(out)
 
@@ -120,7 +124,7 @@ class GwTmMad (object):
         """
         OPERATION, JID, TID, EXE_MODE, SRC_URL, DST_URL = args.split()
         try:
-            if not self._com_list.has_key(urlparse(SRC_URL).host):
+            if not self._com_list.has_key(urlparse(SRC_URL).host) or self.configurationFileTime.test():
                 self._create_com(urlparse(SRC_URL).host)
             self._com_list[urlparse(SRC_URL).host].rmDirectory(SRC_URL)
             self._com_list[urlparse(SRC_URL).host].mkDirectory(SRC_URL)
@@ -138,7 +142,7 @@ class GwTmMad (object):
         """
         OPERATION, JID, TID, EXE_MODE, SRC_URL, DST_URL = args.split()
         try:
-            if not self._com_list.has_key(urlparse(SRC_URL).host):
+            if not self._com_list.has_key(urlparse(SRC_URL).host) or self.configurationFileTime.test():
                 self._create_com(urlparse(SRC_URL).host)
             clean = self._com_list[urlparse(SRC_URL).host].checkOutLock(SRC_URL)
             if not clean: 
@@ -162,7 +166,7 @@ class GwTmMad (object):
                 url = DST_URL
             else:
                 url = SRC_URL
-            if not self._com_list.has_key(urlparse(url).host):
+            if not self._com_list.has_key(urlparse(url).host) or self.configurationFileTime.test():
                 self._create_com(urlparse(url).host)
             self._com_list[urlparse(url).host].copy(SRC_URL, DST_URL, EXE_MODE)
             out = 'CP %s %s SUCCESS -' % (JID, TID)

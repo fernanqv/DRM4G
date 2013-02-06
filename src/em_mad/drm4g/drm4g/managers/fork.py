@@ -14,16 +14,6 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('FORK' ,'FORK')
 
-    def dynamicNodes(self):
-        out, err = self.Communicator.execCommand('grep -c processor /proc/cpuinfo')
-        if err: 
-            raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
-        total_cpu = int(out.rstrip('\n')) 
-        out, err = self.Communicator.execCommand('ps -ef | grep .wrapper | grep -v grep | wc -l') 
-        if err: 
-            raise drm4g.managers.ResourceException(' '.join(err.split('\n')))        
-        return (str(total_cpu) , str(total_cpu - int(out.rstrip('\n'))))
-
     def queuesProperties(self, searchQueue, project):
         queue = drm4g.managers.Queue()
         queue.Name         = 'default'

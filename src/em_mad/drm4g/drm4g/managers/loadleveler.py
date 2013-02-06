@@ -31,17 +31,6 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('Loadleveler', 'Loadleveler') 
  
-    def dynamicNodes(self):
-        out, err = self.Communicator.execCommand("%s -l | egrep 'Maximum_slots' | awk '{print $2}'" % (LLCLASS))
-        if err:
-            raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
-        total_cpu  = sum([int(elem) for elem in out.split()])
-        out, err = self.Communicator.execCommand("%s -l | egrep 'Free_slots' | awk '{print $2}'" % (LLCLASS))
-        if err:
-            raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
-        free_cpu  = sum([int(elem) for elem in out.split()])
-        return (str(total_cpu), str(free_cpu))
-
     def queuesProperties(self, searchQueue, project):
         queue  = drm4g.managers.Queue()
         queue.DispatchType = 'batch'
