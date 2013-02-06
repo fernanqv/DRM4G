@@ -3,9 +3,9 @@ import threading
 import os
 import re
 import time
+import logging
 from drm4g.utils.url import urlparse
 from drm4g.utils.dynamic import ThreadPool
-from drm4g.utils.logger import *
 from drm4g.core.configure import readHostList, parserHost
 from drm4g.utils.message import Send
 from drm4g.global_settings import COMMUNICATOR
@@ -62,7 +62,7 @@ class GwTmMad (object):
     
     """
     
-    logger = get_logger('drm4g.core.tm_mad')
+    logger = logging.getLogger(__name__)
     message = Send()
     
     def __init__(self):
@@ -79,7 +79,7 @@ class GwTmMad (object):
         """
         out = 'INIT - - SUCCESS -'
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
 
     def do_START(self, args):
         """
@@ -89,7 +89,7 @@ class GwTmMad (object):
         """
         out = 'START %s - SUCCESS -' % (args.split()[1])
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
         
     def do_END(self, args):
         """
@@ -99,7 +99,7 @@ class GwTmMad (object):
         """
         out = 'END %s - SUCCESS -' % (args.split()[1])
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
   
     def do_FINALIZE(self, args):
         """
@@ -109,7 +109,7 @@ class GwTmMad (object):
         """
         out = 'FINALIZE %s - SUCCESS -' % (args.split()[1])
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
         sys.exit(0)
  
     def do_MKDIR(self, args):
@@ -128,7 +128,7 @@ class GwTmMad (object):
         except Exception, e:
             out = 'MKDIR %s - FAILURE %s' % (JID, str(e))
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
         
     def do_RMDIR(self, args):
         """
@@ -140,12 +140,14 @@ class GwTmMad (object):
         try:
             if not self._com_list.has_key(urlparse(SRC_URL).host):
                 self._create_com(urlparse(SRC_URL).host)
-            self._com_list[urlparse(SRC_URL).host].rmDirectory(SRC_URL)
+            clean = self._com_list[urlparse(SRC_URL).host].checkOutLock(SRC_URL)
+            if not clean: 
+                self._com_list[urlparse(SRC_URL).host].rmDirectory(SRC_URL)
             out = 'RMDIR %s - SUCCESS -' % (JID)
         except Exception, e:
             out = 'RMDIR %s - FAILURE %s' % (JID, str(e))
         self.message.stdout(out)        
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
     
     def do_CP(self, args):
         """
@@ -167,7 +169,7 @@ class GwTmMad (object):
         except Exception, e:
             out = 'CP %s %s FAILURE %s' % (JID, TID, str(e))    
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
         
     methods = {'INIT'    : do_INIT,
                'START'   : do_START,
@@ -185,7 +187,7 @@ class GwTmMad (object):
             pool = ThreadPool(self._min_thread, self._max_thread)
             while True:
                 input = sys.stdin.readline().split()
-                self.logger.log(DEBUG, '<-- ' + ' '.join(input))
+                self.logger.debug(' '.join(input))
                 OPERATION = input[0].upper()
                 if len(input) == 6 and self.methods.has_key(OPERATION):
                     if OPERATION == 'FINALIZE' or OPERATION == 'INIT':
@@ -193,9 +195,9 @@ class GwTmMad (object):
                     else: pool.add_task(self.methods[OPERATION], self,' '.join(input))
                 else:
                     self.message.stdout('WRONG COMMAND')
-                    self.logger.log(DEBUG, '--> WRONG COMMAND')
+                    self.logger.debug(out)
         except Exception, e: 
-            self.logger.log(DEBUG, '--> ' + str(e))
+            self.logger.warning(str(e))
 
     def _create_com(self, host):
         hostList = readHostList()
@@ -206,10 +208,12 @@ class GwTmMad (object):
                     com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
                     com.hostName      = hostConf.HOST
                     com.userName      = hostConf.USERNAME
-                    com.workDirectory = hostConf.GW_RUNDIR
+                    com.workDirectory = hostConf.GW_SCRATCH_DIR
                     com.connect()
                 except:
-                    raise "It couldn't be connected to %s" %(host)                    
+                    out = "It couldn't be connected to %s" %(host)  
+                    self.logger.warning(out)
+                    raise out
                 else:
                     self._com_list[hostname] = com
 

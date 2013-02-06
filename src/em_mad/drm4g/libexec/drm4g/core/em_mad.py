@@ -4,10 +4,10 @@ import re
 import time
 import os
 import threading
+import logging
 from string import Template
 from drm4g.utils.rsl2 import Rsl2Parser
 from drm4g.utils.list import List 
-from drm4g.utils.logger import *
 from drm4g.core.configure import readHostList, parserHost
 from drm4g.utils.dynamic import ThreadPool
 from drm4g.utils.message import Send
@@ -17,8 +17,6 @@ from drm4g.utils.importlib import import_module
 __version__ = '0.1'
 __author__  = 'Carlos Blanco'
 __revision__ = "$Id$"
-
-GW_LOCATION = os.environ['GW_LOCATION']
 
 class GwEmMad (object):
     """
@@ -61,7 +59,7 @@ class GwEmMad (object):
     -INFO: If RESULT is FAILURE, it contains the cause of failure. Otherwise, 
         if OPERATION is POLL or CALLBACK,it contains the state of the job.
     """
-    logger = get_logger('drm4g.core.em_mad')
+    logger = logging.getLogger(__name__)
     message = Send()
 
     def __init__(self):
@@ -81,7 +79,7 @@ class GwEmMad (object):
 	"""
 	out = 'INIT - SUCCESS -'
 	self.message.stdout(out)
-	self.logger.log(DEBUG, '--> ' + out)
+	self.logger.debug(out)
     
     def do_SUBMIT(self, args):
         """
@@ -92,7 +90,7 @@ class GwEmMad (object):
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
             HOST, JM = HOST_JM.rsplit('/',1)
-
+ 
             # Init ResourceManager class
             if not self._resource_module_list.has_key(HOST):
                 self._create_com(HOST) 
@@ -102,15 +100,15 @@ class GwEmMad (object):
             # Parse rsl
             rsl_var = Rsl2Parser(RSL).parser()
             hostConf = self._host_list_conf[HOST]
-            rsl_var['environment']['GW_RUNDIR'] = hostConf.GW_RUNDIR
-            if hostConf.GW_LOCALDIR:
-                rsl_var['environment']['GW_LOCALDIR'] = hostConf.GW_LOCALDIR
+            rsl_var['environment']['GW_SCRATCH_DIR'] = hostConf.GW_SCRATCH_DIR
+            if hostConf.GW_RUN_DIR:
+                rsl_var['environment']['GW_RUN_DIR'] = hostConf.GW_RUN_DIR
             if hostConf.PROJECT:
                 rsl_var['PROJECT'] = hostConf.PROJECT
             rsl_var['mpi'] = hostConf.MPI_TAG
             rsl_wrapper_directory = rsl_var.setdefault('directory',rsl_var['executable'].split('/')[0])
             for k in "stdout", "stderr", "directory", "executable":
-                rsl_var[k] = "%s/%s" % (hostConf.GW_RUNDIR, rsl_var[k])
+                rsl_var[k] = "%s/%s" % (hostConf.GW_SCRATCH_DIR, rsl_var[k])
 
             # Create and copy wrapper_drm4g 
             local_wrapper_directory  = '%s/wrapper_drm4g.%s' % (RSL.rsplit('/',1)[0] , RSL.split('.')[-1])
@@ -127,7 +125,7 @@ class GwEmMad (object):
         except Exception, e:
             out = 'SUBMIT %s FAILURE %s' % (JID, str(e))
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
 
     def do_FINALIZE(self, args):
         """
@@ -137,7 +135,7 @@ class GwEmMad (object):
         """
         out = 'FINALIZE - SUCCESS -'
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
         sys.exit(0)    
     
     def do_POLL(self, args):
@@ -156,7 +154,7 @@ class GwEmMad (object):
         except Exception, e:
             out = 'POLL %s FAILURE %s' % (JID, str(e))
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
         
     def do_RECOVER(self, args):
         """
@@ -178,7 +176,7 @@ class GwEmMad (object):
         except Exception, e:
             out = 'RECOVER %s FAILURE %s' % (JID, str(e))    
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
             
     def do_CALLBACK(self):
         """
@@ -196,11 +194,11 @@ class GwEmMad (object):
                             self._JID_list.delete(JID)
                         out = 'CALLBACK %s SUCCESS %s' % (JID, newStatus)
                         self.message.stdout(out)
-                        self.logger.log(DEBUG, '--> ' + out)
+                        self.logger.debug(out)
                 except Exception, e:
                     out = 'CALLBACK %s FAILURE %s' % (JID, str(e))
                     self.message.stdout(out)
-                    self.logger.log(DEBUG, '--> ' + out)
+                    self.logger.debug(out)
                 time.sleep(0.1)
         
     def do_CANCEL(self, args):
@@ -219,7 +217,7 @@ class GwEmMad (object):
         except Exception, e:
             out = 'CANCEL %s FAILURE %s' % (JID, str(e))    
         self.message.stdout(out)
-        self.logger.log(DEBUG, '--> ' + out)
+        self.logger.debug(out)
         
     methods = {'INIT'    : do_INIT,
                'SUBMIT'  : do_SUBMIT,
@@ -238,7 +236,7 @@ class GwEmMad (object):
             pool = ThreadPool(self._min_thread, self._max_thread)
             while True:
                 input = sys.stdin.readline().split()
-                self.logger.log(DEBUG, '<-- ' + ' '.join(input))
+                self.logger.debug(' '.join(input))
                 OPERATION = input[0].upper()
                 if len(input) == 4 and self.methods.has_key(OPERATION):
                     if OPERATION == 'FINALIZE' or OPERATION == 'INIT':
@@ -247,9 +245,9 @@ class GwEmMad (object):
                         pool.add_task(self.methods[OPERATION], self, ' '.join(input))    
                 else:
                     self.message.stdout('WRONG COMMAND')
-                    self.logger.log(DEBUG, '--> WRONG COMMAND')
+                    self.logger.debug(out)
         except Exception, e:
-            self.logger.log(DEBUG, '--> ' + str(e))
+            self.logger.warning(str(e))
 
     def _create_com(self, host):
         hostList = readHostList()
@@ -261,16 +259,20 @@ class GwEmMad (object):
                     com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
                     com.hostName = hostConf.HOST
                     com.userName = hostConf.USERNAME
-                    com.workDirectory = hostConf.GW_RUNDIR
+                    com.workDirectory = hostConf.GW_SCRATCH_DIR
                     com.connect()
                 except:
-                    raise "It couldn't be connected to %s" %(host)
+                    out = "It couldn't be connected to %s" %(host)
+                    self.logger.warning(out)
+                    raise out
                 else:
                     self._com_list[hostname] = com
-                    if hostConf.GW_RUNDIR == r'~':
+                    if hostConf.GW_SCRATCH_DIR == r'~':
                         out, err = com.execCommand('echo $HOME')
                         if err:
-                            raise "Couldn't obtain home directory : %s" % (' '.join(err.split('\n')))
-                        self._host_list_conf[hostname].GW_RUNDIR = out.strip('\n')
+                            out = "Couldn't obtain home directory : %s" % (' '.join(err.split('\n')))
+                            self.logger.warning(out)
+                            raise out
+                        self._host_list_conf[hostname].GW_SCRATCH_DIR = out.strip('\n')
                     self._resource_module_list[hostname] = import_module(RESOURCE_MANAGER[hostConf.LRMS_TYPE])
  
