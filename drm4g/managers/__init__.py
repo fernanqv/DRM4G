@@ -30,7 +30,7 @@ class Resource (object):
         self._communicator = communicator
 
     def getCommunicator(self):
-        return self._communicator	
+        returnNODECOUNT      (optional)                 : maximum number of job slots which DRMs can process self._communicator	
     Communicator = property(getCommunicator, setCommunicator)
  
     def setFreeCpu(self, freeCpu):
@@ -112,9 +112,6 @@ class Resource (object):
             return ('0', '0')
 
     # To overload
-    def dynamicNodes(self):
-        pass
-  
     def queuesProperties(self, searchQueue, project):
         pass
 

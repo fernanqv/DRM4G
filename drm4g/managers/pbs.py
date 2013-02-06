@@ -18,18 +18,6 @@ class Resource (drm4g.managers.Resource):
 
     def lrmsProperties(self):
         return ('PBS', 'PBS') 
- 
-    def dynamicNodes(self):
-        out, err = self.Communicator.execCommand("%s | egrep 'np' | awk -F = '{print $2}'" % (PBSNODES))
-        if err: 
-            raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
-        total_cpu  = sum([int(elem) for elem in out.split()])
-        out, err = self.Communicator.execCommand("%s | egrep ' jobs' | awk -F = '{print $2}'" % (PBSNODES))
-        if err:
-            raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
-        busy_cpu = out.count('/')
-        free_cpu = total_cpu - busy_cpu  
-        return (str(total_cpu), str(free_cpu))
 
     def queuesProperties(self, searchQueue, project):
         out, err = self.Communicator.execCommand('%s -q' % (QSTAT))

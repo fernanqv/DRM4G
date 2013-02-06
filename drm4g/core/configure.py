@@ -11,11 +11,27 @@ __revision__ = "$Id$"
 
 class ConfigureException(Exception):
     pass
+
+class CheckConfigFile():
+    
+    def __init__(self):
+        if not os.path.exists(PATH_HOSTS):
+            out='Wrong path for %s' % (PATH_HOSTS)
+            logger.error(out)
+            raise ConfigureException(out)
+        else:
+            self.init_time = os.stat(PATH_HOSTS).st_mtime
+    def test(self):
+        if os.stat(PATH_HOSTS).st_mtime != self.init_time:
+            return True
+        else:
+            return False
+
   
 def readHostList():
     logger = logging.getLogger(__name__)    
     if not os.path.exists(PATH_HOSTS):
-        out='Wrong PATH_HOSTS'
+        out='Wrong path for %s' % (PATH_HOSTS)
         logger.error(out)
         raise ConfigureException(out)
     parser = SafeConfigParser()
@@ -43,11 +59,11 @@ def parserHost(hostname, url):
     username   = url_result.username
     params     = url_result.params
     if not name:
-        out='%s doesn\'t have hostname' % (hostname)
+        out='%s does not have hostname' % (hostname)
         logger.error(out)
         raise ConfigureException(out)
     if not username and (scheme != 'local'):
-        out='%s doesn\'t have username' % (hostname)
+        out='%s does not have username' % (hostname)
         logger.error(out)
         raise ConfigureException(out)      
     if not COMMUNICATOR.has_key(scheme):
@@ -55,11 +71,15 @@ def parserHost(hostname, url):
         logger.error(out)
         raise ConfigureException(out)        
     if not params.has_key('LRMS_TYPE'):
-        out='%s doesn\'t have a LRMS_TYPE' % (hostname)
+        out='%s does not have LRMS_TYPE variable' % (hostname)
         logger.error(out)
         raise ConfigureException(out)
     if not RESOURCE_MANAGER.has_key(params['LRMS_TYPE']):
         out='%s has a wrong LRMS_TYPE "%s"' % (hostname, params['LRMS_TYPE'])
+        logger.error(out)
+        raise ConfigureException(out)
+    if not params.has_key('NODECOUNT'):
+        out='%s does not have NODECOUNT variable' % (hostname)
         logger.error(out)
         raise ConfigureException(out)
     return HostConfiguration(scheme, name, username, params)

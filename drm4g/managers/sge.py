@@ -21,21 +21,6 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('SGE', 'SGE')
 
-    def dynamicNodes(self):
-        out, err = self.Communicator.execCommand('%s -xml' % (QHOST))
-        if err: 
-            raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
-        out_parser = xml.dom.minidom.parseString(out)
-        slots = [elem.getElementsByTagName('hostvalue')[1].firstChild.data \
-            for elem in out_parser.getElementsByTagName('qhost')[0].getElementsByTagName('host')]
-        total_cpu = sum([int(elem) for elem in slots if elem != '-']) 
-        out, err = self.Communicator.execCommand('%s -s r -xml' % (QSTAT))
-        if err: 
-            raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
-        out_parser = xml.dom.minidom.parseString(out) 
-        busy = sum ([int(elem.firstChild.data) for elem in out_parser.getElementsByTagName('slots')])
-        return (str(total_cpu), str(total_cpu - busy))
-
     def queuesProperties(self, searchQueue, project):
         if not searchQueue and project:
             queue              = drm4g.managers.Queue()
