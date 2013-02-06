@@ -30,7 +30,7 @@ class Resource (object):
         self._communicator = communicator
 
     def getCommunicator(self):
-        returnNODECOUNT      (optional)                 : maximum number of job slots which DRMs can process self._communicator	
+        return self._communicator	
     Communicator = property(getCommunicator, setCommunicator)
  
     def setFreeCpu(self, freeCpu):
