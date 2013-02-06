@@ -89,7 +89,7 @@ STDERR_FILE = stderr.${JOB_ID}
 #-------------------------------------------------------------------------------
 
 RESTART_FILES       =
-CHECKPOINT_INTERVAL = 0
+CHECKPOINT_INTERVAL = 300
 CHECKPOINT_URL      = 
 
 #-------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ CHECKPOINT_URL      =
 #-------------------------------------------------------------------------------
 
 REQUIREMENTS =
-RANK         =
+RANK         = QUEUE_FREENODECOUNT
 
 #-------------------------------------------------------------------------------
 # Scheduling variables
@@ -148,7 +148,7 @@ MONITOR            =
 #-------------------------------------------------------------------------------
 
 RESCHEDULE_ON_FAILURE = yes
-NUMBER_OF_RETRIES     = 1
+NUMBER_OF_RETRIES     = 3 
 
 #-------------------------------------------------------------------------------
 # Advanced job execution 
@@ -168,6 +168,6 @@ NUMBER_OF_RETRIES     = 1
 # PRE_WRAPPER_ARGUMENTS: Arguments to the pre-wrapper program.
 #-------------------------------------------------------------------------------
 
-WRAPPER               = libexec/gw_wrapper.sh
+WRAPPER               = libexec/gw_drm4g_wrapper.sh
 PRE_WRAPPER           =
 PRE_WRAPPER_ARGUMENTS =
