@@ -102,7 +102,14 @@ class Communicator(object):
 
     def getUserName(self):
         return self._username
+    
+    def setKeyFile(self, key_file):
+        self._key_file = key_file
+
+    def getKeyFile(self):
+        return self._key_file
 
     workDirectory = property(getWorkDir, setWorkDir)
     hostName      = property(getHostName, setHostName)
-    userName      = property(getUserName, setUserName) 
+    userName      = property(getUserName, setUserName)
+    keyFile       = property(getKeyFile, setKeyFile)
