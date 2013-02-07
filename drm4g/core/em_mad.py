@@ -154,7 +154,7 @@ class GwEmMad (object):
                 status = self._JID_list.get(JID).Status
                 out = 'POLL %s SUCCESS %s' % (JID, status)
             else:
-                out = 'POLL %s FAILURE Job not submited' % (JID) 
+                out = 'POLL %s FAILURE Job not submitted' % (JID) 
         except Exception, e:
             out = 'POLL %s FAILURE %s' % (JID, str(e))
         self.message.stdout(out)
@@ -217,7 +217,7 @@ class GwEmMad (object):
                 self._JID_list.get(JID).jobCancel()
                 out = 'CANCEL %s SUCCESS -' % (JID)
             else:
-                out = 'CANCEL %s FAILURE Job not submited' % (JID)
+                out = 'CANCEL %s FAILURE Job not submitted' % (JID)
         except Exception, e:
             out = 'CANCEL %s FAILURE %s' % (JID, str(e))    
         self.message.stdout(out)
