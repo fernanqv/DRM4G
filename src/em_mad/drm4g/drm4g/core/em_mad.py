@@ -109,7 +109,7 @@ class GwEmMad (object):
                 rsl_var['environment']['GW_RUN_DIR'] = hostConf.GW_RUN_DIR
             if hostConf.PROJECT:
                 rsl_var['PROJECT'] = hostConf.PROJECT
-            rsl_var['mpi'] = hostConf.MPI_TAG
+            rsl_var['mpi'] = hostConf.PARALLEL_TAG
             rsl_wrapper_directory = rsl_var.setdefault('directory',rsl_var['executable'].split('/')[0])
             for k in "stdout", "stderr", "directory", "executable":
                 rsl_var[k] = "%s/%s" % (hostConf.GW_SCRATCH_DIR, rsl_var[k])
@@ -264,6 +264,7 @@ class GwEmMad (object):
                     com.hostName = hostConf.HOST
                     com.userName = hostConf.USERNAME
                     com.workDirectory = hostConf.GW_SCRATCH_DIR
+                    com.keyFile = hostConf.KEY_FILE
                     com.connect()
                 except:
                     out = "It couldn't be connected to %s" %(host)

@@ -213,6 +213,7 @@ class GwTmMad (object):
                     com.hostName      = hostConf.HOST
                     com.userName      = hostConf.USERNAME
                     com.workDirectory = hostConf.GW_SCRATCH_DIR
+                    com.keyFile       = hostConf.KEY_FILE
                     com.connect()
                 except:
                     out = "It couldn't be connected to %s" %(host)  

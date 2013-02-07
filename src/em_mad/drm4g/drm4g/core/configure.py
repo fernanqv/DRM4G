@@ -82,6 +82,12 @@ def parserHost(hostname, url):
         out='%s does not have NODECOUNT variable' % (hostname)
         logger.error(out)
         raise ConfigureException(out)
+    if params.has_key('KEY_FILE'):
+        key = params['KEY_FILE']
+        if not os.path.isfile(os.path.expanduser(key)):
+            out='%s file does not exist' % (key)
+            logger.error(out)
+            raise ConfigureException(out)
     return HostConfiguration(scheme, name, username, params)
                 
 class HostConfiguration(object):
@@ -123,8 +129,12 @@ class HostConfiguration(object):
     def get_project(self):
         return self._params.setdefault('PROJECT')
 
-    def get_mpi_tag(self):
-        return self._params.setdefault('MPI_TAG','mpi')
+    def get_PARALLEL_TAG(self):
+        return self._params.setdefault('PARALLEL_TAG','mpi')
+    
+    def get_key_file(self):
+        return self._params.setdefault('KEY_FILE','~/.ssh/id_rsa')
+
 
     HOST        = property(get_hostname)
     USERNAME    = property(get_username)
@@ -133,6 +143,7 @@ class HostConfiguration(object):
     NODECOUNT   = property(get_node_count)
     QUEUE_NAME  = property(get_queue_name)
     GW_SCRATCH_DIR   = property(get_run_dir, set_run_dir)
-    GW_RUN_DIR = property(get_local_dir)
+    GW_RUN_DIR  = property(get_local_dir)
     PROJECT     = property(get_project)
-    MPI_TAG     = property(get_mpi_tag)
+    PARALLEL_TAG     = property(get_PARALLEL_TAG)
+    KEY_FILE    = property(get_key_file)

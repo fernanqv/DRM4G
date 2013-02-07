@@ -90,6 +90,7 @@ class GwImMad (object):
                 resource = getattr(import_module(RESOURCE_MANAGER[hostConf.LRMS_TYPE]), 'Resource')()
                 com.hostName = hostConf.HOST
                 com.userName = hostConf.USERNAME
+                com.keyFile = hostConf.KEY_FILE
                 com.connect()
                 resource.setCommunicator(com)
                 resource.TotalCpu, resource.FreeCpu  = resource.staticNodes(HID, hostConf.NODECOUNT)
