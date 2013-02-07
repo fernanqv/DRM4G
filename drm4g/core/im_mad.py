@@ -2,13 +2,12 @@ import sys
 import os
 import threading
 import logging
-from drm4g.core.configure import readHostList, parserHost, CheckConfigFile
+from drm4g.core.configure import readHostList, parserHost
 from drm4g.managers import HostInformation
 from drm4g.utils.dynamic import ThreadPool
 from drm4g.utils.message import Send
 from drm4g.global_settings import COMMUNICATOR, RESOURCE_MANAGER
 from drm4g.utils.importlib import import_module
-import traceback
 
 __version__ = '0.1'
 __author__  = 'Carlos Blanco'
@@ -50,8 +49,6 @@ class GwImMad (object):
     def __init__(self):
         self._min_thread = 4
         self._max_thread = 10 
-        self._host_list_conf = { }
-        self._resource_list  = { }
  
     def do_INIT(self, args):
         """
@@ -59,11 +56,7 @@ class GwImMad (object):
         @param args : arguments of operation
         @type args : string
         """
-        try:
-            self.configurationFileTime = CheckConfigFile()
-            out = 'INIT - SUCCESS -'
-        except Exception, e:
-            out = 'INIT - FAILURE %s' % (str(e))
+        out = 'INIT - SUCCESS -'
         self.message.stdout(out)
         self.logger.debug(out)
         
@@ -90,23 +83,15 @@ class GwImMad (object):
         """
         OPERATION, HID, HOST, ARGS = args.split()
         try:
-            if not self._host_list_conf.has_key(HOST) or self.configurationFileTime.test():
-                hostList = readHostList()
-                for hostname, url in hostList.items():
-                    if HOST == hostname:
-                        hostConf = parserHost(hostname, url)
-                        self._host_list_conf[hostname] = hostConf
-                        if not self._resource_list.has_key(hostname):
-                            com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
-                            com.hostName = hostConf.HOST
-                            com.userName = hostConf.USERNAME
-                            com.connect()
-                            resource = getattr(import_module(RESOURCE_MANAGER[hostConf.LRMS_TYPE]), 'Resource')()
-                            resource.Communicator = com
-                            self._resource_list[hostname] = resource
-            hostConf = self._host_list_conf[HOST]
-            if self._resource_list.has_key(HOST):
-                resource = self._resource_list[HOST]
+            hostList = readHostList()
+            if hostList.has_key(HOST):
+                hostConf = parserHost(HOST, hostList[HOST])
+                com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
+                resource = getattr(import_module(RESOURCE_MANAGER[hostConf.LRMS_TYPE]), 'Resource')()
+                com.hostName = hostConf.HOST
+                com.userName = hostConf.USERNAME
+                com.connect()
+                resource.Communicator = com
                 resource.TotalCpu, resource.FreeCpu  = resource.staticNodes(HID, hostConf.NODECOUNT)
                 hostInfo  = HostInformation()
                 hostInfo.Name, hostInfo.OsVersion, hostInfo.Arch, hostInfo.Os  = resource.hostProperties()
@@ -116,9 +101,10 @@ class GwImMad (object):
                 hostInfo.SizeDiskMB, hostInfo.FreeDiskMB = resource.diskProperties()
                 hostInfo.LrmsName  , hostInfo.LrmsType   = resource.lrmsProperties()
                 hostInfo.addQueue(resource.queuesProperties(hostConf.QUEUE_NAME, hostConf.PROJECT)) 
+                com.close()
                 out = 'MONITOR %s SUCCESS %s' % (HID, hostInfo.info())
             else:
-                out = 'MONITOR %s FAILURE %s is not configured correctly' % (HID, HOST)
+                out = 'MONITOR %s FAILURE %s is not a available' % (HID, HOST)
         except Exception, e:
             out = 'MONITOR %s FAILURE %s' % (HID, str(e))
         self.message.stdout(out)
