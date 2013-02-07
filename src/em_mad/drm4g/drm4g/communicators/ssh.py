@@ -63,7 +63,7 @@ class Communicator (drm4g.communicators.Communicator):
             keys = agent.get_keys()
             for pkey_class in (RSAKey, DSSKey):
                 try:
-                    key  = pkey_class.from_private_key_file(os.path.expanduser(keyFile))
+                    key  = pkey_class.from_private_key_file(os.path.expanduser(self.keyFile))
                     keys = keys + (key,)
                 except Exception:
                     pass
@@ -76,6 +76,7 @@ class Communicator (drm4g.communicators.Communicator):
                         pass 
                     sock.connect((self.hostName, self.port))  
                     self._trans = paramiko.Transport(sock)
+                    print self._trans
                     self._trans.connect(username = self.userName, pkey = key)
                     if self._trans.is_authenticated(): break
                 except socket.gaierror:
@@ -84,7 +85,7 @@ class Communicator (drm4g.communicators.Communicator):
                     pass
         finally:
             self._lock.release()            
-        if not self._isAuthenticated():
+        if not self._trans:
             raise drm4g.communicators.ComException('Authentication failed to ' + self.hostName)        
         
     def execCommand(self, command):
