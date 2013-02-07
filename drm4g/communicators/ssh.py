@@ -4,6 +4,8 @@ import platform
 import traceback
 try:
     import paramiko
+    from paramiko.dsskey import DSSKey
+    from paramiko.rsakey import RSAKey
 except ImportError:
     try:
         GW_LOCATION = os.environ['GW_LOCATION']
@@ -23,6 +25,8 @@ except ImportError:
                 sys.path.append(os.path.join(GW_LOCATION, 'libexec','drm4g','utils', 'Cryptos', 'Crypto_x86_64'))
         sys.path.append(os.path.join(GW_LOCATION, 'libexec','drm4g','utils'))
         import paramiko
+        from paramiko.dsskey import DSSKey
+        from paramiko.rsakey import RSAKey
     except Exception, e:
         print 'Caught exception: %s: %s' % (e.__class__, str(e))
         traceback.print_exc(file=sys.stdout)
@@ -46,10 +50,6 @@ class Communicator (drm4g.communicators.Communicator):
     # AUTHENTICATION #
     ##################
 
-    PRIVATE_KEYS = (
-        ("rsa", r"~/.ssh/id_rsa"),
-        ("dsa", r"~/.ssh/id_dsa"),
-        )
     port    = 22
     timeout = 20 # seconds
  
@@ -61,16 +61,12 @@ class Communicator (drm4g.communicators.Communicator):
         try:
             agent = paramiko.Agent()
             keys = agent.get_keys()
-            for key, path in self.PRIVATE_KEYS:
+            for pkey_class in (RSAKey, DSSKey):
                 try:
-                    privatekeyfile = os.path.expanduser(path)
-                    if key == 'rsa':
-                        ki_rsa = paramiko.RSAKey.from_private_key_file(privatekeyfile)
-                        keys = keys + (ki_rsa,)
-                    if key == 'dsa':        
-                        ki_dsa = paramiko.DSSKey.from_private_key_file(privatekeyfile)
-                        keys = keys + (ki_dsa,)
-                except Exception: pass
+                    key  = pkey_class.from_private_key_file(os.path.expanduser(keyFile))
+                    keys = keys + (key,)
+                except Exception:
+                    pass
             for key in keys:
                 try:
                     sock = socket.socket()
@@ -84,8 +80,10 @@ class Communicator (drm4g.communicators.Communicator):
                     if self._trans.is_authenticated(): break
                 except socket.gaierror:
                     raise drm4g.communicators.ComException('Could not resolve hostname ' + self.hostName)
-                except Exception: pass
-        finally: self._lock.release()            
+                except Exception:
+                    pass
+        finally:
+            self._lock.release()            
         if not self._isAuthenticated():
             raise drm4g.communicators.ComException('Authentication failed to ' + self.hostName)        
         
