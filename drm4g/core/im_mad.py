@@ -91,7 +91,7 @@ class GwImMad (object):
                 com.hostName = hostConf.HOST
                 com.userName = hostConf.USERNAME
                 com.connect()
-                resource.Communicator = com
+                resource.setCommunicator(com)
                 resource.TotalCpu, resource.FreeCpu  = resource.staticNodes(HID, hostConf.NODECOUNT)
                 hostInfo  = HostInformation()
                 hostInfo.Name, hostInfo.OsVersion, hostInfo.Arch, hostInfo.Os  = resource.hostProperties()
