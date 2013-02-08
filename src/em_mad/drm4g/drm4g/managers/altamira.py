@@ -21,7 +21,7 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('ALTAMIRA', 'ALTAMIRA')
      
-    def queuesProperties(self, searchQueue, project):
+    def queueProperties(self, queueName, project):
         queue              = drm4g.managers.Queue()
         queue.Name         = 'default'
         queue.Nodes        = self.TotalCpu
@@ -84,9 +84,6 @@ class Job (drm4g.managers.Job):
             walltime = self.walltime_default
         args += '# @ wall_clock_limit = %s\n' % (walltime)
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
-        if parameters['jobType'] == "mpi":
-            args += 'srun $executable\n'
-        else:
-            args += '$executable\n'
+        args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 

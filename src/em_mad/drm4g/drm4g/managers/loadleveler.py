@@ -31,11 +31,11 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('Loadleveler', 'Loadleveler') 
  
-    def queuesProperties(self, searchQueue, project):
+    def queueProperties(self, queueName, project):
         queue  = drm4g.managers.Queue()
         queue.DispatchType = 'batch'
-        if searchQueue:
-            out, err = self.Communicator.execCommand("%s -l %s | -e Free_slots -e Maximum_slots | awk '{print $2}'" % (LLCLASS, searchQueue))
+        if queueName:
+            out, err = self.Communicator.execCommand("%s -l %s | -e Free_slots -e Maximum_slots | awk '{print $2}'" % (LLCLASS, queueName))
             if err:
                 raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
             if self.TotalCpu != "0":
@@ -47,7 +47,7 @@ class Resource (drm4g.managers.Resource):
             queue.Name         = 'default'
             queue.Nodes        = self.TotalCpu
             queue.FreeNodes    = self.FreeCpu
-        return [queue]
+        return queue
 
 class Job (drm4g.managers.Job):
    
@@ -123,9 +123,6 @@ class Job (drm4g.managers.Job):
         args += '#@ queue\n'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
         args += 'cd $directory\n'
-        if parameters['jobType'] == "mpi":
-            args += 'mpiexec -np $count $executable\n'
-        else:
-            args += '$executable\n'
+        args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 
