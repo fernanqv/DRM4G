@@ -14,13 +14,13 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('FORK' ,'FORK')
 
-    def queuesProperties(self, searchQueue, project):
-        queue = drm4g.managers.Queue()
-        queue.Name         = 'default'
+    def queueProperties(self, queueName, project):
+        queue              = drm4g.managers.Queue()
+        queue.Name         = queueName
         queue.Nodes        = self.TotalCpu
         queue.FreeNodes    = self.FreeCpu
         queue.DispatchType = 'Immediate'
-        return [queue]
+        return queue
 
 class Job (drm4g.managers.Job):
     

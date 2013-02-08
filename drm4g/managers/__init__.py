@@ -112,7 +112,7 @@ class Resource (object):
             return ('0', '0')
 
     # To overload
-    def queuesProperties(self, searchQueue, project):
+    def queueProperties(self, queueName, project):
         pass
 
     def lrmsProperties(self):
@@ -317,9 +317,8 @@ class HostInformation:
         self._lrmsType   = "NULL"
         self._queues     = [] 
  
-    def addQueue(self, queues):
-        for queue in queues:
-            self._queues.append(queue)
+    def addQueue(self, queue):
+        self._queues.append(queue)
         
     def showQueues(self):
         return self._queues
