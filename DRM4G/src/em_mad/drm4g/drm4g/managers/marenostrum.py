@@ -21,13 +21,13 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('MNSLRUM', 'MNSLURM')
     
-    def queuesProperties(self, searchQueue, project):
+    def queueProperties(self, queueName, project):
         queue              = drm4g.managers.Queue()
-        queue.Name         = 'default'
+        queue.Name         = queueName
         queue.Nodes        = self.TotalCpu
         queue.FreeNodes    = self.FreeCpu
-        queue.DispatchType = 'Immediate'
-        return [queue]
+        queue.DispatchType = 'Batch'
+        return queue
 
 class Job (drm4g.managers.Job):
     
@@ -56,7 +56,6 @@ class Job (drm4g.managers.Job):
         out, err = self.Communicator.execCommand('%s %s' % (MNSUBMIT, path_script))
         re_job_id = re.compile(r'Submitted batch job (\d*)').search(err)
         if re_job_id:
-            time.sleep(60)
             return re_job_id.group(1)
         else:
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
@@ -90,9 +89,6 @@ class Job (drm4g.managers.Job):
             walltime = self.walltime_default
         args += '# @ wall_clock_limit = %s\n' % (walltime)
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
-        if parameters['jobType'] == "mpi":
-            args += 'srun $executable\n'
-        else:
-            args += '$executable\n'
+        args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 

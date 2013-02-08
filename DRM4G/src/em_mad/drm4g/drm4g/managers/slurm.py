@@ -14,18 +14,17 @@ SQUEUE  = 'squeue'   #show status of jobs
 SCANCEL = 'scancel'  #delete a job
 
 class Resource (drm4g.managers.Resource):
-    MAX_RESOURCES = 1000
 
     def lrmsProperties(self):
         return ('SLURM', 'SLURM')
 
-    def queuesProperties(self, searchQueue, project):
+    def queueProperties(self, queueName, project):
         queue              = drm4g.managers.Queue()
-        queue.Name         = 'default'
+        queue.Name         = queueName
         queue.Nodes        = self.TotalCpu
         queue.FreeNodes    = self.FreeCpu
         queue.DispatchType = 'batch' 
-        return [queue]
+        return queue
 
 class Job (drm4g.managers.Job):
    
