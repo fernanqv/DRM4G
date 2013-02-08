@@ -115,7 +115,7 @@ class HostConfiguration(object):
         return self._params.setdefault('NODECOUNT')
 
     def get_queue_name(self):
-        return self._params.setdefault('QUEUE_NAME')
+        return self._params.setdefault('QUEUE_NAME','default')
 
     def get_run_dir(self):
         return self._params.setdefault('GW_SCRATCH_DIR',r'~')
@@ -136,14 +136,14 @@ class HostConfiguration(object):
         return self._params.setdefault('KEY_FILE','~/.ssh/id_rsa')
 
 
-    HOST        = property(get_hostname)
-    USERNAME    = property(get_username)
-    SCHEME      = property(get_scheme)
-    LRMS_TYPE   = property(get_lrms_type)
-    NODECOUNT   = property(get_node_count)
-    QUEUE_NAME  = property(get_queue_name)
-    GW_SCRATCH_DIR   = property(get_run_dir, set_run_dir)
-    GW_RUN_DIR  = property(get_local_dir)
-    PROJECT     = property(get_project)
-    PARALLEL_TAG     = property(get_PARALLEL_TAG)
-    KEY_FILE    = property(get_key_file)
+    HOST           = property(get_hostname)
+    USERNAME       = property(get_username)
+    SCHEME         = property(get_scheme)
+    LRMS_TYPE      = property(get_lrms_type)
+    NODECOUNT      = property(get_node_count)
+    QUEUE_NAME     = property(get_queue_name)
+    GW_SCRATCH_DIR = property(get_run_dir, set_run_dir)
+    GW_RUN_DIR     = property(get_local_dir)
+    PROJECT        = property(get_project)
+    PARALLEL_TAG   = property(get_PARALLEL_TAG)
+    KEY_FILE       = property(get_key_file)
