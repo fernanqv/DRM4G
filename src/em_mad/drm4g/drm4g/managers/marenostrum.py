@@ -3,7 +3,6 @@ from string import Template
 import xml.dom.minidom
 import re
 import time
-from drm4g.managers import sec_to_H_M_S
 
 __version__ = '0.1'
 __author__  = 'Carlos Blanco'
@@ -21,7 +20,7 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('MNSLRUM', 'MNSLURM')
     
-    def queueProperties(self, queueName, project):
+    def queueProperties(self, queueName):
         queue              = drm4g.managers.Queue()
         queue.Name         = queueName
         queue.Nodes        = self.TotalCpu
@@ -52,8 +51,8 @@ class Job (drm4g.managers.Job):
                   'Suspended' : 'SUSPENDED', #Job was running but has been suspended by the scheduler or an admin.
                 }                 
     
-    def jobSubmit(self, path_script):
-        out, err = self.Communicator.execCommand('%s %s' % (MNSUBMIT, path_script))
+    def jobSubmit(self, pathScript):
+        out, err = self.Communicator.execCommand('%s %s' % (MNSUBMIT, pathScript))
         re_job_id = re.compile(r'Submitted batch job (\d*)').search(err)
         if re_job_id:
             return re_job_id.group(1)
@@ -81,10 +80,10 @@ class Job (drm4g.managers.Job):
         args += '# @ output = $stdout\n'
         args += '# @ error  = $stderr\n'
         args += '# @ total_tasks = $count\n'
-        if parameters.has_key('tasksPerNode'):
-            args += '# @ tasks_per_node =$tasksPerNode\n'
+        if parameters.has_key('ppn'):
+            args += '# @ tasks_per_node =$ppn\n'
         if parameters.has_key('maxWallTime'):
-            walltime = sec_to_H_M_S(parameters['maxWallTime'])
+            walltime = parameters['maxWallTime']
         else:
             walltime = self.walltime_default
         args += '# @ wall_clock_limit = %s\n' % (walltime)

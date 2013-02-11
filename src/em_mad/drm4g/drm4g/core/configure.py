@@ -112,7 +112,7 @@ class HostConfiguration(object):
         return self._params['LRMS_TYPE']
 
     def get_node_count(self):
-        return self._params.setdefault('NODECOUNT')
+        return self._params['NODECOUNT']
 
     def get_queue_name(self):
         return self._params.setdefault('QUEUE_NAME','default')
@@ -124,13 +124,13 @@ class HostConfiguration(object):
         self._params['GW_SCRATCH_DIR'] = run_dir
         
     def get_local_dir(self):
-        return self._params.setdefault('GW_RUN_DIR')
+        return self._params.setdefault('GW_RUN_DIR',r'~')
         
     def get_project(self):
         return self._params.setdefault('PROJECT')
 
     def get_PARALLEL_TAG(self):
-        return self._params.setdefault('PARALLEL_TAG','mpi')
+        return self._params.setdefault('PARALLEL_TAG')
     
     def get_key_file(self):
         return self._params.setdefault('KEY_FILE','~/.ssh/id_rsa')

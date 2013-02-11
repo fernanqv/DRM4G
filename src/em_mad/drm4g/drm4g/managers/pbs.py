@@ -1,6 +1,5 @@
 import drm4g.managers 
 from string import Template
-from drm4g.managers import sec_to_H_M_S
 import re
 
 __version__ = '0.1'
@@ -19,7 +18,7 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('PBS', 'PBS') 
 
-    def queueProperties(self, queueName, project):
+    def queueProperties(self, queueName):
         queue              = drm4g.managers.Queue()
         queue.Name         = queueName
         queue.DispatchType = 'batch'
@@ -65,8 +64,8 @@ class Job (drm4g.managers.Job):
                   'C': 'DONE',	    #Job finalize.
                 }
     
-    def jobSubmit(self, path_script):
-        out, err = self.Communicator.execCommand('%s %s' % (QSUB, path_script))
+    def jobSubmit(self, pathScript):
+        out, err = self.Communicator.execCommand('%s %s' % (QSUB, pathScript))
         if err: 
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
         return out.strip() #job_id
@@ -89,22 +88,22 @@ class Job (drm4g.managers.Job):
     def jobTemplate(self, parameters):
         args  = '#!/bin/bash\n'
         args += '#PBS -N JID_%s\n' % (parameters['environment']['GW_JOB_ID'])
-        if parameters.has_key('PROJECT'):
+        if parameters['PROJECT']:
             args += '#PBS -P $PROJECT\n'
         args += '#PBS -q $queue\n'
         args += '#PBS -o $stdout\n'
         args += '#PBS -e $stderr\n'
         if parameters.has_key('maxWallTime'): 
-            args += '#PBS -l walltime=%s\n' % (sec_to_H_M_S(parameters['maxWallTime']))
+            args += '#PBS -l walltime=$maxWallTime\n' 
         if parameters.has_key('maxCpuTime'): 
-            args += '#PBS -l cput=%s\n' % (sec_to_H_M_S(parameters['maxCpuTime']))
+            args += '#PBS -l cput=$maxCpuTime\n' 
         if parameters.has_key('maxMemory'):
-            args += '#PBS -l vmem=%sMB\n' % (parameters['maxMemory'])
-        if parameters.has_key('tasksPerNode'):
+            args += '#PBS -l vmem=$maxMemoryMB\n'
+        if parameters.has_key('ppn'):
             node_count = int(parameters['count']) / int(parameters['tasksPerNode'])
             if node_count == 0:
                 node_count = 1
-            args += '#PBS -l nodes=%d:ppn=$tasksPerNode\n' % (node_count)
+            args += '#PBS -l nodes=%d:ppn=$ppn\n' % (node_count)
         else:
             args += '#PBS -l nodes=$count\n'
         args += '#PBS -v %s\n' % (','.join(['%s=%s' %(k, v) for k, v in parameters['environment'].items()]))
