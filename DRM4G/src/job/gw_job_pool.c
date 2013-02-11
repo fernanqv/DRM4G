@@ -541,53 +541,60 @@ gw_job_t* gw_job_pool_get (int job_id, int lock)
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-int gw_job_pool_em_recover (gw_em_mad_t * em_mad)
+int gw_job_pool_em_recover (gw_em_mad_t * em_mad, gw_am_t *em_am)
 {
     gw_job_t * job;
     int        i;
     char *     job_contact;
-        
+    int *      _job_id;
+
     pthread_mutex_lock(&(gw_job_pool.mutex));
-    
-    for ( i=0; i < gw_conf.number_of_jobs; i++)
+
+    for (i=0; i < gw_conf.number_of_jobs; i++)
     {
         job = gw_job_pool.pool[i];
-        
+
         if (job != NULL)
         {
-            pthread_mutex_lock(&(job->mutex));            
+            pthread_mutex_lock(&(job->mutex));
 
-            if ((job->history != NULL) && 
-                (job->history->em_mad == em_mad) &&
-                (job->job_state == GW_JOB_STATE_WRAPPER))
+            if ((job->history != NULL)
+                    && (job->history->em_mad == em_mad)
+                    && (job->job_state == GW_JOB_STATE_WRAPPER))
             {
                 job_contact = gw_job_recover_get_contact(job);
-                
+
                 if ( job_contact != NULL )
                 {
 #ifdef GWJOBDEBUG
-                    gw_log_print("DM",'D',"Recovering job %i, contact is %s.\n", 
-                            job->id,
-                            job_contact);
+                    gw_log_print("DM",'D',"Recovering job %i, contact is %s.\n",
+                            job->id, job_contact);
 #endif
                     gw_em_mad_recover(em_mad, job->id, job_contact);
-                    
-                    free(job_contact);      
+
+                    free(job_contact);
                 }
-#ifdef GWJOBDEBUG                
                 else
-                    gw_log_print("DM",'D',"Could not recover job %i, no contact.\n", 
+                {
+#ifdef GWJOBDEBUG
+                    gw_log_print("DM",'D',"Could not recover job %i, no contact.\n",
                             job->id);
-                
-#endif                 
+#endif
+
+                    _job_id    = (int *) malloc (sizeof(int));
+                    *(_job_id) = job->id;
+
+                    gw_am_trigger(em_am, "GW_EM_STATE_FAILED",
+                            (void *) _job_id);
+                }
             }
-            
+
             pthread_mutex_unlock(&(job->mutex));
         }
     }
-        
+
     pthread_mutex_unlock(&(gw_job_pool.mutex));
-    
+
     return 0;
 }
 

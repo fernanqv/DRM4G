@@ -43,28 +43,19 @@ void gw_job_history_init(gw_history_t **job_history)
 
 int gw_job_history_destroy(gw_history_t **job_history)
 {
-    if (*job_history != NULL)
-    {
-        gw_job_history_destroy(&((*job_history)->next));
-
-    	if ((*job_history)->rdir != NULL)
-			free((*job_history)->rdir);
-
-    	if ((*job_history)->em_rc != NULL)
-			free((*job_history)->em_rc);
-
-    	if ((*job_history)->em_fork_rc != NULL)
-			free((*job_history)->em_fork_rc);
-
-    	if ((*job_history)->queue != NULL)
-			free((*job_history)->queue);
-       
-        free(*job_history);
-
-        return 0;
-    }
-    else
-        return -1;
+    if (*job_history == NULL)
+    	return -1;
+    gw_job_history_destroy(&((*job_history)->next));
+    if ((*job_history)->rdir != NULL)
+    	free((*job_history)->rdir);
+    if ((*job_history)->em_rc != NULL)
+    	free((*job_history)->em_rc);
+    if ((*job_history)->em_fork_rc != NULL)
+    	 free((*job_history)->em_fork_rc);
+    if ((*job_history)->queue != NULL)
+    	free((*job_history)->queue);
+    free(*job_history);
+    return 0;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -120,6 +111,7 @@ int gw_job_history_add(gw_history_t **job_history,
     new_record->host         = host;
     new_record->tries        = 0;
     new_record->failed_polls = 0;
+    new_record->cancel_tries = 0;
 	new_record->counter      = -1;
 
 	se = gw_host_get_genvar_str("SE_HOSTNAME", 0, host);

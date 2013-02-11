@@ -100,9 +100,11 @@ char* gw_generate_nowrapper_rsl2 (gw_job_t *job)
     sprintf(tmp_buffer,
             " <directory>.gw_%s_%i</directory>"
             " <count>%d</count>"
+    		" <ppn>%d</ppn>"
             " <jobType>%s</jobType>",
             job->owner, job->id,
             job->template.np,
+            job->template.ppn,
             gw_template_jobtype_string(job->template.type));
 
     strncat(rsl_buffer,tmp_buffer, GW_RSL_LENGTH-strlen(rsl_buffer));
@@ -218,35 +220,25 @@ char* gw_generate_wrapper_rsl2 (gw_job_t *job)
     if (strlen(rsl_buffer) + 6 > GW_RSL_LENGTH)
         return NULL;
 
-    if (job->max_cpu_time > 0)
+    if (strcmp(job->template.cputime,'\0') != 0 )
     {
-        sprintf(tmp_buffer, " <maxCpuTime>%d</maxCpuTime>", job->max_cpu_time);
+        sprintf(tmp_buffer, " <maxCpuTime>%s</maxCpuTime>", job->template.cputime);
         strcat(rsl_buffer, tmp_buffer);
     }
-    if (job->max_time > 0)
+    if (strcmp(job->template.walltime,'\0') != 0)
     {
-        sprintf(tmp_buffer, " <maxTime>%d</maxTime>", job->max_time);
+        sprintf(tmp_buffer, " <maxWallTime>%s</maxWallTime>", job->template.walltime);
         strcat(rsl_buffer, tmp_buffer);
     }
-    if (job->max_walltime > 0)
+    if (job->template.memory > 0)
     {
-        sprintf(tmp_buffer, " <maxWallTime>%d</maxWallTime>", job->max_walltime);
-        strcat(rsl_buffer, tmp_buffer);
-    }
-    if (job->max_memory > 0)
-    {
-        sprintf(tmp_buffer, " <maxMemory>%d</maxMemory>", job->max_memory);
-        strcat(rsl_buffer, tmp_buffer);
-    }
-    if (job->min_memory > 0)
-    {
-        sprintf(tmp_buffer, " <minMemory>%d</minMemory>", job->min_memory);
+        sprintf(tmp_buffer, " <maxMemory>%d</maxMemory>", job->template.memory);
         strcat(rsl_buffer, tmp_buffer);
     }
 
-    if (job->tasks_per_node > 0)
+    if (job->template.ppn > 0)
     {
-        sprintf(tmp_buffer, " <tasksPerNode>%d</tasksPerNode>", job->tasks_per_node);
+        sprintf(tmp_buffer, " <ppn>%d</ppn>", job->template.ppn);
         strcat(rsl_buffer, tmp_buffer);
     }
 

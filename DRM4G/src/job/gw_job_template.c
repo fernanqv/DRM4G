@@ -191,6 +191,11 @@ void gw_job_template_init (gw_job_template_t *jt, const gw_template_t *ct)
 
     jt->type = ct->type;
     jt->np = ct->np;
+    jt->ppn= ct->ppn;
+    jt->memory= ct->memory;
+    jt->walltime= ct->walltime;
+    jt->cputime= ct->cputime;
+
 
     jt->deadline = ct->deadline;
 }
@@ -335,6 +340,10 @@ void gw_job_template_print (FILE *fd, gw_job_template_t *template)
 
     gw_print(fd,"DM",'I',"\t%-23s: %s\n","TYPE",gw_template_jobtype_string(template->type));
     gw_print(fd,"DM",'I',"\t%-23s: %i\n","NP",template->np);
+    gw_print(fd,"DM",'I',"\t%-23s: %i\n","PPN",template->ppn);
+    gw_print(fd,"DM",'I',"\t%-23s: %i\n","MEMORY",template->memory);
+    gw_print(fd,"DM",'I',"\t%-23s: %s\n","WALLTIME",GWNSTR(template->walltime));
+    gw_print(fd,"DM",'I',"\t%-23s: %s\n","CPUTIME",GWNSTR(template->cputime));
 
     gw_print(fd,"DM",'I',"\t%-23s: %s %d\n","DEADLINE",gw_template_deadline_string(template->deadline), template->deadline);
 				
@@ -432,6 +441,8 @@ void gw_job_template_to_file(FILE *fd, gw_job_template_t *template)
 
 	fprintf(fd, "TYPE=%s\n", gw_template_jobtype_string(template->type));
 	fprintf(fd, "NP=%d\n", template->np);
+	fprintf(fd, "PPN=%d\n", template->ppn);
+
 
 	fprintf(fd, "DEADLINE=%s\n", gw_template_deadline_string(template->deadline));
 }

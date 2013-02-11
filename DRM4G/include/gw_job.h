@@ -159,12 +159,6 @@ typedef struct gw_job_s
     
     gw_boolean_t reschedule;
 
-    int max_cpu_time;
-    int max_time;
-    int max_walltime;
-    int max_memory;
-    int min_memory;
-    int tasks_per_node;
 } gw_job_t;
 
 
