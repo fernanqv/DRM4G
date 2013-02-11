@@ -112,7 +112,7 @@ class Resource (object):
             return ('0', '0')
 
     # To overload
-    def queueProperties(self, queueName, project):
+    def queueProperties(self, queueName):
         pass
 
     def lrmsProperties(self):

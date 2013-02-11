@@ -104,12 +104,8 @@ class GwEmMad (object):
             # Parse rsl
             rsl_var = Rsl2Parser(RSL).parser()
             hostConf = self._host_list_conf[HOST]
-            rsl_var['environment']['GW_SCRATCH_DIR'] = hostConf.GW_SCRATCH_DIR
-            if hostConf.GW_RUN_DIR:
-                rsl_var['environment']['GW_RUN_DIR'] = hostConf.GW_RUN_DIR
-            if hostConf.PROJECT:
-                rsl_var['PROJECT'] = hostConf.PROJECT
-            rsl_var['mpi'] = hostConf.PARALLEL_TAG
+            rsl_var['PROJECT']      = hostConf.PROJECT
+            rsl_var['parallel_env'] = hostConf.PARALLEL_TAG
             rsl_wrapper_directory = rsl_var.setdefault('directory',rsl_var['executable'].split('/')[0])
             for k in "stdout", "stderr", "directory", "executable":
                 rsl_var[k] = "%s/%s" % (hostConf.GW_SCRATCH_DIR, rsl_var[k])
