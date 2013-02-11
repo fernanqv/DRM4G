@@ -109,6 +109,10 @@ CHECKPOINT_URL          { jtp_var = CHECKPOINT_URL;         BEGIN var_str;}
 JOB_DEPENDENCIES        { jtp_var = JOB_DEPENDENCIES;       BEGIN var_str;}
 TYPE                    { jtp_var = TYPE;                   BEGIN var_str;}
 NP                      { jtp_var = NP;                     BEGIN var_int;}
+PPN                     { jtp_var = PPN;                    BEGIN var_int;}
+MEMORY                  { jtp_var = MEMORY;                 BEGIN var_int;}
+WALLTIME                { jtp_var = WALLTIME;               BEGIN var_str;}
+CPUTIME                 { jtp_var = CPUTIME;                BEGIN var_str;}
 DEADLINE                { jtp_var = DEADLINE;               BEGIN var_dl;}
 NAME                    { jtp_var = NAME;                   BEGIN var_str;}
 
@@ -328,6 +332,14 @@ void gw_template_set_value_str (gw_template_t *jt,
         case CHECKPOINT_URL:
             strncpy(jt->checkpoint_url,val,GW_JT_STR);
             break;
+            
+        case CPUTIME:
+            strncpy(jt->cputime,val,GW_JT_STR);
+            break;
+
+        case WALLTIME:
+            strncpy(jt->walltime,val,GW_JT_STR);
+            break;    
         
         case WRAPPER:
             if (val[0] != '/')
@@ -421,6 +433,13 @@ void gw_template_set_value_int (gw_template_t *jt,
         case NP:
             jt->np = val;
             break;
+        
+        case PPN:
+            jt->ppn = val;
+            break;
+            
+        case MEMORY:
+        	jt->memory = val;
         
         default:
             fprintf(stderr,"Unexpected error setting int variable, line %i\n",jtp_lineno);
