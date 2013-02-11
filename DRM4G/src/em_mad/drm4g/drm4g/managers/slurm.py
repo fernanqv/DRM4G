@@ -1,6 +1,5 @@
 import drm4g.managers 
 from string import Template
-from drm4g.managers import sec_to_H_M_S
 import re
 
 __version__ = '0.1'
@@ -18,7 +17,7 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('SLURM', 'SLURM')
 
-    def queueProperties(self, queueName, project):
+    def queueProperties(self, queueName):
         queue              = drm4g.managers.Queue()
         queue.Name         = queueName
         queue.Nodes        = self.TotalCpu
@@ -40,8 +39,8 @@ class Job (drm4g.managers.Job):
                   'TIMEOUT'   : 'FAILED',
                 }
     
-    def jobSubmit(self, path_script):
-        out, err = self.Communicator.execCommand('%s %s' % (SBATCH, path_script))
+    def jobSubmit(self, pathScript):
+        out, err = self.Communicator.execCommand('%s %s' % (SBATCH, pathScript))
         re_job_id = re.compile(r'Submitted batch job (\d*)').search(out)
         if re_job_id:
             return re_job_id.group(1)
@@ -68,11 +67,11 @@ class Job (drm4g.managers.Job):
         args += '#SBATCH --output=$stdout\n'
         args += '#SBATCH --error=$stderr\n'
         if parameters.has_key('maxWallTime'): 
-            args += '#SBATCH --time=%s\n' % (sec_to_H_M_S(parameters['maxWallTime']))
+            args += '#SBATCH --time=%s\n' % (parameters['maxWallTime'])
         if parameters.has_key('maxMemory'):
             args += '#SBATCH --mem=%s\n' % (parameters['maxMemory'])
-        if parameters.has_key('tasksPerNode'): 
-            args += '#SBATCH --ntasks-per-node=$tasksPerNode'
+        if parameters.has_key('ppn'): 
+            args += '#SBATCH --ntasks-per-node=$ppn'
         args += '#SBATCH --ntasks=$count\n'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
         args += 'cd $directory\n'

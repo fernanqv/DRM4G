@@ -14,7 +14,7 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('FORK' ,'FORK')
 
-    def queueProperties(self, queueName, project):
+    def queueProperties(self, queueName):
         queue              = drm4g.managers.Queue()
         queue.Name         = queueName
         queue.Nodes        = self.TotalCpu
@@ -24,8 +24,8 @@ class Resource (drm4g.managers.Resource):
 
 class Job (drm4g.managers.Job):
     
-    def jobSubmit(self, path_script):
-        out, err = self.Communicator.execCommand('%s %s' % (SH, path_script))
+    def jobSubmit(self, pathScript):
+        out, err = self.Communicator.execCommand('%s %s' % (SH, pathScript))
         if err: 
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
         job_id = out.rstrip('\n')

@@ -1,7 +1,6 @@
 import drm4g.managers
 import re
 from string import Template
-from drm4g.managers import sec_to_H_M_S
 
 __version__ = '0.1'
 __author__  = 'Carlos Blanco'
@@ -20,7 +19,7 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('SGE', 'SGE')
 
-    def queueProperties(self, queueName, project):
+    def queueProperties(self, queueName):
         queue              = drm4g.managers.Queue()
         queue.Name         = queueName
         queue.DispatchType = 'batch'
@@ -64,8 +63,8 @@ class Job (drm4g.managers.Job):
         'qw' : 'PENDING',  #Job is waiting
         }
 
-    def jobSubmit(self, path_script):
-        out, err = self.Communicator.execCommand('%s %s' % (QSUB, path_script))
+    def jobSubmit(self, pathScript):
+        out, err = self.Communicator.execCommand('%s %s' % (QSUB, pathScript))
         if err: 
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
         re_job  = re.compile(r'^Your job (\d*) .*').search(out)
@@ -87,20 +86,20 @@ class Job (drm4g.managers.Job):
     def jobTemplate(self, parameters):
         args  = '#!/bin/bash\n'
         args += '#$ -N JID_%s\n' % (parameters['environment']['GW_JOB_ID'])
-        if parameters.has_key('PROJECT'): 
+        if parameters['PROJECT']: 
             args += '#$ -P $PROJECT\n'
         if parameters['queue'] != 'default':
             args += '#$ -q $queue\n'
         args += '#$ -o $stdout\n'
         args += '#$ -e $stderr\n'
         if parameters.has_key('maxWallTime'): 
-            args += '#$ -l h_rt=%s\n' % (sec_to_H_M_S(parameters['maxWallTime']))
+            args += '#$ -l h_rt=$maxWallTime\n'
         if parameters.has_key('maxCpuTime'): 
-            args += '#$ -l cput=%s\n' % (sec_to_H_M_S(parameters['maxCpuTime']))
+            args += '#$ -l cput=$maxCpuTime\n' 
         if parameters.has_key('maxMemory'): 
-            args += '#$ -l mem_free=%sM\n' % (parameters['maxMemory'])
+            args += '#$ -l mem_free=$maxMemoryM\n'
         if int(parameters['count']) > 1:
-            args += '#$ -pe $mpi $count\n'
+            args += '#$ -pe $parallel_env $count\n'
         args += '#$ -v %s\n' % (','.join(['%s=%s' %(k, v) for k, v in parameters['environment'].items()]))
         args += 'cd $directory\n'
         args += '$executable\n'

@@ -101,7 +101,7 @@ class GwImMad (object):
                 hostInfo.SizeMemMB , hostInfo.FreeMemMB  = resource.memProperties()
                 hostInfo.SizeDiskMB, hostInfo.FreeDiskMB = resource.diskProperties()
                 hostInfo.LrmsName  , hostInfo.LrmsType   = resource.lrmsProperties()
-                hostInfo.addQueue(resource.queueProperties(hostConf.QUEUE_NAME, hostConf.PROJECT)) 
+                hostInfo.addQueue(resource.queueProperties(hostConf.QUEUE_NAME)) 
                 com.close()
                 out = 'MONITOR %s SUCCESS %s' % (HID, hostInfo.info())
             else:

@@ -1,6 +1,5 @@
 import drm4g.managers 
 from string import Template
-from drm4g.managers import sec_to_H_M_S
 import re
 
 __version__ = '0.1'
@@ -31,22 +30,12 @@ class Resource (drm4g.managers.Resource):
     def lrmsProperties(self):
         return ('Loadleveler', 'Loadleveler') 
  
-    def queueProperties(self, queueName, project):
-        queue  = drm4g.managers.Queue()
+    def queueProperties(self, queueName):
+        queue              = drm4g.managers.Queue()
         queue.DispatchType = 'batch'
-        if queueName:
-            out, err = self.Communicator.execCommand("%s -l %s | -e Free_slots -e Maximum_slots | awk '{print $2}'" % (LLCLASS, queueName))
-            if err:
-                raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
-            if self.TotalCpu != "0":
-                queue.FreeNodes, queue.Nodes = out.split()  
-            else:
-                queue.Nodes        = self.TotalCpu
-                queue.FreeNodes    = self.FreeCpu
-        else:
-            queue.Name         = 'default'
-            queue.Nodes        = self.TotalCpu
-            queue.FreeNodes    = self.FreeCpu
+        queue.Name         = queueName
+        queue.Nodes        = self.TotalCpu
+        queue.FreeNodes    = self.FreeCpu
         return queue
 
 class Job (drm4g.managers.Job):
@@ -79,8 +68,8 @@ class Job (drm4g.managers.Job):
                 }
     re_submit=re.compile(r"The job \"(\S+)\" has been submitted")
 
-    def jobSubmit(self, path_script):
-        out, err = self.Communicator.execCommand('%s %s' % (LLSUBMIT, path_script))
+    def jobSubmit(self, pathScript):
+        out, err = self.Communicator.execCommand('%s %s' % (LLSUBMIT, pathScript))
         job_id = self.re_submit.search(out).group(1)
         return job_id
 
@@ -111,14 +100,14 @@ class Job (drm4g.managers.Job):
             args += '#@ job_type  = serial\n'
         args += '#@ node = $count\n'
         if parameters.has_key('maxWallTime'): 
-            args += '#@ wall_clock_limit = %s\n' % (sec_to_H_M_S(parameters['maxWallTime']))
+            args += '#@ wall_clock_limit = $maxWallTime\n'
         if parameters.has_key('maxCpuTime'):
-            args += '#@ job_cpu_limit = %s\n' % (sec_to_H_M_S(parameters['maxCpuTime']))
+            args += '#@ job_cpu_limit = $maxCpuTime\n' 
         if parameters.has_key('maxMemory'):
-            args += '#@ resources = ConsumableMemory(%s)\n' % (parameters['maxMemory'])
-        if parameters.has_key('tasksPerNode'):
-            args += '#@ tasks_per_node = $tasksPerNode\n' % (parameters['tasksPerNode'])
-        if parameters.has_key('PROJECT'):
+            args += '#@ resources = ConsumableMemory($maxMemory)\n'
+        if parameters.has_key('ppn'):
+            args += '#@ tasks_per_node = $ppn'
+        if parameters['PROJECT']:
             args += '#@ account_no = $PROJECT\n'
         args += '#@ queue\n'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
