@@ -41,10 +41,10 @@ const char * usage =
 "  -l            release\n"
 "  -s            re-schedule\n"
 "  -p <priority> fixed priority for the job\n"
-"  -9            hard kill, removes the job from the system without synchronizing"
+"  -9            hard kill, removes the job from the system without synchronizing\n"
 "                remote job execution or cleaning remote host\n"
 "  job_id [job_id2 ...] job identification as provided by gwps\n"
-" -A <array_id>  array identification as provided by gwps\n";
+"  -A <array_id> array identification as provided by gwps\n";
 
 const char * susage =
 "usage: gwkill [-h] [-a] [-k | -t | -o | -s | -r | -p <priority> | -l | -9] <job_id | -A array_id>\n";
