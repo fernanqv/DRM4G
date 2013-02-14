@@ -78,7 +78,7 @@ class GwEmMad (object):
         @type args : string
         """
         try:
-            self.configurationFileTime = CheckConfigFile()
+            self. _createCom()
             out = 'INIT - SUCCESS -'
         except Exception, e:
             out = 'INIT - FAILURE %s' % (str(e))
@@ -96,8 +96,6 @@ class GwEmMad (object):
             HOST, JM = HOST_JM.rsplit('/',1)
  
             # Init ResourceManager class
-            if not self._resource_module_list.has_key(HOST) or self.configurationFileTime.test():
-                self._create_com(HOST) 
             job = getattr(self._resource_module_list[HOST], 'Job')()
             job.Communicator = self._com_list[HOST]
 
@@ -165,8 +163,6 @@ class GwEmMad (object):
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
             host, remoteJobId = HOST_JM.split(':')
-            if not self._resource_module_list.has_key(host) or self.configurationFileTime.test():
-                self._create_com(host)
             job = getattr(self._resource_module_list[host], 'Job')()
             job.Communicator = self._com_list[host]
             job.JobId = remoteJobId
@@ -234,12 +230,14 @@ class GwEmMad (object):
             worker = threading.Thread(target = self.do_CALLBACK, )
             worker.setDaemon(True); worker.start()
             pool = ThreadPool(self._min_thread, self._max_thread)
+            self.configurationFileTime = CheckConfigFile()
             while True:
                 input = sys.stdin.readline().split()
                 self.logger.debug(' '.join(input))
+                self._checkConfigurationFile()
                 OPERATION = input[0].upper()
                 if len(input) == 4 and self.methods.has_key(OPERATION):
-                    if OPERATION == 'FINALIZE' or OPERATION == 'INIT':
+                    if OPERATION == 'FINALIZE' or OPERATION == 'INIT' or OPERATION == 'RECOVER':
                         self.methods[OPERATION](self, ' '.join(input))
                     else:
                         pool.add_task(self.methods[OPERATION], self, ' '.join(input))    
@@ -248,32 +246,34 @@ class GwEmMad (object):
                     self.logger.debug(out)
         except Exception, e:
             self.logger.warning(str(e))
-
-    def _create_com(self, host):
+    
+    def _checkConfigurationFile(self):
+        if self.configurationFileTime.test():
+            sys.exit(0)
+            
+    def _createCom(self):
         hostList = readHostList()
         for hostname, url in hostList.items():
-            if hostname == host:
-                try:
-                    hostConf = parserHost(hostname, url)
+            try:
+                hostConf = parserHost(hostname, url)
+                com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
+                com.hostName      = hostConf.HOST
+                com.userName      = hostConf.USERNAME
+                com.workDirectory = hostConf.GW_SCRATCH_DIR
+                com.keyFile       = hostConf.KEY_FILE
+                com.connect()
+                if hostConf.GW_SCRATCH_DIR == r'~':
+                    out, err = com.execCommand('echo $HOME')
+                    if err:
+                        out = "Couldn't obtain home directory : %s" % (' '.join(err.split('\n')))
+                        self.logger.warning(out)
+                        raise Exception(out)
+                    hostConf.GW_SCRATCH_DIR = out.strip('\n')
                     self._host_list_conf[hostname] = hostConf
-                    com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
-                    com.hostName = hostConf.HOST
-                    com.userName = hostConf.USERNAME
-                    com.workDirectory = hostConf.GW_SCRATCH_DIR
-                    com.keyFile = hostConf.KEY_FILE
-                    com.connect()
-                except:
-                    out = "It couldn't be connected to %s" %(host)
-                    self.logger.warning(out)
-                    raise out
-                else:
-                    self._com_list[hostname] = com
-                    if hostConf.GW_SCRATCH_DIR == r'~':
-                        out, err = com.execCommand('echo $HOME')
-                        if err:
-                            out = "Couldn't obtain home directory : %s" % (' '.join(err.split('\n')))
-                            self.logger.warning(out)
-                            raise out
-                        self._host_list_conf[hostname].GW_SCRATCH_DIR = out.strip('\n')
                     self._resource_module_list[hostname] = import_module(RESOURCE_MANAGER[hostConf.LRMS_TYPE])
- 
+                    self._com_list[hostname] = com
+            except Exception, e:
+                out = "It couldn't be connected to %s : %s" %(hostname, str(e))
+                self.logger.warning(out)
+                raise Exception(out)
+
