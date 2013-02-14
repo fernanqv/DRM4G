@@ -199,7 +199,8 @@ class GwTmMad (object):
                         self.methods[OPERATION](self, ' '.join(input))
                     else: pool.add_task(self.methods[OPERATION], self,' '.join(input))
                 else:
-                    self.message.stdout('WRONG COMMAND')
+                    out = 'WRONG COMMAND'
+                    self.message.stdout(out)
                     self.logger.debug(out)
         except Exception, e: 
             self.logger.warning(str(e))
