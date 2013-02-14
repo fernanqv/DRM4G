@@ -78,7 +78,7 @@ class GwTmMad (object):
         @type args : string 
         """
         try:
-            self.configurationFileTime = CheckConfigFile()
+            self._createCom()
             out = 'INIT - - SUCCESS -'
         except Exception, e:
             out = 'INIT - - FAILURE %s' % (str(e))
@@ -124,8 +124,6 @@ class GwTmMad (object):
         """
         OPERATION, JID, TID, EXE_MODE, SRC_URL, DST_URL = args.split()
         try:
-            if not self._com_list.has_key(urlparse(SRC_URL).host) or self.configurationFileTime.test():
-                self._create_com(urlparse(SRC_URL).host)
             self._com_list[urlparse(SRC_URL).host].rmDirectory(SRC_URL)
             self._com_list[urlparse(SRC_URL).host].mkDirectory(SRC_URL)
             out = 'MKDIR %s - SUCCESS -' % (JID)
@@ -142,8 +140,6 @@ class GwTmMad (object):
         """
         OPERATION, JID, TID, EXE_MODE, SRC_URL, DST_URL = args.split()
         try:
-            if not self._com_list.has_key(urlparse(SRC_URL).host) or self.configurationFileTime.test():
-                self._create_com(urlparse(SRC_URL).host)
             self._com_list[urlparse(SRC_URL).host].rmDirectory(SRC_URL)
             out = 'RMDIR %s - SUCCESS -' % (JID)
         except Exception, e:
@@ -159,17 +155,22 @@ class GwTmMad (object):
         @type args : string 
         """
         OPERATION, JID, TID, EXE_MODE, SRC_URL, DST_URL = args.split()
+        if 'file:' in SRC_URL:
+            url = DST_URL
+        else:
+            url = SRC_URL
         try:
-            if 'file:' in SRC_URL:
-                url = DST_URL
-            else:
-                url = SRC_URL
-            if not self._com_list.has_key(urlparse(url).host) or self.configurationFileTime.test():
-                self._create_com(urlparse(url).host)
             self._com_list[urlparse(url).host].copy(SRC_URL, DST_URL, EXE_MODE)
             out = 'CP %s %s SUCCESS -' % (JID, TID)
         except Exception, e:
-            out = 'CP %s %s FAILURE %s' % (JID, TID, str(e))    
+            self.logger.warning('Error copying from %s to %s : %s' %(SRC_URL, DST_URL, str(e)))
+            time.sleep(60)
+            try:
+                self.logger.debug('Copying again from %s to %s' % (SRC_URL, DST_URL))
+                self._com_list[urlparse(url).host].copy(SRC_URL, DST_URL, EXE_MODE)
+                out = 'CP %s %s SUCCESS -' % (JID, TID)
+            except Exception, e:
+                out = 'CP %s %s FAILURE %s' % (JID, TID, str(e))   
         self.message.stdout(out)
         self.logger.debug(out)
         
@@ -187,9 +188,11 @@ class GwTmMad (object):
         """
         try:
             pool = ThreadPool(self._min_thread, self._max_thread)
+            self.configurationFileTime = CheckConfigFile()
             while True:
                 input = sys.stdin.readline().split()
                 self.logger.debug(' '.join(input))
+                self._checkConfigurationFile()
                 OPERATION = input[0].upper()
                 if len(input) == 6 and self.methods.has_key(OPERATION):
                     if OPERATION == 'FINALIZE' or OPERATION == 'INIT':
@@ -200,23 +203,24 @@ class GwTmMad (object):
                     self.logger.debug(out)
         except Exception, e: 
             self.logger.warning(str(e))
-
-    def _create_com(self, host):
+    
+    def _checkConfigurationFile(self):
+        if self.configurationFileTime.test():
+            sys.exit(0)
+            
+    def _createCom(self):
         hostList = readHostList()
         for hostname, url in hostList.items():
-            if hostname == host:
-                try:
-                    hostConf = parserHost(hostname, url)
-                    com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
-                    com.hostName      = hostConf.HOST
-                    com.userName      = hostConf.USERNAME
-                    com.workDirectory = hostConf.GW_SCRATCH_DIR
-                    com.keyFile       = hostConf.KEY_FILE
-                    com.connect()
-                except:
-                    out = "It couldn't be connected to %s" %(host)  
-                    self.logger.warning(out)
-                    raise out
-                else:
-                    self._com_list[hostname] = com
-
+            try:
+                hostConf = parserHost(hostname, url)
+                com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
+                com.hostName      = hostConf.HOST
+                com.userName      = hostConf.USERNAME
+                com.workDirectory = hostConf.GW_SCRATCH_DIR
+                com.keyFile       = hostConf.KEY_FILE
+                com.connect()
+                self._com_list[hostname] = com
+            except Exception, e:
+                out = "It couldn't be connected to %s : %s" %(hostname, str(e))
+                self.logger.warning(out)
+                raise Exception(out)
