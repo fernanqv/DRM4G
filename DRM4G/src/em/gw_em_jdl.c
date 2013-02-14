@@ -96,28 +96,19 @@ char* gw_generate_wrapper_jdl(gw_job_t *job)
     {
             strcat(jdl_buffer, "Requirements = ");
 
-            if (job->max_cpu_time > 0)
+            if (strcmp(job->max_cpu_time, '\0') != 0)
             {
                 snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                        "(other.GlueCEPolicyMaxCPUTime <= %d)",
+                        "(other.GlueCEPolicyMaxCPUTime <= %s)",
                         job->max_cpu_time);
                 strcat(jdl_buffer, tmp_buffer);
                 prev_reqs = 1;
             }
-            if ((job->max_time > 0) && (job->max_walltime == 0))
+            if (strcmp(job->max_walltime, '\0') != 0)
             {
                 if (prev_reqs) strcat(jdl_buffer, " && ");
                 snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                        "(other.GlueCEPolicyMaxWallClockTime <= %d)",
-                        job->max_time);
-                strcat(jdl_buffer, tmp_buffer);
-                prev_reqs = 1;
-            }
-            if (job->max_walltime > 0)
-            {
-                if (prev_reqs) strcat(jdl_buffer, " && ");
-                snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                        "(other.GlueCEPolicyMaxWallClockTime <= %d)",
+                        "(other.GlueCEPolicyMaxWallClockTime <= %s)",
                         job->max_walltime);
                 strcat(jdl_buffer, tmp_buffer);
                 prev_reqs = 1;
@@ -130,14 +121,6 @@ char* gw_generate_wrapper_jdl(gw_job_t *job)
                         job->max_memory);
                 strcat(jdl_buffer, tmp_buffer);
                 prev_reqs = 1;
-            }
-            if (job->min_memory > 0)
-            {
-                if (prev_reqs) strcat(jdl_buffer, " && ");
-                snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                        "(other.GlueHostMainMemoryRAMSize >= %d)",
-                        job->min_memory);
-                strcat(jdl_buffer, tmp_buffer);
             }
             strcat(jdl_buffer, ";");
     }
