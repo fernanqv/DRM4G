@@ -52,10 +52,12 @@ class Communicator (drm4g.communicators.Communicator):
 
     port    = 22
     timeout = 20 # seconds
+    sftp_connections = 3
  
     def __init__(self):
         self._lock = __import__('threading').Lock()
- 
+        self._sem  = __import__('threading').Semaphore(self.sftp_connections)
+        
     def connect(self):
         self._lock.acquire()
         try:
@@ -111,22 +113,26 @@ class Communicator (drm4g.communicators.Communicator):
         except Exception: pass
             
     def copy(self, source_url, destination_url, execution_mode):
-        if not self._isAuthenticated(): 
-            self.connect()
-        self._lock.acquire()
-        try: sftp = paramiko.SFTPClient.from_transport(self._trans)
-        finally: self._lock.release()
-        if 'file://' in source_url:
-            from_dir = urlparse(source_url).path
-            to_dir   = self._setDir(urlparse(destination_url).path)
-            sftp.put(from_dir, to_dir)
-            if execution_mode == 'X': sftp.chmod(to_dir, 0755)#execution permissions
-        else:
-            from_dir = self._setDir(urlparse(source_url).path)
-            to_dir   = urlparse(destination_url).path
-            sftp.get(from_dir, to_dir)
-        try: sftp.close()
-        except Exception: pass
+        self._sem.acquire()
+        try:
+            if not self._isAuthenticated():
+                self.connect()
+            self._lock.acquire()
+            try: sftp = paramiko.SFTPClient.from_transport(self._trans)
+            finally: self._lock.release()
+            if 'file://' in source_url:
+                from_dir = urlparse(source_url).path
+                to_dir   = self._setDir(urlparse(destination_url).path)
+                sftp.put(from_dir, to_dir)
+                if execution_mode == 'X': sftp.chmod(to_dir, 0755)#execution permissions
+            else:
+                from_dir = self._setDir(urlparse(source_url).path)
+                to_dir   = urlparse(destination_url).path
+                sftp.get(from_dir, to_dir)
+            try: sftp.close()
+            except Exception: pass
+        finally:
+            self._sem.release()
             
     def rmDirectory(self, url):
         if not self._isAuthenticated(): 
