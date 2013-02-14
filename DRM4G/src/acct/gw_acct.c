@@ -58,7 +58,7 @@ int gw_acct_db_open(gw_boolean_t server)
 	
 	/* ----- Open the environment ------ */
 	
-    mask = umask(S_IWOTH);
+	mask = umask(002);
 	
 	rc = db_env_create(&(gw_acct_db.env_db), 0);
 	

@@ -440,8 +440,8 @@ void gw_client_print_status_full(gw_msg_job_t * msg)
     
 	printf("EM_STATE=%s\n", gw_em_state_string (msg->em_state));
 	printf("RESTARTED=%d\n",msg->restarted);
-	printf("CLIENT_WAITING=%d\n",msg->client_waiting);
-	printf("RESCHEDULE=%d\n",msg->reschedule);
+        printf("CLIENT_WAITING=%d\n",msg->client_waiting);
+        printf("RESCHEDULE=%d\n",msg->reschedule);
 
 	printf("START_TIME=%s\n",gw_print_date_and_time(msg->start_time,the_time));
 	printf("EXIT_TIME=%s\n",gw_print_date_and_time(msg->exit_time,the_time));
