@@ -88,10 +88,6 @@ typedef struct gw_template_s
 
     int type;
     int np;
-    int ppn;
-    char cputime[GW_JT_STR];
-    char walltime[GW_JT_STR];
-    int memory;
 
     time_t deadline;
 } gw_template_t;
@@ -126,10 +122,6 @@ typedef enum {
     JOB_DEPENDENCIES,
     TYPE,
     NP,
-    PPN,
-    MEMORY,
-    WALLTIME,
-    CPUTIME,
     DEADLINE,
     NAME
 } gw_template_var_t;

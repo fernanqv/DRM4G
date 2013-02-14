@@ -145,10 +145,6 @@ int gw_template_init(gw_template_t *jt, const char *jt_file)
 
 	jt->type = GW_JOB_TYPE_SINGLE;
     jt->np   = 1;
-    jt->ppn  = 0;
-    jt->memory = 0;
-    jt->walltime[0] = '\0';
-    jt->cputime[0] = '\0';
 
     jt->deadline = 0;
 	
@@ -227,11 +223,6 @@ void gw_template_print(gw_template_t *jt)
 
     fprintf(stderr,"  %-23s: %s\n","TYPE",gw_template_jobtype_string(jt->type));
     fprintf(stderr,"  %-23s: %d\n","NP",jt->np);
-    fprintf(stderr,"  %-23s: %d\n","PPN",jt->ppn);
-    fprintf(stderr,"  %-23s: %d\n","MEMORY",jt->memory);
-    fprintf(stderr,"  %-23s: %s\n","WALLTIME",GWNSTR(jt->walltime));
-    fprintf(stderr,"  %-23s: %s\n","CPUTIME",GWNSTR(jt->cputime));
-
 		
     fprintf(stderr,"  %-23s: %s\n","DEADLINE",gw_template_deadline_string(jt->deadline));
 

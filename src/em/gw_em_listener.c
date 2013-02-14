@@ -106,14 +106,14 @@ void gw_em_listener(void *arg)
                     gw_log_print("EM",'W',"Error reading MAD (%s) message\n",
                                  em_mads[i]->name);
                     
-                    rcm = gw_em_mad_reload(em_mads[i]);
+                    rcm = gw_em_mad_reload (em_mads[i]);
                     
                     if ( rcm == 0 )
                     {
                         gw_log_print("EM",'I',"MAD (%s) successfully reloaded\n",
                                      em_mads[i]->name);
                         
-                        gw_job_pool_em_recover(em_mads[i], &(gw_em.am));
+                        gw_job_pool_em_recover(em_mads[i]);
                     }
                     else
                     {
@@ -190,8 +190,8 @@ void gw_em_listener(void *arg)
                     else /* Save persistent job contact */
                     {
                         snprintf(contact_file, PATH_MAX-1, 
-                                 "%s/" GW_VAR_DIR "/%i/job.contact",
-                                 gw_conf.gw_location, job->id);
+                                 "%s/" GW_VAR_DIR "/%i00-%i99/%i/job.contact",
+                                 gw_conf.gw_location, job->id/100, job->id/100,job->id);
                                  
                         file = fopen(contact_file, "w");
                         

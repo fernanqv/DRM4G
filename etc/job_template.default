@@ -135,7 +135,7 @@ RESCHEDULING_THRESHOLD = 300
 # MONITOR: Optional program to monitor job performance
 #-------------------------------------------------------------------------------
 
-SUSPENSION_TIMEOUT = 300
+SUSPENSION_TIMEOUT = 600
 CPULOAD_THRESHOLD  = 50
 MONITOR            =
 

@@ -101,7 +101,7 @@ char* gw_generate_wrapper_jsdl (gw_job_t *job)
             job->restarted,
             job_environment);
     strcat(jsdl_buffer, tmp_buffer);
-/*
+
     if ((job->max_time > 0) && (job->max_walltime == 0))
     {
             snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
@@ -131,7 +131,7 @@ char* gw_generate_wrapper_jsdl (gw_job_t *job)
             strcat(jsdl_buffer, tmp_buffer);
     }
 
-*/
+
     snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
             "   </jsdl-posix:POSIXApplication>\n"
             "  </jsdl:Application>\n");

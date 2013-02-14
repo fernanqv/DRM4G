@@ -86,12 +86,6 @@ typedef struct gw_job_template_s
 
     int type;
     int np;	
-    int ppn;
-    char * cputime;
-    char * walltime;
-    int memory;
-
-
 
     time_t deadline;
 } gw_job_template_t;
