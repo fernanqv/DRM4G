@@ -218,14 +218,14 @@ char* gw_generate_wrapper_rsl2 (gw_job_t *job)
     if (strlen(rsl_buffer) + 6 > GW_RSL_LENGTH)
         return NULL;
 
-    if (job->max_cpu_time > 0)
+    if (strcmp(job->max_cpu_time, '\0') != 0)
     {
-        sprintf(tmp_buffer, " <maxCpuTime>%d</maxCpuTime>", job->max_cpu_time);
+        sprintf(tmp_buffer, " <maxCpuTime>%s</maxCpuTime>", job->max_cpu_time);
         strcat(rsl_buffer, tmp_buffer);
     }
-    if (job->max_walltime > 0)
+    if (strcmp(job->max_walltime, '\0') != 0)
     {
-        sprintf(tmp_buffer, " <maxWallTime>%d</maxWallTime>", job->max_walltime);
+        sprintf(tmp_buffer, " <maxWallTime>%s</maxWallTime>", job->max_walltime);
         strcat(rsl_buffer, tmp_buffer);
     }
     if (job->max_memory > 0)

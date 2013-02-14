@@ -102,18 +102,11 @@ char* gw_generate_wrapper_jsdl (gw_job_t *job)
             job_environment);
     strcat(jsdl_buffer, tmp_buffer);
 
-    if ((job->max_time > 0) && (job->max_walltime == 0))
+    if (strcmp(job->max_walltime, '\0') != 0)
     {
             snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                    "    <jsdl-posix:WallTimeLimit>%d</jsdl-posix:WallTimeLimit>\n",
-                    job->max_time*60);
-            strcat(jsdl_buffer, tmp_buffer);
-    }
-    if (job->max_walltime > 0) 
-    {
-            snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                    "    <jsdl-posix:WallTimeLimit>%d</jsdl-posix:WallTimeLimit>\n",
-                    job->max_walltime*60);
+                    "    <jsdl-posix:WallTimeLimit>%s</jsdl-posix:WallTimeLimit>\n",
+                    job->max_walltime);
             strcat(jsdl_buffer, tmp_buffer);
     }
     if (job->max_memory > 0)
@@ -123,10 +116,10 @@ char* gw_generate_wrapper_jsdl (gw_job_t *job)
                     job->max_memory*1024);
             strcat(jsdl_buffer, tmp_buffer);
     }
-    if (job->max_cpu_time > 0)
+    if (strcmp(job->max_cpu_time, '\0') != 0)
     {
             snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                    "    <jsdl-posix:CPUTimeLimit>%d</jsdl-posix:CPUTimeLimit>\n",
+                    "    <jsdl-posix:CPUTimeLimit>%s</jsdl-posix:CPUTimeLimit>\n",
                     job->max_cpu_time*60);
             strcat(jsdl_buffer, tmp_buffer);
     }
