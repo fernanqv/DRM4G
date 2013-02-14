@@ -78,7 +78,6 @@ class Communicator (drm4g.communicators.Communicator):
                         pass 
                     sock.connect((self.hostName, self.port))  
                     self._trans = paramiko.Transport(sock)
-                    print self._trans
                     self._trans.connect(username = self.userName, pkey = key)
                     if self._trans.is_authenticated(): break
                 except socket.gaierror:
