@@ -92,11 +92,10 @@ char* gw_generate_wrapper_jdl(gw_job_t *job)
             job->history->queue,
             job->template.np);
 
-    if ((job->max_cpu_time > 0) || (job->max_time > 0) || (job->max_walltime > 0) || (job->max_memory > 0) || (job->min_memory > 0))
+    if ((job->max_cpu_time != NULL) || (job->max_time > 0) || (job->max_walltime != NULL ) || (job->max_memory > 0) || (job->min_memory > 0))
     {
             strcat(jdl_buffer, "Requirements = ");
-
-            if (strcmp(job->max_cpu_time, '\0') != 0)
+            if (job->max_cpu_time != NULL)
             {
                 snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
                         "(other.GlueCEPolicyMaxCPUTime <= %s)",
@@ -104,7 +103,16 @@ char* gw_generate_wrapper_jdl(gw_job_t *job)
                 strcat(jdl_buffer, tmp_buffer);
                 prev_reqs = 1;
             }
-            if (strcmp(job->max_walltime, '\0') != 0)
+            if ((job->max_time > 0) && (job->max_walltime == NULL))
+            {
+                if (prev_reqs) strcat(jdl_buffer, " && ");
+                snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
+                        "(other.GlueCEPolicyMaxWallClockTime <= %d)",
+                        job->max_time);
+                strcat(jdl_buffer, tmp_buffer);
+                prev_reqs = 1;
+            }
+            if (job->max_walltime != NULL)
             {
                 if (prev_reqs) strcat(jdl_buffer, " && ");
                 snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,

@@ -327,8 +327,9 @@ int gw_job_environment(gw_job_t *job)
         }        
     }
 
-    job->max_cpu_time[0] = '\0';
-    job->max_walltime[0] = '\0';
+    job->max_cpu_time = NULL;
+    job->max_time = 0;
+    job->max_walltime = NULL;
     job->max_memory = 0;
     job->processes_per_node = 0;
     if ( job->template.num_env != 0 )
@@ -343,10 +344,10 @@ int gw_job_environment(gw_job_t *job)
                     job->template.environment[i][GW_ENV_VAR], var);
                 if (strcmp("CPUTIME", job->template.environment[i][GW_ENV_VAR]) == 0)
                 {
-                    job->max_cpu_time = var;
+                    job->max_cpu_time = strdup(var);
                 } else if (strcmp("WALLTIME", job->template.environment[i][GW_ENV_VAR]) == 0)
                 {
-                    job->max_walltime = var;
+                    job->max_walltime = strdup(var);
                 } else if (strcmp("MEMORY", job->template.environment[i][GW_ENV_VAR]) == 0)
                 {
                     job->min_memory = atoi(var);
