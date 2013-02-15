@@ -77,14 +77,19 @@ char* gw_generate_wrapper_rsl (gw_job_t *job)
         strncat(rsl_buffer, tmp_buffer, GW_RSL_LENGTH-strlen(rsl_buffer));
     }
 
-    if (strcmp(job->max_cpu_time, '\0') != 0)
+    if (job->max_cpu_time != NULL)
     {
         snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
                 "(maxCpuTime=\"%s\")", job->max_cpu_time);
         strcat(rsl_buffer, tmp_buffer);
     }
-
-    if (strcmp(job->max_walltime, '\0') != 0)
+    if (job->max_time > 0)
+    {
+        snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
+                "(maxTime=\"%d\")", job->max_time);
+        strcat(rsl_buffer, tmp_buffer);
+    }
+    if (job->max_walltime != NULL)
     {
         snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
                 "(maxWallTime=\"%s\")", job->max_walltime);
@@ -215,10 +220,10 @@ char* gw_generate_wrapper_rsl_nsh (gw_job_t *job)
                 "(queue=\"%s\")", job->history->queue);
         strncat(rsl_buffer, tmp_buffer, GW_RSL_LENGTH-strlen(rsl_buffer));
     }
-    if (job->max_cpu_time > 0)
+    if (job->max_cpu_time != NULL)
     {
         snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                "(maxCpuTime=\"%d\")", job->max_cpu_time);
+                "(maxCpuTime=\"%s\")", job->max_cpu_time);
         strcat(rsl_buffer, tmp_buffer);
     }
     if (job->max_time > 0)
@@ -227,10 +232,10 @@ char* gw_generate_wrapper_rsl_nsh (gw_job_t *job)
                 "(maxTime=\"%d\")", job->max_time);
         strcat(rsl_buffer, tmp_buffer);
     }
-    if (job->max_walltime > 0)
+    if (job->max_walltime != NULL)
     {
         snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                "(maxWallTime=\"%d\")", job->max_walltime);
+                "(maxWallTime=\"%s\")", job->max_walltime);
         strcat(rsl_buffer, tmp_buffer);
     }
     if (job->max_memory > 0)

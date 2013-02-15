@@ -159,8 +159,8 @@ typedef struct gw_job_s
     
     gw_boolean_t reschedule;
 
-    char * max_cpu_time;
-    char * max_time;
+    char  * max_cpu_time;
+    int max_time;
     char * max_walltime;
     int max_memory;
     int min_memory;
