@@ -106,7 +106,7 @@ class GwEmMad (object):
             rsl_var['parallel_env'] = hostConf.PARALLEL_TAG
             rsl_wrapper_directory = rsl_var.setdefault('directory',rsl_var['executable'].split('/')[0])
             for k in "stdout", "stderr", "directory", "executable":
-                rsl_var[k] = "%s/%s" % (hostConf.GW_SCRATCH_DIR, rsl_var[k])
+                rsl_var[k] = "%s/%s" % (hostConf.TEMP_DIR, rsl_var[k])
 
             # Create and copy wrapper_drm4g 
             local_wrapper_directory  = '%s/wrapper_drm4g.%s' % (RSL.rsplit('/',1)[0] , RSL.split('.')[-1])
@@ -260,16 +260,16 @@ class GwEmMad (object):
                 com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
                 com.hostName      = hostConf.HOST
                 com.userName      = hostConf.USERNAME
-                com.workDirectory = hostConf.GW_SCRATCH_DIR
+                com.workDirectory = hostConf.TEMP_DIR
                 com.keyFile       = hostConf.SSH_KEY_FILE
                 com.connect()
-                if hostConf.GW_SCRATCH_DIR == r'~':
+                if hostConf.TEMP_DIR == r'~':
                     out, err = com.execCommand('echo $HOME')
                     if err:
                         out = "Couldn't obtain home directory : %s" % (' '.join(err.split('\n')))
                         self.logger.warning(out)
                         raise Exception(out)
-                    hostConf.GW_SCRATCH_DIR = out.strip('\n')
+                    hostConf.TEMP_DIR = out.strip('\n')
                     self._host_list_conf[hostname] = hostConf
                     self._resource_module_list[hostname] = import_module(RESOURCE_MANAGER[hostConf.LRMS_TYPE])
                     self._com_list[hostname] = com
