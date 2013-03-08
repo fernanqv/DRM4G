@@ -82,8 +82,8 @@ def parserHost(hostname, url):
         out='%s does not have NODECOUNT variable' % (hostname)
         logger.error(out)
         raise ConfigureException(out)
-    if params.has_key('KEY_FILE'):
-        key = params['KEY_FILE']
+    if params.has_key('SSH_KEY_FILE'):
+        key = params['SSH_KEY_FILE']
         if not os.path.isfile(os.path.expanduser(key)):
             out='%s file does not exist' % (key)
             logger.error(out)
@@ -133,7 +133,7 @@ class HostConfiguration(object):
         return self._params.setdefault('PARALLEL_TAG')
     
     def get_key_file(self):
-        return self._params.setdefault('KEY_FILE','~/.ssh/id_rsa')
+        return self._params.setdefault('SSH_KEY_FILE','~/.ssh/id_rsa')
 
 
     HOST           = property(get_hostname)
@@ -146,4 +146,4 @@ class HostConfiguration(object):
     GW_RUN_DIR     = property(get_local_dir)
     PROJECT        = property(get_project)
     PARALLEL_TAG   = property(get_PARALLEL_TAG)
-    KEY_FILE       = property(get_key_file)
+    SSH_KEY_FILE       = property(get_key_file)
