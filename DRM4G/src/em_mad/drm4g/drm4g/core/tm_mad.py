@@ -218,7 +218,7 @@ class GwTmMad (object):
                 com.hostName      = hostConf.HOST
                 com.userName      = hostConf.USERNAME
                 com.workDirectory = hostConf.GW_SCRATCH_DIR
-                com.keyFile       = hostConf.KEY_FILE
+                com.keyFile       = hostConf.SSH_KEY_FILE
                 com.connect()
                 self._com_list[hostname] = com
             except Exception, e:
