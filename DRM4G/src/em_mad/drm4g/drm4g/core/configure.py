@@ -118,10 +118,10 @@ class HostConfiguration(object):
         return self._params.setdefault('QUEUE_NAME','default')
 
     def get_run_dir(self):
-        return self._params.setdefault('GW_SCRATCH_DIR',r'~')
+        return self._params.setdefault('TEMP_DIR',r'~')
  
     def set_run_dir(self, run_dir):
-        self._params['GW_SCRATCH_DIR'] = run_dir
+        self._params['TEMP_DIR'] = run_dir
         
     def get_local_dir(self):
         return self._params.setdefault('GW_RUN_DIR',r'~')
@@ -142,7 +142,7 @@ class HostConfiguration(object):
     LRMS_TYPE      = property(get_lrms_type)
     NODECOUNT      = property(get_node_count)
     QUEUE_NAME     = property(get_queue_name)
-    GW_SCRATCH_DIR = property(get_run_dir, set_run_dir)
+    TEMP_DIR = property(get_run_dir, set_run_dir)
     GW_RUN_DIR     = property(get_local_dir)
     PROJECT        = property(get_project)
     PARALLEL_TAG   = property(get_PARALLEL_TAG)
