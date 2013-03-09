@@ -78,7 +78,7 @@ class GwEmMad (object):
         @type args : string
         """
         try:
-            self. _createCom()
+            self._createCom()
             out = 'INIT - SUCCESS -'
         except Exception, e:
             out = 'INIT - FAILURE %s' % (str(e))
@@ -234,10 +234,10 @@ class GwEmMad (object):
             while True:
                 input = sys.stdin.readline().split()
                 self.logger.debug(' '.join(input))
-                self._checkConfigurationFile()
                 OPERATION = input[0].upper()
                 if len(input) == 4 and self.methods.has_key(OPERATION):
-                    if OPERATION == 'FINALIZE' or OPERATION == 'INIT' or OPERATION == 'RECOVER':
+                    if OPERATION == 'FINALIZE' or OPERATION == 'INIT' \
+                        or OPERATION == 'RECOVER' or OPERATION == 'SUBMIT':
                         self.methods[OPERATION](self, ' '.join(input))
                     else:
                         pool.add_task(self.methods[OPERATION], self, ' '.join(input))    
@@ -245,6 +245,7 @@ class GwEmMad (object):
                     out = 'WRONG COMMAND'
                     self.message.stdout(out)
                     self.logger.debug(out)
+                self._checkConfigurationFile()
         except Exception, e:
             self.logger.warning(str(e))
     
