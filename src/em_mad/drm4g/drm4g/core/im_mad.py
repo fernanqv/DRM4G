@@ -86,21 +86,19 @@ class GwImMad (object):
             hostList = readHostList()
             if hostList.has_key(HOST):
                 hostConf = parserHost(HOST, hostList[HOST])
-                com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
+                com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), "Communicator")()
                 resource = getattr(import_module(RESOURCE_MANAGER[hostConf.LRMS_TYPE]), 'Resource')()
                 com.hostName = hostConf.HOST
                 com.userName = hostConf.USERNAME
-                com.keyFile = hostConf.SSH_KEY_FILE
+                com.port     = hostConf.PORT
+                com.keyFile  = hostConf.SSH_KEY_FILE
                 com.connect()
-                resource.setCommunicator(com)
+                resource.setCommunicator(com)      
                 resource.TotalCpu, resource.FreeCpu  = resource.staticNodes(HID, hostConf.NODECOUNT)
-                hostInfo  = HostInformation()
+                hostInfo = HostInformation()
                 hostInfo.Name, hostInfo.OsVersion, hostInfo.Arch, hostInfo.Os  = resource.hostProperties()
-                hostInfo.NodeCount                       = resource.TotalCpu
-                hostInfo.CpuModel  , hostInfo.CpuMhz     = resource.cpuProperties()
-                hostInfo.SizeMemMB , hostInfo.FreeMemMB  = resource.memProperties()
-                hostInfo.SizeDiskMB, hostInfo.FreeDiskMB = resource.diskProperties()
-                hostInfo.LrmsName  , hostInfo.LrmsType   = resource.lrmsProperties()
+                hostInfo.NodeCount = resource.TotalCpu
+                hostInfo.LrmsName, hostInfo.LrmsType = resource.lrmsProperties()
                 hostInfo.addQueue(resource.queueProperties(hostConf.QUEUE_NAME)) 
                 com.close()
                 out = 'MONITOR %s SUCCESS %s' % (HID, hostInfo.info())
