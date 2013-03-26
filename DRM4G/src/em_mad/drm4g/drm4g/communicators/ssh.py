@@ -46,48 +46,47 @@ class Communicator (drm4g.communicators.Communicator):
     """
     Create a SSH session to remote resources.  
     """
-    ##################
-    # AUTHENTICATION #
-    ##################
-
-    port    = 22
     timeout = 20 # seconds
     sftp_connections = 3
  
     def __init__(self):
-        self._lock = __import__('threading').Lock()
-        self._sem  = __import__('threading').Semaphore(self.sftp_connections)
-        
+        self._lock        = __import__('threading').Lock()
+        self._sem         = __import__('threading').Semaphore(self.sftp_connections)
+        self._close_force = False
+        self._trans       = None
+    
     def connect(self):
         self._lock.acquire()
         try:
-            agent = paramiko.Agent()
-            keys = agent.get_keys()
-            for pkey_class in (RSAKey, DSSKey):
-                try:
-                    key  = pkey_class.from_private_key_file(os.path.expanduser(self.keyFile))
-                    keys = keys + (key,)
-                except Exception:
-                    pass
-            for key in keys:
-                try:
-                    sock = socket.socket()
+            if not self._close_force :
+                agent = paramiko.Agent()
+                keys = agent.get_keys()
+                for pkey_class in (RSAKey, DSSKey):
                     try:
-                        sock.settimeout(self.timeout)
-                    except:
-                        pass 
-                    sock.connect((self.hostName, self.port))  
-                    self._trans = paramiko.Transport(sock)
-                    self._trans.connect(username = self.userName, pkey = key)
-                    if self._trans.is_authenticated(): break
-                except socket.gaierror:
-                    raise drm4g.communicators.ComException('Could not resolve hostname ' + self.hostName)
-                except Exception:
-                    pass
+                        key  = pkey_class.from_private_key_file(os.path.expanduser(self.keyFile))
+                        keys = keys + (key,)
+                    except Exception:
+                        pass
+                for key in keys:
+                    try:
+                        sock = socket.socket()
+                        try:
+                            sock.settimeout(self.timeout)
+                        except:
+                            pass
+                        sock.connect((self.hostName, self.port))
+                        self._trans = paramiko.Transport(sock)
+                        self._trans.connect(username = self.userName, pkey = key)
+                        if self._trans.is_authenticated():
+                            break
+                    except socket.gaierror:
+                        raise drm4g.communicators.ComException('Could not resolve hostname ' + self.hostName)
+                    except Exception:
+                        pass
         finally:
             self._lock.release()            
-        if not self._trans:
-            raise drm4g.communicators.ComException('Authentication failed to ' + self.hostName)        
+        if not self._trans :
+            raise drm4g.communicators.ComException('Authentication failed to ' + self.hostName)      
         
     def execCommand(self, command):
         if not self._isAuthenticated(): 
@@ -164,11 +163,14 @@ class Communicator (drm4g.communicators.Communicator):
         except Exception: pass
         return output
 
-    def close(self):
+    def close(self, force = True):
         self._lock.acquire()
         try:
-            try: self._trans.close()
-            except Exception: pass
+            try: 
+                self._trans.close()
+                self._close_force = force
+            except Exception: 
+                pass
         finally: self._lock.release()
             
     #internal
