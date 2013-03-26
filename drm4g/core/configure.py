@@ -23,6 +23,7 @@ class CheckConfigFile():
             self.init_time = os.stat(PATH_HOSTS).st_mtime
     def test(self):
         if os.stat(PATH_HOSTS).st_mtime != self.init_time:
+            self.init_time = os.stat(PATH_HOSTS).st_mtime
             return True
         else:
             return False
@@ -52,11 +53,12 @@ def readHostList():
         return host_list
 
 def parserHost(hostname, url):
-    logger = logging.getLogger(__name__)
+    logger     = logging.getLogger(__name__)
     url_result = urlparse(url)
     scheme     = url_result.scheme.lower()
     name       = url_result.host
     username   = url_result.username
+    port       = url_result.port
     params     = url_result.params
     if not name:
         out='%s does not have hostname' % (hostname)
@@ -88,15 +90,16 @@ def parserHost(hostname, url):
             out='%s file does not exist' % (key)
             logger.error(out)
             raise ConfigureException(out)
-    return HostConfiguration(scheme, name, username, params)
+    return HostConfiguration(scheme, name, username, port, params)
                 
 class HostConfiguration(object):
         
-    def __init__(self, scheme, name, username, params):
+    def __init__(self, scheme, name, username, port, params):
         
         self._scheme     = scheme
         self._name       = name
         self._username   = username
+        self._port       = port
         self._params     = params
      
     def get_hostname(self):
@@ -107,24 +110,30 @@ class HostConfiguration(object):
     
     def get_scheme(self):
         return self._scheme
+    
+    def get_port(self):
+        if not self._port:
+            return 22
+        else:
+            return int(self._port)
 
     def get_lrms_type(self):
-        return self._params['LRMS_TYPE']
+        return self._params.setdefault('LRMS_TYPE', 'FORK')
 
     def get_node_count(self):
-        return self._params['NODECOUNT']
+        return self._params.setdefault('NODECOUNT','1')
 
     def get_queue_name(self):
-        return self._params.setdefault('QUEUE_NAME','default')
+        return self._params.setdefault('QUEUE_NAME', 'default')
 
     def get_run_dir(self):
-        return self._params.setdefault('TEMP_DIR',r'~')
+        return self._params.setdefault('TEMP_DIR', r'~')
  
     def set_run_dir(self, run_dir):
         self._params['TEMP_DIR'] = run_dir
         
     def get_local_dir(self):
-        return self._params.setdefault('GW_RUN_DIR',r'~')
+        return self._params.setdefault('GW_RUN_DIR', r'~')
         
     def get_project(self):
         return self._params.setdefault('PROJECT')
@@ -134,7 +143,13 @@ class HostConfiguration(object):
     
     def get_key_file(self):
         return self._params.setdefault('SSH_KEY_FILE','~/.ssh/id_rsa')
-
+    
+    def com_attrs(self):
+        return (self.HOST, self.USERNAME, self.SCHEME, self.PORT, self.TEMP_DIR, self.SSH_KEY_FILE)
+    
+    def resource_attrs(self):
+        return (self.LRMS_TYPE, self.PROJECT, self.PARALLEL_TAG)
+    
 
     HOST           = property(get_hostname)
     USERNAME       = property(get_username)
@@ -142,8 +157,9 @@ class HostConfiguration(object):
     LRMS_TYPE      = property(get_lrms_type)
     NODECOUNT      = property(get_node_count)
     QUEUE_NAME     = property(get_queue_name)
-    TEMP_DIR = property(get_run_dir, set_run_dir)
+    TEMP_DIR       = property(get_run_dir, set_run_dir)
     GW_RUN_DIR     = property(get_local_dir)
     PROJECT        = property(get_project)
     PARALLEL_TAG   = property(get_PARALLEL_TAG)
-    SSH_KEY_FILE       = property(get_key_file)
+    SSH_KEY_FILE   = property(get_key_file)
+    PORT           = property(get_port)
