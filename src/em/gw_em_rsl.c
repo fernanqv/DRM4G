@@ -18,6 +18,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <limits.h>
+#include <time.h>
 
 #include "gw_em_rsl.h"
 #include "gw_job.h"
@@ -28,6 +29,14 @@
 /*---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
  
+static int gw_seconds(char *hour)
+{
+	struct tm tm_;
+	if(strptime( hour, "%H:%M:%S", &tm_ )== NULL)
+		return 0;
+    return 60 * 60 * tm_.tm_hour + 60 * tm_.tm_min + tm_.tm_sec;
+}
+
 char* gw_generate_wrapper_rsl (gw_job_t *job)
 {
     char *rsl;
@@ -80,7 +89,7 @@ char* gw_generate_wrapper_rsl (gw_job_t *job)
     if (job->max_cpu_time != NULL)
     {
         snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                "(maxCpuTime=\"%s\")", job->max_cpu_time);
+                "(maxCpuTime=\"%d\")", gw_seconds(job->max_cpu_time));
         strcat(rsl_buffer, tmp_buffer);
     }
     if (job->max_time > 0)
@@ -92,7 +101,7 @@ char* gw_generate_wrapper_rsl (gw_job_t *job)
     if (job->max_walltime != NULL)
     {
         snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                "(maxWallTime=\"%s\")", job->max_walltime);
+                "(maxWallTime=\"%d\")", gw_seconds(job->max_walltime));
         strcat(rsl_buffer, tmp_buffer);
     }
     if (job->max_memory > 0)
@@ -223,7 +232,7 @@ char* gw_generate_wrapper_rsl_nsh (gw_job_t *job)
     if (job->max_cpu_time != NULL)
     {
         snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                "(maxCpuTime=\"%s\")", job->max_cpu_time);
+                "(maxCpuTime=\"%d\")", gw_seconds(job->max_cpu_time));
         strcat(rsl_buffer, tmp_buffer);
     }
     if (job->max_time > 0)
@@ -235,7 +244,7 @@ char* gw_generate_wrapper_rsl_nsh (gw_job_t *job)
     if (job->max_walltime != NULL)
     {
         snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                "(maxWallTime=\"%s\")", job->max_walltime);
+                "(maxWallTime=\"%d\")", gw_seconds(job->max_walltime));
         strcat(rsl_buffer, tmp_buffer);
     }
     if (job->max_memory > 0)
