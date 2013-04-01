@@ -33,11 +33,11 @@ char *gw_em_jdl_environment(gw_job_t *job);
 /*---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*/
  
-static int gw_seconds(char *hour)
+static int gw_seconds(char * hour)
 {
-	struct tm tm_;
-	if(strptime( hour, "%H:%M:%S", &tm_ )== NULL)
-		return 0;
+    struct tm tm_;
+    if (strptime( hour, "%H:%M:%S", &tm_ )==NULL)
+       return 0;
     return 60 * 60 * tm_.tm_hour + 60 * tm_.tm_min + tm_.tm_sec;
 }
 
@@ -181,20 +181,7 @@ char *gw_template_jobtype_string_jdl(gw_jobtype_t type)
 char* gw_generate_pre_wrapper_jdl(gw_job_t *job)
 {
     char *jdl;
-    char *job_envirstatic inline time_t gw_acct_total_time(time_t ini, time_t end, time_t aend)
-    {
-    	time_t tot = 0;
-
-    	if (ini != 0)
-    	{
-    		if (end != 0)
-    			tot = end - ini;
-    		else if (aend != 0)
-    			tot = aend - ini;
-    	}
-
-    	return tot;
-    }	onment;
+    char *job_environment;
     char *pre_wrapper;
     char *pre_wrapper_arguments;    
     char jdl_buffer[GW_RSL_LENGTH];
