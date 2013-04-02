@@ -13,8 +13,6 @@ __version__ = '0.1'
 __author__  = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-GW_LOCATION = os.environ['GW_LOCATION']
-
 class GwEmMad (object):
     
     logger = logging.getLogger(__name__)
@@ -180,7 +178,7 @@ class GwEmMad (object):
             pool = ThreadPool(self._min_thread, self._max_thread)
             while True:
                 input = sys.stdin.readline().split()
-                self.logger.log(' '.join(input))
+                self.logger.debug(' '.join(input))
                 OPERATION = input[0].upper()
                 if len(input) == 4 and self.methods.has_key(OPERATION):
                     if OPERATION == 'FINALIZE' or OPERATION == 'INIT':
