@@ -36,7 +36,7 @@ char *gw_em_jdl_environment(gw_job_t *job);
 static int gw_seconds(char * hour)
 {
     struct tm tm_;
-    if (strptime( hour, "%H:%M:%S", &tm_ )==NULL)
+    if (strptime( hour, "%H:%M:%S", &tm_ ) == NULL)
        return 0;
     return 60 * 60 * tm_.tm_hour + 60 * tm_.tm_min + tm_.tm_sec;
 }
@@ -103,7 +103,7 @@ char* gw_generate_wrapper_jdl(gw_job_t *job)
             job->history->queue,
             job->template.np);
 
-    if ((job->max_cpu_time != NULL) || (job->max_time > 0) || (job->max_walltime != NULL ) || (job->max_memory > 0) || (job->min_memory > 0))
+    if ((job->max_cpu_time != NULL) || (job->max_walltime != NULL ) || (job->max_memory > 0))
     {
             strcat(jdl_buffer, "Requirements = ");
             if (job->max_cpu_time != NULL)
@@ -111,15 +111,6 @@ char* gw_generate_wrapper_jdl(gw_job_t *job)
                 snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
                         "(other.GlueCEPolicyMaxCPUTime <= %d)",
                         gw_seconds(job->max_cpu_time));
-                strcat(jdl_buffer, tmp_buffer);
-                prev_reqs = 1;
-            }
-            if ((job->max_time > 0) && (job->max_walltime == NULL))
-            {
-                if (prev_reqs) strcat(jdl_buffer, " && ");
-                snprintf(tmp_buffer, sizeof(char) * GW_RSL_LENGTH,
-                        "(other.GlueCEPolicyMaxWallClockTime <= %d)",
-                        job->max_time);
                 strcat(jdl_buffer, tmp_buffer);
                 prev_reqs = 1;
             }
