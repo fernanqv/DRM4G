@@ -22,7 +22,7 @@ function check_globus {
 }
 
 function setup_globus {
-    check_globus
+    #check_globus
     if [ -f $GLOBUS_LOCATION/etc/globus-user-env.sh ]; then
         . $GLOBUS_LOCATION/etc/globus-user-env.sh
     fi
