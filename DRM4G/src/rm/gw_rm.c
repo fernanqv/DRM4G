@@ -56,13 +56,14 @@ gw_rm_t* gw_rm_init()
     /* ----------------------------------------------------------------- */
     
     
+    /*
     rc = gethostname(hostname, GW_MSG_STRING_HOST-1);
     if (rc == -1)
     {
 		perror("[RM]: gethostname()");
 		return NULL;
 	}
-		   
+	*/
     gw_rm.socket = socket(AF_INET, SOCK_STREAM, 0);
     if ( gw_rm.socket == -1) 
     {
@@ -113,7 +114,7 @@ gw_rm_t* gw_rm_init()
 		return NULL;
 	}
 	
-	fprintf(fd,"%s %i\n",hostname ,gw_conf.gwd_port);
+	fprintf(fd,"%s %i\n","localhost" ,gw_conf.gwd_port);
 	fclose(fd);
 
 
