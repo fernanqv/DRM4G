@@ -236,7 +236,7 @@ char* gw_generate_wrapper_rsl2 (gw_job_t *job)
 
     if (job->processes_per_node > 0)
     {
-        sprintf(tmp_buffer, " <ppn>%d</pnn>", job->processes_per_node);
+        sprintf(tmp_buffer, " <ppn>%d</ppn>", job->processes_per_node);
         strcat(rsl_buffer, tmp_buffer);
     }
 
