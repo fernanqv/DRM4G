@@ -17,8 +17,7 @@
 
 # Common initialization
 if [ -z "${GW_LOCATION}" ]; then
-    echo "Please, set GW_LOCATION variable."
-    exit -1
+    export GW_LOCATION=`dirname $0`
 fi
 
 . $GW_LOCATION/bin/gw_mad_common.sh
