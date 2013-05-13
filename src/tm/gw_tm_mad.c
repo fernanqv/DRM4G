@@ -45,13 +45,14 @@ int gw_tm_mad_init(gw_tm_mad_t * tm_mad,
 	if ((name == NULL) || (exe == NULL) || (owner == NULL))
 		return -1;
 		
-	length = strlen(gw_conf.gw_location) + strlen(exe) + 6;
 	
-    tm_mad->name         = strdup(name);
+    tm_mad->name          = strdup(name);
     tm_mad->owner         = strdup(owner);
-    tm_mad->executable   = (char *) malloc(sizeof(char)*length);
-    
-    sprintf(tm_mad->executable,"%s/bin/%s",gw_conf.gw_location,exe);
+
+    tm_mad->executable    = strdup(exe);
+	//length = strlen(gw_conf.gw_location) + strlen(exe) + 6;
+    //tm_mad->executable   = (char *) malloc(sizeof(char)*length);
+    //sprintf(tm_mad->executable,"%s/bin/%s",gw_conf.gw_location,exe);
     
     if (args != NULL)
 		tm_mad->argument = strdup(args);
