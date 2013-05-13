@@ -47,9 +47,13 @@ int gw_em_mad_init(gw_em_mad_t *em_mad,
     if ((name == NULL) || (exe == NULL) || (owner == NULL) || (args==NULL))
         return -1;
 		
-    length = strlen(gw_conf.gw_location) + strlen(exe) + 6;
 
-    em_mad->executable = (char *) malloc(sizeof(char)*length);
+    em_mad->executable    = strdup(exe);
+
+    //length = strlen(gw_conf.gw_location) + strlen(exe) + 6;
+    //em_mad->executable   = (char *) malloc(sizeof(char)*length);
+    //sprintf(em_mad->executable,"%s/bin/%s",gw_conf.gw_location,exe);
+
     em_mad->args       = strdup(args);
     em_mad->name       = strdup(name);
     em_mad->owner      = strdup(owner);
@@ -112,8 +116,6 @@ int gw_em_mad_init(gw_em_mad_t *em_mad,
         em_mad->wrapper_rsl     = gw_generate_rsl2;
         em_mad->pre_wrapper_rsl = gw_generate_pre_wrapper_rsl2;            
     }    
-       
-    sprintf(em_mad->executable, "%s/bin/%s", gw_conf.gw_location, exe);    
     
     rc = gw_em_mad_start(em_mad);
 
