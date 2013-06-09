@@ -97,9 +97,27 @@ void gw_recover_state();
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
+void pid_gridway(char *pid_file)
+{
+	FILE * fd;
+
+	fd = fopen(pid_file, "w");
+	if (fd == NULL)
+	{
+		fprintf(stderr,"Error opening gwd.pid file (%s)\n",pid_file);
+		free(pid_file);
+		exit(-1);
+	}
+	fprintf(fd,"%i",getpid());
+	fclose(fd);
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
 void print_license()
 {
-  //printf(GW_VERSION"\n");
+  printf("GW_VERSION\n");
   printf("Copyright 2002-2011 GridWay Project Leads\n");
   printf("GridWay is distributed and licensed for use under the terms of the\n"); 
   printf("Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).\n");
@@ -365,6 +383,7 @@ int main(int argc, char **argv)
     int  rc, fd;
     char *GW_LOCATION;
     char *log;
+    char *pid_file;
     pid_t pid, sid;
     int   length;
     gw_boolean_t multiuser  = GW_FALSE, clear_state = GW_FALSE;
@@ -417,9 +436,11 @@ int main(int argc, char **argv)
 	length   = strlen(GW_LOCATION) + sizeof(GW_VAR_DIR);
 	log  = (char *) malloc (sizeof(char)*(length + 10));
     lock = (char *) malloc (sizeof(char)*(length + 8));
+    pid_file = (char *) malloc (sizeof(char)*(length + 8));
 
     sprintf(lock, "%s/" GW_VAR_DIR "/.lock", GW_LOCATION);
     sprintf(log,  "%s/" GW_VAR_DIR "/gwd.log", GW_LOCATION);
+    sprintf(pid_file, "%s/" GW_VAR_DIR "/gwd.pid", GW_LOCATION);
 
     /* --------------------------------- */
     /*   Check if other gwd is running   */
@@ -496,7 +517,8 @@ int main(int argc, char **argv)
        		unlink(lock);
        		exit(-1);
        	}
-
+       	pid_gridway(pid_file);
+       	free(pid_file);
        	gwd_main();            
     } 
     else 
@@ -533,6 +555,8 @@ int main(int argc, char **argv)
        				return -1;
        			}
 
+       			pid_gridway(pid_file);
+       			free(pid_file);
        			gwd_main();            
        			break;
 
