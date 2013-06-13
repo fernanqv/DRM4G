@@ -103,11 +103,11 @@ void gw_recover_state();
 int gw_check_port()
 {
 	struct sockaddr_in serv_addr;
-	int socket;
+	int socket_;
 
-	socket = socket(AF_INET, SOCK_STREAM, 0);
+	socket_ = socket(AF_INET, SOCK_STREAM, 0);
 
-	if( socket == -1)
+	if( socket_ == -1)
 	{
 		fprintf(stderr,"ERROR: socket error\n");
         return -1;
@@ -118,13 +118,13 @@ int gw_check_port()
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	serv_addr.sin_port = htons(gw_conf.gwd_port);
 
-    if (bind(socket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)
+    if (bind(socket_, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)
     {
     	fprintf(stderr,"ERROR: the port %d is not free.\n",gw_conf.gwd_port);
     	return -1;
     }
 
-    if (close (socket) < 0 )
+    if (close (socket_) < 0 )
     {
     	fprintf(stderr,"ERROR: did not close socket: %s.\n", strerror(errno));
         return errno;
