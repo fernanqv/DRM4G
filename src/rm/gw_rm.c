@@ -78,7 +78,7 @@ gw_rm_t* gw_rm_init()
 	rc = bind(gw_rm.socket,(struct sockaddr *) &(gw_rm.rm_addr),sizeof(struct sockaddr));
 	if ( rc == -1)
 	{
-		fprintf(stderr,"Error starting gwd, the %d port is busy\n",gw_conf.gwd_port);
+		gw_log_print("RM",'R',"Error starting gwd, the %d port is busy\n",gw_conf.gwd_port);
 		return NULL;
 	}
 
