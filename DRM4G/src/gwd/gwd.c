@@ -50,6 +50,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <time.h>
+#include <sys/socket.h>
 
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES                                                          */
@@ -93,6 +94,43 @@ static void gw_register_mads();
 int gw_clear_state();
 
 void gw_recover_state();
+
+
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+int gw_check_port()
+{
+	struct sockaddr_in serv_addr;
+	int socket;
+
+	socket = socket(AF_INET, SOCK_STREAM, 0);
+
+	if( socket == -1)
+	{
+		fprintf(stderr,"ERROR: socket error\n");
+        return -1;
+    }
+
+	bzero((char *) &serv_addr, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(gw_conf.gwd_port);
+
+    if (bind(socket, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)
+    {
+    	fprintf(stderr,"ERROR: the port %d is not free.\n",gw_conf.gwd_port);
+    	return -1;
+    }
+
+    if (close (socket) < 0 )
+    {
+    	fprintf(stderr,"ERROR: did not close socket: %s.\n", strerror(errno));
+        return errno;
+    }
+    return 0;
+}
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
@@ -384,6 +422,7 @@ int main(int argc, char **argv)
     char *GW_LOCATION;
     char *log;
     char *pid_file;
+    char *conf_file;
     pid_t pid, sid;
     int   length;
     gw_boolean_t multiuser  = GW_FALSE, clear_state = GW_FALSE;
@@ -442,6 +481,7 @@ int main(int argc, char **argv)
     sprintf(log,  "%s/" GW_VAR_DIR "/gwd.log", GW_LOCATION);
     sprintf(pid_file, "%s/" GW_VAR_DIR "/gwd.pid", GW_LOCATION);
 
+
     /* --------------------------------- */
     /*   Check if other gwd is running   */
     /* --------------------------------- */
@@ -456,8 +496,7 @@ int main(int argc, char **argv)
         		fprintf(stderr,"Error! Lock file %s exists.\n",lock);
 				break;
 			case EACCES:
-				fprintf(stderr, "Error! Can not access %s, "
-						"check permissions.\n", lock);
+				fprintf(stderr, "Error! Can not access %s, check permissions.\n", lock);
 				break;
 			default:
 				fprintf(stderr, "Error! Can not access %s\n", lock);
@@ -480,7 +519,7 @@ int main(int argc, char **argv)
     if (rc != 0)
     {
         printf("ERROR: Loading gwd configuration file: %s "
-               "check $GW_LOCATION/" GW_VAR_DIR "/gwd.log\n",log);
+               "check %s/" GW_VAR_DIR "/gwd.log\n",log, GW_LOCATION);
         unlink(lock);
         exit(-1);
     }
@@ -493,12 +532,27 @@ int main(int argc, char **argv)
         
         if (rc  == -1)
         {
-            printf("ERROR: Removing job dirs, check $GW_LOCATION/" 
-                   GW_VAR_DIR "/gwd.log\n");
+            printf("ERROR: Removing job dirs, check %s/"
+                   GW_VAR_DIR "/gwd.log\n",GW_LOCATION);
                    
             unlink(lock);
             exit(-1);
         }
+    }
+
+    /* ---------------------------- */
+    /*   Check if gwd.port is free  */
+    /* ---------------------------- */
+
+    gw_log_print("GW",'I',"Checking if %d port is free.\n",gw_conf.gwd_port);
+
+    rc = gw_check_port();
+
+    if (rc  == -1)
+    {
+    	printf("Update the GWD_PORT variable in file: %s/" GW_ETC_DIR "/gwd.conf\n",GW_LOCATION);
+    	unlink(lock);
+    	exit(-1);
     }
 
     /* ---------------------------- */
