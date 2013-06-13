@@ -79,6 +79,7 @@ gw_rm_t* gw_rm_init()
 	if ( rc == -1)
 	{
 		fprintf(stderr,"Error starting gwd, the %d port is busy\n",gw_conf.gwd_port);
+		return NULL;
 	}
 
 
