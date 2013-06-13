@@ -49,21 +49,11 @@ gw_rm_t* gw_rm_init()
 	int    rc;
 	FILE * fd;
     char   str_buffer[GW_MSG_STRING_LONG];
-    char   hostname[GW_MSG_STRING_HOST];
     
     /* ----------------------------------------------------------------- */
     /* 1.- Socket Initialization                                         */
     /* ----------------------------------------------------------------- */
     
-    
-    /*
-    rc = gethostname(hostname, GW_MSG_STRING_HOST-1);
-    if (rc == -1)
-    {
-		perror("[RM]: gethostname()");
-		return NULL;
-	}
-	*/
     gw_rm.socket = socket(AF_INET, SOCK_STREAM, 0);
     if ( gw_rm.socket == -1) 
     {
@@ -84,16 +74,13 @@ gw_rm_t* gw_rm_init()
 	gw_rm.rm_addr.sin_port        = htons(gw_conf.gwd_port);
 	gw_rm.rm_addr.sin_addr.s_addr = INADDR_ANY;
 
-	/* ----- Loop until we find a free port ----- */
-	do 
+
+	rc = bind(gw_rm.socket,(struct sockaddr *) &(gw_rm.rm_addr),sizeof(struct sockaddr));
+	if ( rc == -1)
 	{
-		rc = bind(gw_rm.socket,(struct sockaddr *) &(gw_rm.rm_addr),sizeof(struct sockaddr));
-		if ( rc == -1) 
-		{
-			gw_conf.gwd_port = gw_conf.gwd_port + 1;
-			gw_rm.rm_addr.sin_port = htons(gw_conf.gwd_port);
-		}
-	} while ( rc == -1 );
+		fprintf(stderr,"Error starting gwd, the %d port is busy\n",gw_conf.gwd_port);
+	}
+
 
 	/* ----- Write the port we found in $GW_LOCATION/var/gw.port to let clients know ----- */	
     rc = snprintf(str_buffer,
