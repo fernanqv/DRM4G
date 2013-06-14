@@ -25,6 +25,7 @@
 #include "gw_array_pool.h"
 #include "gw_host_pool.h"
 #include "gw_user_pool.h"
+#include "gw_client.h"
 #include "gw_log.h"
 #include "gw_conf.h"
 
@@ -66,10 +67,12 @@ const char * usage =
 "  -m            runs GridWay daemon in multiuser mode\n"
 "  -c            clears previous GridWay state (otherwise, it is recovered)\n"
 "  -f            run GridWay in foreground mode (no detached)\n"
-"  -d            disposes jobs when done\n";
+"  -d            disposes jobs when done\n"
+"  -s            status of GridWay daemon\n"
+"  -k            kills GridWay daemon\n";
 
 const char * susage =
-"usage: gwd [-h] [-v] [-m] [-c] [-f] [-d]\n";
+"usage: gwd [-h] [-v] [-m] [-c] [-f] [-d] [-s] [-k]\n";
 
 /* -------------------------------------------------------------------------- */
 
@@ -153,12 +156,77 @@ void pid_gridway(char *pid_file)
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
+int read_pid_gridway(char *pid_file)
+{
+	FILE * fd;
+    int pid
+
+	fd = fopen(pid_file, "r");
+	if (fd == NULL)
+	{
+		fprintf(stderr,"Error opening gwd.pid file (%s)\n",pid_file);
+		free(pid_file);
+		exit(-1);
+
+	}
+	if (fscanf(fd,"%i",&pid) != 1)
+	{
+		fprintf(stderr,"Error reading gwd.pid file (%s)\n",pid_file);
+		free(pid_file);
+		exit(-1);
+	}
+	fclose(fd);
+	return pid;
+
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+void gw_status()
+{
+	if( (access(lock , F_OK ) != -1 ) || (gw_client_init() != NULL))
+	{
+		printf("gwd is running\n");
+	}
+	else
+	{
+		printf("gwd is stopped\n");
+	}
+}
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
+void gw_kill(char *pid_file)
+{
+	int pid;
+	int rc;
+
+	pid = read_pid_gridway(pid_file)
+	if (pid >= 0)
+    {
+		rc = kill(pid, SIGTERM);
+		if (rc == -1)
+		{
+			fprintf(stderr,"ERROR: killing gwd pid (%d)\n",pid);
+			exit(-1);
+
+        }
+        unlink(lock);
+    }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
+
 void print_license()
 {
-  printf("GW_VERSION\n");
-  printf("Copyright 2002-2011 GridWay Project Leads\n");
-  printf("GridWay is distributed and licensed for use under the terms of the\n"); 
-  printf("Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).\n");
+	printf("GW_VERSION\n");
+	printf("Copyright 2002-2011 GridWay Project Leads\n");
+	printf("GridWay is distributed and licensed for use under the terms of the\n");
+	printf("Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).\n");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -419,6 +487,7 @@ int main(int argc, char **argv)
 {
   	char  opt;
     int  rc, fd;
+    int  pid;
     char *GW_LOCATION;
     char *log;
     char *pid_file;
@@ -429,7 +498,33 @@ int main(int argc, char **argv)
     gw_boolean_t fg_mode = GW_FALSE;
     gw_boolean_t dispose = GW_FALSE;
     
-    while((opt = getopt(argc,argv,"vhmcfd")) != -1)
+
+    /* ------------------------------------ */
+    /*   Get Environment & Load conf files  */
+    /* ------------------------------------ */
+
+    GW_LOCATION = getenv("GW_LOCATION");
+
+    if(GW_LOCATION == NULL)
+    {
+    	fprintf(stderr,"Error! GW_LOCATION environment variable is undefined.\n");
+    	return -1;
+    }
+
+    length   = strlen(GW_LOCATION) + sizeof(GW_VAR_DIR);
+    log  = (char *) malloc (sizeof(char)*(length + 10));
+    lock = (char *) malloc (sizeof(char)*(length + 8));
+    pid_file = (char *) malloc (sizeof(char)*(length + 8));
+
+    sprintf(lock, "%s/" GW_VAR_DIR "/.lock", GW_LOCATION);
+    sprintf(log,  "%s/" GW_VAR_DIR "/gwd.log", GW_LOCATION);
+    sprintf(pid_file, "%s/" GW_VAR_DIR "/gwd.pid", GW_LOCATION);
+
+    /* ------------------------------------ */
+    /*              Main menu               */
+    /* ------------------------------------ */
+
+    while((opt = getopt(argc,argv,"vhmcfdsk")) != -1)
         switch(opt)
         {
             case 'v':
@@ -447,39 +542,25 @@ int main(int argc, char **argv)
             	clear_state = GW_TRUE;
             	break;       
             case 'f':
-            	fg_mode  = GW_TRUE;
+            	fg_mode = GW_TRUE;
             	break;
             case 'd':
                 dispose = GW_TRUE;
-                break; 
+                break;
+            case 's':
+            	gw_status()
+            	return 0;
+                break;
+            case 'k':
+            	gw_kill()
+            	return 0;
+                break;
             default:
                 fprintf(stderr,"error: invalid option \'%c\'\n",optopt);
                 printf("%s", susage);
                 exit(1);
                 break;
       	}
-    
-    /* ------------------------------------ */
-    /*   Get Environment & Load conf files  */
-    /* ------------------------------------ */
-
-    GW_LOCATION = getenv("GW_LOCATION");
-    
-    if(GW_LOCATION == NULL)
-    {
-        fprintf(stderr,"Error! GW_LOCATION environment variable is"
-                " undefined.\n");
-        return -1;
-    }
-
-	length   = strlen(GW_LOCATION) + sizeof(GW_VAR_DIR);
-	log  = (char *) malloc (sizeof(char)*(length + 10));
-    lock = (char *) malloc (sizeof(char)*(length + 8));
-    pid_file = (char *) malloc (sizeof(char)*(length + 8));
-
-    sprintf(lock, "%s/" GW_VAR_DIR "/.lock", GW_LOCATION);
-    sprintf(log,  "%s/" GW_VAR_DIR "/gwd.log", GW_LOCATION);
-    sprintf(pid_file, "%s/" GW_VAR_DIR "/gwd.pid", GW_LOCATION);
 
 
     /* --------------------------------- */
