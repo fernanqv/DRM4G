@@ -25,9 +25,9 @@
 #include "gw_array_pool.h"
 #include "gw_host_pool.h"
 #include "gw_user_pool.h"
-#include "gw_client.h"
 #include "gw_log.h"
 #include "gw_conf.h"
+#include "gw_client.h"
 
 #ifdef HAVE_LIBDB
 #include "gw_acct.h"
@@ -58,7 +58,7 @@
 /* ------------------------------------------------------------------------- */
 
 const char * usage =
-"\n gwd [-h] [-v] [-m] [-c] [-f] [-d]\n\n"
+"\n gwd [-h] [-v] [-m] [-c] [-f] [-d] [-s] [-k]\n\n"
 "SYNOPSIS\n"
 "  GridWay daemon\n\n"
 "OPTIONS\n"
@@ -105,21 +105,21 @@ void gw_recover_state();
 
 int gw_check_port()
 {
-	struct sockaddr_in serv_addr;
-	int socket_;
+    struct sockaddr_in serv_addr;
+    int socket_;
 
-	socket_ = socket(AF_INET, SOCK_STREAM, 0);
+    socket_ = socket(AF_INET, SOCK_STREAM, 0);
 
-	if( socket_ == -1)
-	{
-		fprintf(stderr,"ERROR: socket error\n");
+    if( socket_ == -1)
+    {
+        fprintf(stderr,"ERROR: socket error\n");
         return -1;
     }
 
-	bzero((char *) &serv_addr, sizeof(serv_addr));
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(gw_conf.gwd_port);
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(gw_conf.gwd_port);
 
     if (bind(socket_, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)
     {
@@ -129,8 +129,8 @@ int gw_check_port()
 
     if (close (socket_) < 0 )
     {
-    	fprintf(stderr,"ERROR: did not close socket: %s.\n", strerror(errno));
-        return errno;
+    	fprintf(stderr,"ERROR: did not close socket.\n");
+        return -1;
     }
     return 0;
 }
@@ -140,17 +140,17 @@ int gw_check_port()
 
 void pid_gridway(char *pid_file)
 {
-	FILE * fd;
+     int fd;
 
-	fd = fopen(pid_file, "w");
-	if (fd == NULL)
-	{
-		fprintf(stderr,"Error opening gwd.pid file (%s)\n",pid_file);
-		free(pid_file);
-		exit(-1);
-	}
-	fprintf(fd,"%i",getpid());
-	fclose(fd);
+     fd = fopen(pid_file, "w");
+     if (fd == NULL)
+     {
+         fprintf(stderr,"Error opening gwd.pid file (%s)\n",pid_file);
+	 free(pid_file);
+	 exit(-1);
+     }
+     fprintf(fd,"%i",getpid());
+     fclose(fd);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -158,41 +158,40 @@ void pid_gridway(char *pid_file)
 
 int read_pid_gridway(char *pid_file)
 {
-	FILE * fd;
-    int pid
+    int fd;
+    int pid;
 
-	fd = fopen(pid_file, "r");
-	if (fd == NULL)
-	{
-		fprintf(stderr,"Error opening gwd.pid file (%s)\n",pid_file);
-		free(pid_file);
-		exit(-1);
-
-	}
-	if (fscanf(fd,"%i",&pid) != 1)
-	{
-		fprintf(stderr,"Error reading gwd.pid file (%s)\n",pid_file);
-		free(pid_file);
-		exit(-1);
-	}
-	fclose(fd);
-	return pid;
-
+    fd = fopen(pid_file, "r");
+    if (fd == NULL)
+    {
+        fprintf(stderr,"Error opening gwd.pid file (%s)\n",pid_file);
+	return -1; 
+    }
+    if (fscanf(fd,"%i",&pid) != 1)
+    {
+        fprintf(stderr,"Error reading gwd.pid file (%s)\n",pid_file); 
+        return -1;
+    }
+    fclose(fd);
+    return pid;
 }
 
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-void gw_status()
+void gw_status(char *pid_file)
 {
-	if( (access(lock , F_OK ) != -1 ) || (gw_client_init() != NULL))
-	{
-		printf("gwd is running\n");
-	}
-	else
-	{
-		printf("gwd is stopped\n");
-	}
+    int pid;
+
+    pid = read_pid_gridway(pid_file);
+    if (kill(pid, 0) == 0)
+    {
+        printf("gwd is running\n");
+    }
+    else
+    {
+        printf("gwd is stopped\n");
+    }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -200,20 +199,25 @@ void gw_status()
 
 void gw_kill(char *pid_file)
 {
-	int pid;
-	int rc;
+    int pid;
+    int rc;
 
-	pid = read_pid_gridway(pid_file)
-	if (pid >= 0)
+    pid = read_pid_gridway(pid_file);
+    if (pid > 0)
     {
-		rc = kill(pid, SIGTERM);
-		if (rc == -1)
-		{
-			fprintf(stderr,"ERROR: killing gwd pid (%d)\n",pid);
-			exit(-1);
-
+     	rc = kill(pid, SIGTERM);	
+        if (errno != ESRCH && rc == -1)
+	{
+            fprintf(stderr,"ERROR: killing gwd, pid (%d)\n",pid);
+            free(pid_file);
+	    exit(-1);
         }
         unlink(lock);
+    }
+    else
+    {
+        free(pid_file);
+        exit(-1);
     }
 }
 
@@ -223,10 +227,10 @@ void gw_kill(char *pid_file)
 
 void print_license()
 {
-	printf("GW_VERSION\n");
-	printf("Copyright 2002-2011 GridWay Project Leads\n");
-	printf("GridWay is distributed and licensed for use under the terms of the\n");
-	printf("Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).\n");
+    printf("GW_VERSION\n");
+    printf("Copyright 2002-2011 GridWay Project Leads\n");
+    printf("GridWay is distributed and licensed for use under the terms of the\n");
+    printf("Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0).\n");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -298,7 +302,7 @@ void gwd_main()
 
 #ifdef HAVE_LIBDB
 	
-	rc = gw_acct_db_open(GW_TRUE);
+    rc = gw_acct_db_open(GW_TRUE);
     if (  rc != 0  )
     {
         gw_log_print("GW",'E',"Error initializing accounting databases.\n");
@@ -485,15 +489,14 @@ void gwd_main()
 
 int main(int argc, char **argv)
 {
-  	char  opt;
-    int  rc, fd;
-    int  pid;
-    char *GW_LOCATION;
-    char *log;
-    char *pid_file;
-    char *conf_file;
-    pid_t pid, sid;
-    int   length;
+    char  opt;
+    int   rc, fd;
+    char  *GW_LOCATION;
+    char  *log;
+    char  *pid_file;
+    char  *conf_file;
+    pid_t  pid, sid;
+    int    length;
     gw_boolean_t multiuser  = GW_FALSE, clear_state = GW_FALSE;
     gw_boolean_t fg_mode = GW_FALSE;
     gw_boolean_t dispose = GW_FALSE;
@@ -511,13 +514,13 @@ int main(int argc, char **argv)
     	return -1;
     }
 
-    length   = strlen(GW_LOCATION) + sizeof(GW_VAR_DIR);
+    length = strlen(GW_LOCATION) + sizeof(GW_VAR_DIR);
     log  = (char *) malloc (sizeof(char)*(length + 10));
     lock = (char *) malloc (sizeof(char)*(length + 8));
     pid_file = (char *) malloc (sizeof(char)*(length + 8));
 
     sprintf(lock, "%s/" GW_VAR_DIR "/.lock", GW_LOCATION);
-    sprintf(log,  "%s/" GW_VAR_DIR "/gwd.log", GW_LOCATION);
+    sprintf(log, "%s/" GW_VAR_DIR "/gwd.log", GW_LOCATION);
     sprintf(pid_file, "%s/" GW_VAR_DIR "/gwd.pid", GW_LOCATION);
 
     /* ------------------------------------ */
@@ -548,11 +551,11 @@ int main(int argc, char **argv)
                 dispose = GW_TRUE;
                 break;
             case 's':
-            	gw_status()
+            	gw_status(pid_file);
             	return 0;
                 break;
             case 'k':
-            	gw_kill()
+            	gw_kill(pid_file);
             	return 0;
                 break;
             default:
@@ -571,18 +574,18 @@ int main(int argc, char **argv)
 
     if( fd == -1)
     {
-		switch(errno)
-		{
-			case EEXIST:
-        		fprintf(stderr,"Error! Lock file %s exists.\n",lock);
-				break;
-			case EACCES:
-				fprintf(stderr, "Error! Can not access %s, check permissions.\n", lock);
-				break;
-			default:
-				fprintf(stderr, "Error! Can not access %s\n", lock);
-		}
-		exit(-1);
+        switch(errno)
+        {
+        case EEXIST:
+            fprintf(stderr,"Error! Lock file %s exists.\n",lock);
+            break;
+        case EACCES:
+	    fprintf(stderr, "Error! Can not access %s, check permissions.\n", lock);
+            break;
+        default:
+            fprintf(stderr, "Error! Can not access %s\n", lock);
+        }
+        exit(-1);
     }
 
     close(fd);
@@ -631,16 +634,17 @@ int main(int argc, char **argv)
 
     if (rc  == -1)
     {
-    	printf("Update the GWD_PORT variable in file: %s/" GW_ETC_DIR "/gwd.conf\n",GW_LOCATION);
-    	unlink(lock);
-    	exit(-1);
+        printf("Update the GWD_PORT variable in file: %s/" GW_ETC_DIR "/gwd.conf\n",GW_LOCATION);
+        unlink(lock);
+        exit(-1);
     }
 
     /* ---------------------------- */
     /*   Fork & exit main process   */
     /* ---------------------------- */
     
-    if (fg_mode == GW_TRUE) {
+    if (fg_mode == GW_TRUE) 
+    {
        	sprintf(log,"%s/" GW_VAR_DIR "/",GW_LOCATION);
        	rc = chdir(log);
 
@@ -648,9 +652,9 @@ int main(int argc, char **argv)
 
        	if (rc != 0)
        	{
-       		perror("Error, can not change to dir.");
-       		unlink(lock);
-       		exit(-1);
+            perror("Error, can not change to dir.");
+            unlink(lock);
+       	    exit(-1);
        	}
        	pid_gridway(pid_file);
        	free(pid_file);
@@ -662,45 +666,44 @@ int main(int argc, char **argv)
 
        	switch (pid)
        	{
-       		case -1: /* Error */
-       			fprintf(stderr,"Error! Unable to fork.\n"); 
-       			unlink(lock);
-       			free(log);
-       			exit(-1);
-       			break;
+       	case -1: /* Error */
+            fprintf(stderr,"Error! Unable to fork.\n"); 
+            unlink(lock);
+            free(log);
+            exit(-1);
+            break;
 
-       		case 0: /* Child process */
-       			sprintf(log,"%s/" GW_VAR_DIR "/",GW_LOCATION);
-       			rc = chdir(log);
+        case 0: /* Child process */
+       	    sprintf(log,"%s/" GW_VAR_DIR "/",GW_LOCATION);
+            rc = chdir(log);
 
-       			free(log);
+       	    free(log);
 
-       			if (rc != 0)
-       			{
-       				perror("Error, can not change to dir.");
-       				unlink(lock);
-       				exit(-1);
-       			}
+            if (rc != 0)
+            {
+                perror("Error, can not change to dir.");
+                unlink(lock);
+                exit(-1);
+            }
 
-       			sid = setsid();
-       			if (sid == -1)
-       			{
-       				perror("Error, creating new session");
-       				unlink(lock);                
-       				return -1;
-       			}
+       	    sid = setsid();
+            if (sid == -1)
+       	    {
+       	        perror("Error, creating new session");
+       	        unlink(lock);                
+       		return -1;
+            }
 
-       			pid_gridway(pid_file);
-       			free(pid_file);
-       			gwd_main();            
-       			break;
+       	    pid_gridway(pid_file);
+            free(pid_file);
+            gwd_main();            
+            break;
 
-       		default: /* Parent process */
-       			free(log);
-       			break;               
+        default: /* Parent process */
+            free(log);
+            break;               
         }
     }
-    
     return 0;
 }
 
@@ -710,10 +713,10 @@ int main(int argc, char **argv)
 
 void gw_register_mads()
 {
-	int i;
-	int rc;
+    int i;
+    int rc;
 	
-	gw_log_print("GW",'I',"Loading Information Manager MADs.\n");
+    gw_log_print("GW",'I',"Loading Information Manager MADs.\n");
     i = 0;
     while ( ( i < GW_MAX_MADS ) && (gw_conf.im_mads[i][0] != NULL) )
     {
