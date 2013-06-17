@@ -145,7 +145,7 @@ void pid_gridway(char *pid_file)
      fd = fopen(pid_file, "w");
      if (fd == NULL)
      {
-         fprintf(stderr,"Error opening gwd.pid file (%s)\n",pid_file);
+         fprintf(stderr,"ERROR: opening gwd.pid file (%s)\n",pid_file);
 	 free(pid_file);
 	 exit(-1);
      }
@@ -164,13 +164,12 @@ int read_pid_gridway(char *pid_file)
     fd = fopen(pid_file, "r");
     if (fd == NULL)
     {
-        fprintf(stderr,"Error opening gwd.pid file (%s)\n",pid_file);
 	return -1; 
     }
     if (fscanf(fd,"%i",&pid) != 1)
     {
-        fprintf(stderr,"Error reading gwd.pid file (%s)\n",pid_file); 
-        return -1;
+        fprintf(stderr,"ERROR: reading gwd.pid file (%s)\n",pid_file); 
+        exit(-1);
     }
     fclose(fd);
     return pid;
@@ -184,14 +183,22 @@ void gw_status(char *pid_file)
     int pid;
 
     pid = read_pid_gridway(pid_file);
-    if (kill(pid, 0) == 0)
+    if(pid == -1)
     {
-        printf("gwd is running\n");
+        printf("stopped\n");
     }
-    else
+    else 
     {
-        printf("gwd is stopped\n");
+        if (kill(pid, 0) == 0)
+        {
+            printf("running\n");
+        }
+        else
+        {
+            printf("stopped\n");
+        }
     }
+    free(pid_file);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -205,17 +212,30 @@ void gw_kill(char *pid_file)
     pid = read_pid_gridway(pid_file);
     if (pid > 0)
     {
-     	rc = kill(pid, SIGTERM);	
-        if (errno != ESRCH && rc == -1)
+     	rc = kill(pid, SIGTERM);
+        if (rc == 0)
+        {
+            unlink(lock);
+            free(pid_file);
+            exit(0);
+        }	
+        else if (errno == ESRCH)
 	{
-            fprintf(stderr,"ERROR: killing gwd, pid (%d)\n",pid);
+            fprintf(stderr,"ERROR: GridWay daemon is already stopped\n");
             free(pid_file);
 	    exit(-1);
         }
-        unlink(lock);
+        else 
+        {
+            fprintf(stderr,"ERROR: killing GridWay daemon, pid (%d)\n",pid);
+            free(pid_file);
+            exit(-1);    
+        }                  
+        
     }
     else
     {
+        fprintf(stderr,"ERROR: GridWay daemon is already stopped\n");
         free(pid_file);
         exit(-1);
     }
@@ -510,7 +530,7 @@ int main(int argc, char **argv)
 
     if(GW_LOCATION == NULL)
     {
-    	fprintf(stderr,"Error! GW_LOCATION environment variable is undefined.\n");
+    	fprintf(stderr,"ERROR: GW_LOCATION environment variable is undefined.\n");
     	return -1;
     }
 
@@ -552,14 +572,13 @@ int main(int argc, char **argv)
                 break;
             case 's':
             	gw_status(pid_file);
-            	return 0;
+            	exit(0);
                 break;
             case 'k':
             	gw_kill(pid_file);
-            	return 0;
                 break;
             default:
-                fprintf(stderr,"error: invalid option \'%c\'\n",optopt);
+                fprintf(stderr,"ERROR: invalid option \'%c\'\n",optopt);
                 printf("%s", susage);
                 exit(1);
                 break;
@@ -602,8 +621,8 @@ int main(int argc, char **argv)
     
     if (rc != 0)
     {
-        printf("ERROR: Loading gwd configuration file: %s "
-               "check %s/" GW_VAR_DIR "/gwd.log\n",log, GW_LOCATION);
+        fprintf(stderr,"ERROR: loading gwd configuration file: %s check %s/" 
+               GW_VAR_DIR "/gwd.log\n",log, GW_LOCATION);
         unlink(lock);
         exit(-1);
     }
@@ -616,7 +635,7 @@ int main(int argc, char **argv)
         
         if (rc  == -1)
         {
-            printf("ERROR: Removing job dirs, check %s/"
+            fprintf(stderr,"ERROR: removing job dirs, check %s/"
                    GW_VAR_DIR "/gwd.log\n",GW_LOCATION);
                    
             unlink(lock);
@@ -634,7 +653,7 @@ int main(int argc, char **argv)
 
     if (rc  == -1)
     {
-        printf("Update the GWD_PORT variable in file: %s/" GW_ETC_DIR "/gwd.conf\n",GW_LOCATION);
+        fprintf(stderr,"ERROR: update the GWD_PORT variable in file: %s/" GW_ETC_DIR "/gwd.conf\n",GW_LOCATION);
         unlink(lock);
         exit(-1);
     }
