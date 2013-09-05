@@ -1,21 +1,20 @@
 import sys
-from Queue import Queue
 import re
 import time
-import os
 import threading
 import logging
-from string import Template
-from drm4g.utils.rsl2 import Rsl2Parser
-from drm4g.utils.list import List 
-from drm4g.core.configure import readHostList, parserHost, CheckConfigFile
-from drm4g.utils.dynamic import ThreadPool
-from drm4g.utils.message import Send
-from drm4g.global_settings import COMMUNICATOR, RESOURCE_MANAGER
-from drm4g.utils.importlib import import_module
+from os.path                 import join, dirname
+from string                  import Template
+from Queue                   import Queue
+from drm4g                   import REMOTE_JOBS_DIR 
+from drm4g.utils.rsl2        import Rsl2Parser
+from drm4g.utils.list        import List 
+from drm4g.core.configure    import Configuration
+from drm4g.utils.dynamic     import ThreadPool
+from drm4g.utils.message     import Send
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 class GwEmMad (object):
@@ -59,17 +58,18 @@ class GwEmMad (object):
     -INFO: If RESULT is FAILURE, it contains the cause of failure. Otherwise, 
         if OPERATION is POLL or CALLBACK,it contains the state of the job.
     """
-    logger = logging.getLogger(__name__)
+    logger  = logging.getLogger(__name__)
     message = Send()
 
     def __init__(self):
         self._callback_interval = 30 #seconds
         self._max_thread        = 100
         self._min_thread        = 5
-        self._JID_list          = List()
-        self._host_properties   = { }
+        self._job_list          = List()
+        self._resources         = dict()
+        self._job_obj           = dict()
+        self._configure         = None 
         self._lock              = threading.Lock()
-        self._config_file_time  = None
 	        
     def do_INIT(self, args):
         """
@@ -78,8 +78,8 @@ class GwEmMad (object):
         @type args : string
         """
         out = 'INIT - SUCCESS -'
-        self.message.stdout(out)
-        self.logger.debug(out)
+        self.message.stdout( out )
+        self.logger.debug( out )
   
     def do_SUBMIT(self, args):
         """
@@ -90,36 +90,36 @@ class GwEmMad (object):
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
             HOST, JM = HOST_JM.rsplit('/',1)
-            hostConf, com = self._updateHost(HOST)
-            
-            # Init Job class
-            job = getattr(import_module(RESOURCE_MANAGER[hostConf.LRMS_TYPE]), 'Job')()
-            job.Communicator = com
-
             # Parse rsl
-            rsl_var = Rsl2Parser(RSL).parser()
-            rsl_var['PROJECT']      = hostConf.PROJECT
-            rsl_var['parallel_env'] = hostConf.PARALLEL_TAG
-            rsl_wrapper_directory   = rsl_var.setdefault('directory',rsl_var['executable'].split('/')[0])
-            if hostConf.TEMP_DIR == '~':
-                hostConf.TEMP_DIR = job.getHomeDirectory()
-            for k in "stdout", "stderr", "directory", "executable":
-                rsl_var[k] = "%s/%s" % (hostConf.TEMP_DIR, rsl_var[k])
-
-            # Create and copy wrapper_drm4g 
-            local_wrapper_directory  = '%s/wrapper_drm4g.%s' % (RSL.rsplit('/',1)[0] , RSL.split('.')[-1])
-            remote_wrapper_directory = '%s/.wrapper_drm4g' % (rsl_wrapper_directory)
-            string_template = job.jobTemplate(rsl_var)
-            job.createWrapper(local_wrapper_directory, string_template)
-            job.copyWrapper(local_wrapper_directory, remote_wrapper_directory)
-
+            rsl                    = Rsl2Parser(RSL).parser()
+            rsl['project']         = self._resources.get('project')
+            rsl['parallel_env']    = self._resources.get('parallel_env')
+            # Init Job class
+            job = self._update_resource( HOST )
+            if '_VO_' in HOST :
+                host , job.resfeatures['vo'] = HOST.split('_VO_')
+                job.resfeatures['jm']        = JM
+                job.resfeatures['env_file']  = join( dirname(RSL) , "job.env" )
+                job.resfeatures['queue']     = rsl[ 'queue' ]
+            else :
+                host = HOST
+            # Update remote directories 
+            ABS_REMOTE_JOBS_DIR   = job.get_abs_directory( REMOTE_JOBS_DIR )
+            for key in [ "stdout" , "stderr" , "directory" , "executable" ] :
+                rsl[key] = join( ABS_REMOTE_JOBS_DIR , rsl[key] )
+            # Create and copy wrapper_drm4g file 
+            local_file    = join ( RSL.rsplit( '/' , 1 )[ 0 ] , "wrapper_drm4g.%s" % RSL.split( '.' )[ -1 ] )
+            remote_file   = join ( rsl[ 'directory' ] , 'wrapper_drm4g' )
+            job.createWrapper( local_file , job.jobTemplate( rsl ) )
+            job.copyWrapper( local_file , remote_file )
             # Execute wrapper_drm4g 
-            pathScript = Template('$directory/.wrapper_drm4g').safe_substitute(rsl_var)
-            job.JobId = job.jobSubmit(pathScript)
-            self._JID_list.put(JID, job)
-            out = 'SUBMIT %s SUCCESS %s:%s' % (JID, HOST, job.JobId)
-        except Exception, e:
-            out = 'SUBMIT %s FAILURE %s' % (JID, str(e))
+            job.JobId = job.jobSubmit( remote_file )
+            self._job_list.put( JID , job )
+            out = 'SUBMIT %s SUCCESS %s:%s' % ( JID , HOST , job.JobId )
+        except Exception, err:
+            import  traceback
+            traceback.print_exc(file=sys.stdout)
+            out = 'SUBMIT %s FAILURE %s' % ( JID , str( err ) )
         self.message.stdout(out)
         self.logger.debug(out)
 
@@ -130,9 +130,9 @@ class GwEmMad (object):
         @type args : string
         """
         out = 'FINALIZE - SUCCESS -'
-        self.message.stdout(out)
-        self.logger.debug(out)
-        sys.exit(0)    
+        self.message.stdout( out )
+        self.logger.debug( out ) 
+        sys.exit( 0 )    
     
     def do_POLL(self, args):
         """
@@ -142,15 +142,16 @@ class GwEmMad (object):
         """
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
-            if self._JID_list.has_key(JID):
-                status = self._JID_list.get(JID).Status
-                out = 'POLL %s SUCCESS %s' % (JID, status)
+            if self._job_list.has_key( JID ) :
+                job    = self._job_list.get( JID )
+                status = job.getStatus( )
+                out = 'POLL %s SUCCESS %s' % ( JID , status )
             else:
                 out = 'POLL %s FAILURE Job not submitted' % (JID) 
-        except Exception, e:
-            out = 'POLL %s FAILURE %s' % (JID, str(e))
-        self.message.stdout(out)
-        self.logger.debug(out)
+        except Exception, err:
+            out = 'POLL %s FAILURE %s' % ( JID , str( err ) )
+        self.message.stdout( out )
+        self.logger.debug( out )
         
     def do_RECOVER(self, args):
         """
@@ -160,16 +161,14 @@ class GwEmMad (object):
         """
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
-            host, remoteJobId = HOST_JM.split(':')
-            hostConf, com = self._updateHost(host)
-            job = getattr(import_module(RESOURCE_MANAGER[hostConf.LRMS_TYPE]), 'Job')()
-            job.Communicator = com
-            job.JobId = remoteJobId
-            job.refreshJobStatus()
-            self._JID_list.put(JID, job)
-            out = 'RECOVER %s SUCCESS %s' % (JID, job.Status)
-        except Exception, e:
-            out = 'RECOVER %s FAILURE %s' % (JID, str(e))    
+            HOST, remote_JobId = HOST_JM.split( ':' )
+            job                = self._update_resource( HOST )            
+            job.JobId          = remote_JobId
+            job.refreshJobStatus( )
+            self._job_list.put( JID , job )
+            out = 'RECOVER %s SUCCESS %s' % ( JID, job.getStatus() )
+        except Exception, err:
+            out = 'RECOVER %s FAILURE %s' % (JID , str( err ) )    
         self.message.stdout(out)
         self.logger.debug(out)
             
@@ -178,23 +177,23 @@ class GwEmMad (object):
         Show the state of the job
         """
         while True:
-            time.sleep(self._callback_interval)
-            for JID, job  in self._JID_list.items():
+            time.sleep( self._callback_interval )
+            for JID, job  in self._job_list.items( ):
                 try:
-                    oldStatus = job.Status
-                    job.refreshJobStatus()
-                    newStatus = job.Status
+                    oldStatus = job.getStatus( )
+                    job.refreshJobStatus( )
+                    newStatus = job.getStatus( )
                     if oldStatus != newStatus:
                         if newStatus == 'DONE' or newStatus == 'FAILED': 
-                            self._JID_list.delete(JID)
-                        out = 'CALLBACK %s SUCCESS %s' % (JID, newStatus)
-                        self.message.stdout(out)
-                        self.logger.debug(out)
-                except Exception, e:
-                    out = 'CALLBACK %s FAILURE %s' % (JID, str(e))
-                    self.message.stdout(out)
-                    self.logger.debug(out)
-                time.sleep(0.1)
+                            self._job_list.delete(JID)
+                        time.sleep ( 0.2 )
+                        out = 'CALLBACK %s SUCCESS %s' % ( JID , newStatus )
+                        self.message.stdout( out )
+                        self.logger.debug( out )
+                except Exception, err:
+                    out = 'CALLBACK %s FAILURE %s' % ( JID , str( err ) )
+                    self.message.stdout( out )
+                    self.logger.debug( out, exc_info=1 )
         
     def do_CANCEL(self, args):
         """
@@ -204,8 +203,8 @@ class GwEmMad (object):
         """
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
-            if self._JID_list.has_key(JID):
-                self._JID_list.get(JID).jobCancel()
+            if self._job_list.has_key(JID):
+                self._job_list.get(JID).jobCancel()
                 out = 'CANCEL %s SUCCESS -' % (JID)
             else:
                 out = 'CANCEL %s FAILURE Job not submitted' % (JID)
@@ -227,9 +226,10 @@ class GwEmMad (object):
         """
         try:
             worker = threading.Thread(target = self.do_CALLBACK, )
-            worker.setDaemon(True); worker.start()
+            worker.setDaemon(True)
+            worker.start()
+            self._configure = Configuration()
             pool = ThreadPool(self._min_thread, self._max_thread)
-            self._config_file_time = CheckConfigFile()
             while True:
                 input = sys.stdin.readline().split()
                 self.logger.debug(' '.join(input))
@@ -244,43 +244,38 @@ class GwEmMad (object):
                     out = 'WRONG COMMAND'
                     self.message.stdout(out)
                     self.logger.debug(out)
-        except Exception, e:
-            self.logger.warning(str(e))
-              
-    def _updateHost(self, host):
-        self._lock.acquire()
-        try:
-            if self._config_file_time.test() or not self._host_properties or not self._host_properties.has_key(host):
-                hostList = readHostList()
-                hostConf = parserHost(host, hostList.get(host))
-                if not self._host_properties.has_key(host):
-                    communicator = self._createCom(hostConf) 
-                else:
-                    oldHostConf, oldCommunicator = self._host_properties.get(host)
-                    if hostConf.resource_attrs() != oldHostConf.resource_attrs():
-                        oldCommunicator.close()
-                        communicator = self._createCom(hostConf)
-                    else:
-                        communicator = self._host_properties.get(host)[1]
-                self._host_properties[host] = ( hostConf, communicator)
-                return hostConf, communicator
-            else: 
-                return self._host_properties.get(host)
-        finally:
-            self._lock.release()        
-            
-    def _createCom(self, hostConf):
-        try:
-            com               = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
-            com.hostName      = hostConf.HOST
-            com.userName      = hostConf.USERNAME
-            com.workDirectory = hostConf.TEMP_DIR
-            com.keyFile       = hostConf.SSH_KEY_FILE
-            com.port          = hostConf.PORT
-            com.connect()
-            return com
-        except Exception, e:
-            out = "It couldn't be connected to %s : %s" %(hostConf.HOST, str(e))
-            self.logger.warning(out)
-            raise Exception(out)
+        except Exception, err:
+            self.logger.warning( str( err ) )
+    
+    def _update_resource(self, host):
+        with self._lock :
+            if not self._job_obj.has_key( host ) or self._configure.check_update() : 
+                self._configure.load()
+                errors = self._configure.check()
+                if errors :
+                    self.logger.error ( ' '.join( errors ) )
+                    raise Exception ( ' '.join( errors ) )
+                for resname, resdict in self._configure.resources.iteritems() :
+                    if '_VO_' in host :
+                        _ , vo = host.split( '_VO_' )
+                        if self._configure.resources[resname][ 'vo' ] != vo :
+                            continue
+                    if resname != host : 
+                            continue
+                    if not self._job_obj.has_key( host ) :
+                        self._resources[resname] = self._configure.resources[resname]
+                        self._job_obj[host]      = self._configure.make_resources()[resname]['Job']
+                        return self._job_obj[host]
+                    for key in ['communicator' , 'username', 'frontend' , 'public_key', 
+                                'lrms' , 'parallel_env' , 'project' , 'vo' , 'ldap' , 'myproxy_server' ] :
+                        try :
+                            if self._resources[resname][key] != self._configure.resources[resname][key] :
+                                self._job_obj[ host ].Communicator.close()
+                                self._com_obj[ host ] = self._configure.make_resources()[resname]['Job']
+                                return self._job_obj[ host ]
+                        except Exception:
+                            pass
+                    return self._job_obj[ host ]
+            else :
+                return self._job_obj[ host ]
 

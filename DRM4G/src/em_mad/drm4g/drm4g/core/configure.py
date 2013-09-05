@@ -1,165 +1,158 @@
 import os
+import os.path
 import sys
 import logging
-from ConfigParser import SafeConfigParser
-from drm4g.global_settings import PATH_HOSTS, COMMUNICATOR, RESOURCE_MANAGER, HOST_SECTION
-from drm4g.utils.url import urlparse
+import ConfigParser 
+from drm4g.utils.importlib import import_module
+from drm4g                 import DRM4G_CONFIG_FILE, COMMUNICATORS, RESOURCE_MANAGERS
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
+
+logger = logging.getLogger(__name__)
 
 class ConfigureException(Exception):
     pass
 
-class CheckConfigFile():
+class Configuration(object):
+    """
+    Configuration class provides facilities to:
+
+    * parse DRM4G_CONFIG_FILE resources
+    * check key resources
+    * instantiate objects such as communicators or managers
     
+    """
     def __init__(self):
-        if not os.path.exists(PATH_HOSTS):
-            out='Wrong path for %s' % (PATH_HOSTS)
-            logger.error(out)
-            raise ConfigureException(out)
-        else:
-            self.init_time = os.stat(PATH_HOSTS).st_mtime
-    def test(self):
-        if os.stat(PATH_HOSTS).st_mtime != self.init_time:
-            self.init_time = os.stat(PATH_HOSTS).st_mtime
+        self.resources  = dict()
+        if not os.path.exists( DRM4G_CONFIG_FILE ):
+            assert DRM4G_CONFIG_FILE, "dm4g.conf does not exist, please provide one"
+        self.init_time = os.stat( DRM4G_CONFIG_FILE ).st_mtime
+        
+    def check_update(self):
+        """
+        It checks if DRM4G file configuration has been updated.
+        """
+        if os.stat(DRM4G_CONFIG_FILE).st_mtime != self.init_time:
+            self.init_time = os.stat(DRM4G_CONFIG_FILE).st_mtime
             return True
         else:
             return False
 
-  
-def readHostList():
-    logger = logging.getLogger(__name__)    
-    if not os.path.exists(PATH_HOSTS):
-        out='Wrong path for %s' % (PATH_HOSTS)
-        logger.error(out)
-        raise ConfigureException(out)
-    parser = SafeConfigParser()
-    try:
-        parser.read(PATH_HOSTS)
-    except Exception, err:
-        error = 'Error reading ' + PATH_HOSTS + ' file: ' + str(err)
-        logger.error(error)
-        raise ConfigureException(error)
-    host_list = { }
-    if not parser.has_section(HOST_SECTION):
-        error = PATH_HOSTS + ' file does not have ' + HOST_SECTION + ' section'
-        logger.error(error)
-        raise ConfigureException(error)
-    else:
-        for host in parser.options(HOST_SECTION):
-            host_list[host] = parser.get(HOST_SECTION, host)
-        return host_list
-
-def parserHost(hostname, url):
-    logger     = logging.getLogger(__name__)
-    url_result = urlparse(url)
-    scheme     = url_result.scheme.lower()
-    name       = url_result.host
-    username   = url_result.username
-    port       = url_result.port
-    params     = url_result.params
-    if not name:
-        out='%s does not have hostname' % (hostname)
-        logger.error(out)
-        raise ConfigureException(out)
-    if not username and (scheme != 'local'):
-        out='%s does not have username' % (hostname)
-        logger.error(out)
-        raise ConfigureException(out)      
-    if not COMMUNICATOR.has_key(scheme):
-        out='%s has a wrong scheme "%s"' % (hostname, scheme)
-        logger.error(out)
-        raise ConfigureException(out)        
-    if not params.has_key('LRMS_TYPE'):
-        out='%s does not have LRMS_TYPE variable' % (hostname)
-        logger.error(out)
-        raise ConfigureException(out)
-    if not RESOURCE_MANAGER.has_key(params['LRMS_TYPE']):
-        out='%s has a wrong LRMS_TYPE "%s"' % (hostname, params['LRMS_TYPE'])
-        logger.error(out)
-        raise ConfigureException(out)
-    if not params.has_key('NODECOUNT'):
-        out='%s does not have NODECOUNT variable' % (hostname)
-        logger.error(out)
-        raise ConfigureException(out)
-    if params.has_key('SSH_KEY_FILE'):
-        key = params['SSH_KEY_FILE']
-        if not os.path.isfile(os.path.expanduser(key)):
-            out='%s file does not exist' % (key)
-            logger.error(out)
-            raise ConfigureException(out)
-    return HostConfiguration(scheme, name, username, port, params)
+    def load(self):
+        """
+        Read the configuration file.
+        """
+        logger.debug("Reading file '%s' ..." % DRM4G_CONFIG_FILE)
+        try: 
+            try:
+                file = open(DRM4G_CONFIG_FILE, 'r')
+                parser = ConfigParser.SafeConfigParser()
+                try:
+                    parser.readfp(file, DRM4G_CONFIG_FILE)
+                except Exception, err:
+                    output = "Configuration file '%s' is unreadable or malformed: %s" %(DRM4G_CONFIG_FILE, str(err))
+                    logger.error(output)
+                    raise ConfigureException(output)
+                for sectname in parser.sections():
+                    logger.debug("Reading configuration for resource '%s'." % sectname)
+                    self.resources[sectname] = dict(parser.items(sectname))
+                    logger.debug("Resource '%s' defined by: %s.",
+                                 sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[sectname].iteritems())]))
+            except Exception, err:
+                output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err)) 
+                logger.error(output)
+                raise ConfigureException(output)
+        finally:
+            file.close()
+            
+    def check(self):
+        """
+        Check if the drm4g.conf file has been configured well. 
+        
+        Return a list with the errors.
+        """
+        logger.debug("Checking file '%s' ..." % DRM4G_CONFIG_FILE)
+        errors = []
+        for resname, resdict in self.resources.iteritems() :
+            logger.debug("Checking resource '%s' ..." % resname)
+            reslist = resdict.keys( )
+            for key in [ 'frontend' , 'lrms' , 'communicator' ] :
+                if not key in reslist :
+                    output = "'%s' resource does not have '%s' key" % (resname, key)
+                    logger.error( output )
+                    errors.append( output )
+            if resdict.has_key( 'vo' ) :
+                for key in [ "ldap" , "myproxy_server" ]:
+                    if not key in reslist :
+                        output = "'%s' has to be '%s' key" % (resname, key)
+                        logger.error( output )
+                        errors.append( output )
+            else :
+                if not 'ncores' in reslist :
+                    output = "'ncores' key is mandatory '%s' resource" % resname
+                    logger.error( output )
+                    errors.append( output )
+                if not 'queue' in reslist :
+                    self.resources[resname]['queue'] = "default"
+                    output = "'queue' key will be called 'default' for '%s' resource" % resname
+                    logger.debug( output )
+            if not COMMUNICATORS.has_key( resdict[ 'communicator' ] ) :
+                output = "'%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
+                logger.error( output )
+                errors.append( output )
+            if resdict.has_key( 'ssh' ) :
+                output = "'username' key is mandatory for 'ssh' communicator, '%s' resource" % resname 
+                logger.error( output )
+                errors.append( output )
+            if not RESOURCE_MANAGERS.has_key( resdict[ 'lrms' ] ) :
+                output = "'%s' has a wrong lrms: '%s'" % ( resname , resdict[ 'lrms' ] )
+                logger.error( output )
+                errors.append( output )
+            public_key = resdict.get( 'public_key' )
+            if public_key and not os.path.isfile( os.path.expanduser( public_key ) ) :
+                output = "'%s' does not exist '%s' resource" % ( public_key , resname )
+                logger.error( output )
+                errors.append( output )
+            if not errors:
+                logger.debug( "'%s' passed the check with flying colours" % resname )
+        return errors
                 
-class HostConfiguration(object):
-        
-    def __init__(self, scheme, name, username, port, params):
-        
-        self._scheme     = scheme
-        self._name       = name
-        self._username   = username
-        self._port       = port
-        self._params     = params
-     
-    def get_hostname(self):
-        return self._name
-              
-    def get_username(self):
-        return self._username
-    
-    def get_scheme(self):
-        return self._scheme
-    
-    def get_port(self):
-        if not self._port:
-            return 22
-        else:
-            return int(self._port)
+    def make_resources(self):
+        """
+        Make communicator and manager objects corresponding to the configured resources.
 
-    def get_lrms_type(self):
-        return self._params.setdefault('LRMS_TYPE', 'FORK')
+        Return a dictionary, mapping the resource name into the corresponding objects.
+        """
+        resources = dict()
+        for name, resdict in self.resources.iteritems():
+            try:
+                resources[name]                 = dict()
 
-    def get_node_count(self):
-        return self._params.setdefault('NODECOUNT','1')
+                communicator                    = import_module(COMMUNICATORS[resdict['communicator']])
+                manager                         = import_module(RESOURCE_MANAGERS[resdict['lrms']])
 
-    def get_queue_name(self):
-        return self._params.setdefault('QUEUE_NAME', 'default')
+                com_object                      = getattr(communicator, 'Communicator') ()
+                com_object.username             = resdict.get('username')
+                com_object.frontend             = resdict.get('frontend')
+                com_object.public_key           = resdict.get('public_key')
 
-    def get_run_dir(self):
-        return self._params.setdefault('TEMP_DIR', r'~')
- 
-    def set_run_dir(self, run_dir):
-        self._params['TEMP_DIR'] = run_dir
-        
-    def get_local_dir(self):
-        return self._params.setdefault('GW_RUN_DIR', r'~')
-        
-    def get_project(self):
-        return self._params.setdefault('PROJECT')
+                resource_object                 = getattr(manager, 'Resource') ()
+                resource_object.name            = name
+                resource_object.features        = resdict
+                resource_object.Communicator    = com_object
+                
+                job_object                      = getattr(manager, 'Job') ()
+                job_object.Communicator         = com_object
+                                                            
+                resources[name]['Communicator'] = com_object
+                resources[name]['Resource']     = resource_object
+                resources[name]['Job']          = job_object
+            except Exception, err:
+                output = "Failed creating objects for resource '%s' of type : %s" % ( name, str( err ) )
+                logger.warning( output )
+                raise ConfigureException( output )
+        return resources
 
-    def get_PARALLEL_TAG(self):
-        return self._params.setdefault('PARALLEL_TAG')
-    
-    def get_key_file(self):
-        return self._params.setdefault('SSH_KEY_FILE','~/.ssh/id_rsa')
-    
-    def com_attrs(self):
-        return (self.HOST, self.USERNAME, self.SCHEME, self.PORT, self.TEMP_DIR, self.SSH_KEY_FILE)
-    
-    def resource_attrs(self):
-        return (self.LRMS_TYPE, self.PROJECT, self.PARALLEL_TAG)
-    
 
-    HOST           = property(get_hostname)
-    USERNAME       = property(get_username)
-    SCHEME         = property(get_scheme)
-    LRMS_TYPE      = property(get_lrms_type)
-    NODECOUNT      = property(get_node_count)
-    QUEUE_NAME     = property(get_queue_name)
-    TEMP_DIR       = property(get_run_dir, set_run_dir)
-    GW_RUN_DIR     = property(get_local_dir)
-    PROJECT        = property(get_project)
-    PARALLEL_TAG   = property(get_PARALLEL_TAG)
-    SSH_KEY_FILE   = property(get_key_file)
-    PORT           = property(get_port)

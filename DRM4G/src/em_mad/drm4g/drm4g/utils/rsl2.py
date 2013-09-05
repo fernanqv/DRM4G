@@ -43,7 +43,6 @@ class Rsl2Parser(object):
         self._values['environment'] = dict((elem.getElementsByTagName('name')[0].firstChild.data,
                                        elem.getElementsByTagName('value')[0].firstChild.data) \
                                        for elem in environments)
-        self._values['environment']['GW_MAD'] = '1'
 
   def parser(self):
     """

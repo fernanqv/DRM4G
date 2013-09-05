@@ -15,17 +15,7 @@ MNCANCEL = 'LANG=POSIX mncancel' #mncancel - removes his/her job from the queue 
 MNQ      = 'LANG=POSIX mnq'      #mnq      - shows all the jobs submitted
 
 class Resource (drm4g.managers.Resource):
-
-    def lrmsProperties(self):
-        return ('ALTAMIRA', 'ALTAMIRA')
-     
-    def queueProperties(self, queueName):
-        queue              = drm4g.managers.Queue()
-        queue.Name         = queueName
-        queue.Nodes        = self.TotalCpu
-        queue.FreeNodes    = self.FreeCpu
-        queue.DispatchType = 'batch'
-        return queue
+    pass
 
 class Job (drm4g.managers.Job):
     
@@ -82,6 +72,7 @@ class Job (drm4g.managers.Job):
             walltime = self.walltime_default
         args += '# @ wall_clock_limit = %s\n' % (walltime)
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
+        args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 

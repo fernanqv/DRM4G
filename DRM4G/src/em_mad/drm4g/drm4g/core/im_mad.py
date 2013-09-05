@@ -2,15 +2,13 @@ import sys
 import os
 import threading
 import logging
-from drm4g.core.configure import readHostList, parserHost
-from drm4g.managers import HostInformation
-from drm4g.utils.dynamic import ThreadPool
-from drm4g.utils.message import Send
-from drm4g.global_settings import COMMUNICATOR, RESOURCE_MANAGER
-from drm4g.utils.importlib import import_module
+from drm4g.core.configure  import Configuration
+from drm4g.managers        import HostInformation
+from drm4g.utils.dynamic   import ThreadPool
+from drm4g.utils.message   import Send
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 class GwImMad (object):
@@ -43,12 +41,13 @@ class GwImMad (object):
 		it contains a list of host attributes.
     """
 
-    logger = logging.getLogger(__name__)
+    logger  = logging.getLogger(__name__)
     message = Send()
     
     def __init__(self):
         self._min_thread = 4
-        self._max_thread = 10 
+        self._max_thread = 10
+        self._resources  = dict()
  
     def do_INIT(self, args):
         """
@@ -68,12 +67,19 @@ class GwImMad (object):
         """
         OPERATION, HID, HOST, ARGS = args.split()
         try:
-            hostList = readHostList()
-            out = 'DISCOVER %s SUCCESS %s' % (HID, ' '.join([hostname for hostname in hostList.keys()]))
-        except Exception, e:
-            out = 'DISCOVER - FAILURE %s' % (str(e))
-        self.message.stdout(out)
-        self.logger.debug(out)
+            config = Configuration()
+            config.load()
+            errors = config.check()
+            assert not errors, ' '.join( errors )
+            self._resources = config.make_resources()
+            hosts = ""
+            for resname, resdict in self._resources.iteritems() :
+                hosts += " " + resdict['Resource'].hosts() 
+            out = 'DISCOVER %s SUCCESS %s' % ( HID , hosts  )
+        except Exception , err :
+            out = 'DISCOVER - FAILURE %s' % str( err )
+        self.message.stdout( out )
+        self.logger.debug( out )
  
     def do_MONITOR(self, args):
         """
@@ -83,29 +89,15 @@ class GwImMad (object):
         """
         OPERATION, HID, HOST, ARGS = args.split()
         try:
-            hostList = readHostList()
-            if hostList.has_key(HOST):
-                hostConf = parserHost(HOST, hostList[HOST])
-                com = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), "Communicator")()
-                resource = getattr(import_module(RESOURCE_MANAGER[hostConf.LRMS_TYPE]), 'Resource')()
-                com.hostName = hostConf.HOST
-                com.userName = hostConf.USERNAME
-                com.port     = hostConf.PORT
-                com.keyFile  = hostConf.SSH_KEY_FILE
-                com.connect()
-                resource.setCommunicator(com)      
-                resource.TotalCpu, resource.FreeCpu  = resource.staticNodes(HID, hostConf.NODECOUNT)
-                hostInfo = HostInformation()
-                hostInfo.Name, hostInfo.OsVersion, hostInfo.Arch, hostInfo.Os  = resource.hostProperties()
-                hostInfo.NodeCount = resource.TotalCpu
-                hostInfo.LrmsName, hostInfo.LrmsType = resource.lrmsProperties()
-                hostInfo.addQueue(resource.queueProperties(hostConf.QUEUE_NAME)) 
-                com.close()
-                out = 'MONITOR %s SUCCESS %s' % (HID, hostInfo.info())
-            else:
-                out = 'MONITOR %s FAILURE %s is not a available' % (HID, HOST)
-        except Exception, e:
-            out = 'MONITOR %s FAILURE %s' % (HID, str(e))
+            info = ""
+            for resname, resdict in self._resources.iteritems() :
+                if HOST in resdict['Resource'].host_list :
+                    info = resdict['Resource'].host_properties( HOST )
+                    break
+            assert info, "Host '%s' is not avaible" % HOST
+            out = 'MONITOR %s SUCCESS %s' % (HID , info )
+        except Exception , err :
+            out = 'MONITOR %s FAILURE %s' % (HID , str( err ) )
         self.message.stdout(out)
         self.logger.debug(out)
  
@@ -115,7 +107,7 @@ class GwImMad (object):
         @param args : arguments of operation
         @type args : string
         """
-        out =  'FINALIZE - SUCCESS -'
+        out = 'FINALIZE - SUCCESS -'
         self.message.stdout(out)
         self.logger.debug(out)
         sys.exit(0)
