@@ -202,16 +202,6 @@ void gw_host_update(int host_id, char *attrs)
         return;
     }
 
-    /* Calculate free nodes for fork LRMS */
-    
-    if (host->lrms_type != NULL && strcmp(host->lrms_type, "fork") == 0)
-    {
-        host->queue_freenodecount[0] = host->cpu_free / 100;
-        
-        if (host->cpu_free % 100 > GW_HOST_CPU_FREE_LIMIT)
-            host->queue_freenodecount[0]++;
-    }
-
     host->state = GW_HOST_STATE_MONITORED;
     
     /* Notify the scheduler */

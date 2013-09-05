@@ -4,257 +4,290 @@ import os
 import subprocess
 import logging
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
+logger = logging.getLogger(__name__)
 
-def sec_to_H_M_S(sec):
-    m, s = divmod(int(sec), 60)
-    h, m = divmod(m, 60) 
-    return "%d:%02d:%02d" % (h, m, s) 
+def sec_to_H_M_S( sec ):
+    m, s = divmod( int( sec ) , 60)
+    h, m = divmod( m , 60 ) 
+    return "%d:%02d:%02d" % ( h , m , s ) 
 
-class ResourceException(Exception): pass 
-class JobException(Exception):      pass
-    
+class ResourceException(Exception): 
+    pass 
+
+class JobException(Exception):      
+    pass
+
 class Resource (object):
-
-    logger = logging.getLogger(__name__)
+    """
+    """
    
     def __init__(self):
-        self._communicator = None
-        self._totalCpu     = "0"
-        self._freeCpu      = "0"
+        self.name          = None
+        self.features      = dict()
+        self.Communicator  = None
+        self.host_list     = []
+    
+    def _ldapsearch(filt = '' , attr = '*', bdii = 'lcg-bdii.cern.ch:2170', base = 'Mds-Vo-name=local,o=grid' ) :
+        """ 
+        Wrapper for ldapserch.
+        Input parameters:
+        filt:    Filter used to search ldap, default = '', means select all
+        attr:    Attributes returned by ldapsearch, default = '*', means return all
+        host:    Host used for ldapsearch, default = 'lcg-bdii.cern.ch:2170', can be changed by $LCG_GFAL_INFOSYS
+        
+        Return each element of list is dictionary with keys:
+        'dn':                 Distinguished name of ldapsearch response
+        'objectClass':        List of classes in response
+        'attr':               Dictionary of attributes
+        """
+        cmd = 'ldapsearch -x -LLL -h %s -b %s "%s" "%s"' % ( bdii, base, filt, attr )
+        out, err = self.Communicator.execCommand( cmd )
+        assert not err, err
+        
+        response = []
+        lines = []
+        for line in result.split( "\n" ):
+            if line.find( " " ) == 0:
+                lines[-1] += line.strip()
+            else:
+                lines.append( line.strip() )
+        record = None
+        for line in lines:
+            if line.find( 'dn:' ) == 0:
+                record = {'dn':line.replace( 'dn:', '' ).strip(),
+                          'objectClass':[],
+                          'attr':{'dn':line.replace( 'dn:', '' ).strip()}}
+                response.append( record )
+                continue
+            if record:
+                if line.find( 'objectClass:' ) == 0:
+                    record['objectClass'].append( line.replace( 'objectClass:', '' ).strip() )
+                    continue
+                if line.find( 'Glue' ) == 0:
+                    index = line.find( ':' )
+                    if index > 0:
+                        attr = line[:index]
+                        value = line[index + 1:].strip()
+                        if record['attr'].has_key( attr ):
+                            if type( record['attr'][attr] ) == type( [] ):
+                                record['attr'][attr].append( value )
+                            else:
+                                record['attr'][attr] = [record['attr'][attr], value]
+                        else:
+                            record['attr'][attr] = value
+        return response
+    
+    def hosts(self):
+        """
+        It will return a string with the host available in the resource.
+        """
+        if self.features.has_key( 'vo' ) :
+            self.host_list = self._hosts_vo( )
+            return ' '.join( self.host_list )
+        else :
+            self.host_list = [ self.name ]
+            return self.name
+        
+    def host_properties(self , host ):
+        """
+        """
+        if self.features.has_key( 'vo' ) :
+            return self._host_vo_properties( host )
+        else :
+            return self._host_properties( host ) 
 
-    def setCommunicator(self, communicator):
-        self._communicator = communicator
-
-    def getCommunicator(self):
-        return self._communicator	
-    Communicator = property(getCommunicator, setCommunicator)
- 
-    def setFreeCpu(self, freeCpu):
-        self._freeCpu = freeCpu
-
-    def getFreeCpu(self):
-        return self._freeCpu
-    FreeCpu = property(getFreeCpu, setFreeCpu)
-
-    def getTotalCpu(self):
-        return self._totalCpu
-
-    def setTotalCpu(self, totalCpu):
-        self._totalCpu = totalCpu
-    TotalCpu = property(getTotalCpu, setTotalCpu)    
-
-    def staticNodes(self, hid, total_cpu):
-        command_proc = subprocess.Popen('gwhost -x %s' % (hid),
-                shell = True,
+    def _hosts_vo(self):
+        """
+        It will return a list with the sites available in the VO.
+        """
+        filt   = '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM))' % ( self.features[ 'vo' ] )
+        attr   = 'GlueCEHostingCluster'
+        bdii   = self.features['ldap']
+        result = self._ldapsearch( filt , attr , bdii )
+        hosts  = []
+        for value in result :
+            host = "%s_VO_%s" % ( value['attr'][attr] , self.features[ 'vo' ] )
+            hosts.append(host)
+        return hosts
+        
+    def _host_vo_properties(self , host ): 
+        """
+        It will return a string with the features.
+        """
+        host , _       = host.split( '_VO_' )
+        host_info      = HostInformation()
+        host_info.Name = host
+        
+        # First search
+        filt   = "(&(objectclass=GlueCE)(GlueCEInfoHostName=%s))" % ( host )
+        attr   = '*'
+        bdii   = self.features[ 'ldap' ]
+        result = self._ldapsearch( filt , attr , bdii )
+    
+        for value in result :
+            queue                = Queue()
+            queue.Name           = value['attr']["GlueCEName"]
+            queue.Nodes          = value['attr']["GlueCEInfoTotalCPUs"]
+            queue.FreeNodes      = value['attr']["GlueCEStateFreeCPUs"]
+            queue.MaxTime        = value['attr']["GlueCEPolicyMaxWallClockTime"]
+            queue.MaxCpuTime     = value['attr']["GlueCEPolicyMaxCPUTime"]
+            queue.MaxRunningJobs = value['attr']["GlueCEPolicyMaxTotalJobs"]
+            queue.MaxRunningJobs = value['attr']["GlueCEPolicyMaxRunningJobs"]
+            queue.Status         = value['attr']["GlueCEStateStatus"]
+            queue.Priority       = value['attr']["GlueCEPolicyPriority"]
+            queue.MaxJobsWoutCpu = value['attr']["GlueCEStateWaitingJobs"]
+            host_info.addQueue(queue)
+            if int( queue.FreeNodes ) > int( host_info.Nodes ) :
+                host_info.Nodes = value['attr']["GlueCEInfoTotalCPUs"]
+        host_info.LrmsName = value['attr']["GlueCEUniqueID"].split('/')[1].rsplit('-',1)[0]
+        host_info.LrmsType = value['attr']["GlueCEInfoLRMSType"]
+        # Second search    
+        filt   = "(&(objectclass=GlueHostOperatingSystem)(GlueSubClusterName=%s))"  % ( host )
+        attr   = '*'
+        bdii   = self.features[ 'ldap' ]
+        result = self._ldapsearch( filt , attr , bdii )
+        
+        host_info.Os         = result[0]['attr']["GlueHostOperatingSystemName"]
+        host_info.OsVersion  = result[0]['attr']["GlueHostOperatingSystemVersion"]
+        host_info.Arch       = result[0]['attr']["GlueHostArchitecturePlatformType"]
+        
+        return host_info.info()
+    
+    def _host_properties(self , host ):
+        """
+        """
+        host_info       = HostInformation()
+        host_info.Name  = host
+        host_info.Nodes = self.features[ 'ncores' ]
+        host_info.Name, host_info.OsVersion, host_info.Arch, host_info.Os  = self.system_information()
+           
+        for queue_name in [ elem.strip()  for elem in self.features[ 'queue' ].split( ',' ) ] :
+            queue              = Queue()
+            queue.Name         = queue_name
+            queue.Nodes        = self.features[ 'ncores' ]
+            queue.FreeNodes    = self._free_cores( host )
+            host_info.addQueue( self.additional_queue_properties( queue ) )
+        host_info.LrmsName = self.features[ 'lrms' ]
+        host_info.LrmsType = self.features[ 'lrms' ]
+        return host_info.info()
+    
+    def _free_cores(self , host ) :
+        """
+        """
+        cmd = "gwhost $(gwhost | grep %s | awk '{print $1 }') -x" % host 
+        command_proc = subprocess.Popen( cmd ,
+                shell  = True,
                 stdout = subprocess.PIPE,
                 stderr = subprocess.PIPE,
-                env = os.environ)
+                env    = os.environ)
         stdout, stderr = command_proc.communicate()
         if stderr: 
-            raise ResourceException(' '.join(stderr.split('\n')))
+            output = "Error executing `gwhost` command: %s" % ' '.join( stderr.split( '\n' ) ) 
+            logger.error( output )
+            return "0"
         out_parser = xml.dom.minidom.parseString(stdout)
-        busy = int(out_parser.getElementsByTagName('USED_SLOTS')[0].firstChild.data)
-        if busy > int (total_cpu) :
-           return (total_cpu , "0")
+        busy_cores = int(out_parser.getElementsByTagName('USED_SLOTS')[0].firstChild.data)
+        if busy_cores > int ( self.features[ 'ncores' ] ) :
+           return "0"
         else:
-           free_cpu = str(int(total_cpu) - busy)
-           return (total_cpu , free_cpu)
-        
-    def hostProperties(self): 
+           free_cores = str( int( self.features[ 'ncores' ] ) - busy_cores )
+           return free_cores
+       
+    def system_information(self):
         """
-        hostPropertis will return a tuple with hostname, OS version, architecture, OS name
+        It will return a tuple with hostname, OS version, architecture, OS name
         """
         out, err = self.Communicator.execCommand('uname -n -r -m -o')
         if not err:
             return out.split()  
         else:
-            self.logger.log(DEBUG, ' '.join(err.split('\n')))
+            logger.error("Error executing `uname` command: %s" % ' '.join( err.split( '\n' ) ) )
             return ('NULL', 'NULL', 'NULL', 'NULL')
           
     # To overload
-    def queueProperties(self, queueName):
-        pass
-
-    def lrmsProperties(self):
-        pass
+    def additional_queue_properties(self, Queue):
+        return Queue
 
 class Job (object):
     
-    logger = logging.getLogger(__name__)
-    
     def __init__(self):
-        self._communicator = None
-        self._jobId        = "NULL"
-        self._status       = "NULL"
-        self._lock         = __import__('threading').Lock()
+        self.resfeatures  = dict()
+        self.Communicator = None
+        self.JobId        = None
+        self._status      = None
+        self._lock        = __import__('threading').Lock()
     
     def setStatus(self, status):
-        self._lock.acquire()
-        try:
+        with self._lock :
             self._status = status
-        finally:
-            self._lock.release()
 
     def getStatus(self):
-        self._lock.acquire()
-        try:
+        with self._lock :
             return self._status
-        finally:
-            self._lock.release()
-    Status = property(getStatus, setStatus)
-
-    def setCommunicator(self, communicator):
-        self._communicator = communicator
-
-    def getCommunicator(self):
-        return self._communicator
-    Communicator = property(getCommunicator, setCommunicator)   
-
-    def setJobId(self, jobId):
-        self._jobId = jobId
-
-    def getJobId(self):
-        return self._jobId
-    JobId = property(getJobId, setJobId)
     
     def refreshJobStatus(self):
-        self.Status = self.jobStatus()
+        self._status = self.jobStatus()
     
-    def getHomeDirectory(self):
-        out, err = self.Communicator.execCommand('echo $HOME')
+    def get_abs_directory(self, directory ):
+        out, err = self.Communicator.execCommand( 'ls -d %s' % directory )
         if not err:
             return out.strip('\n')
         else:
-            raise JobException("Couldn't obtain home directory : %s" % (' '.join(err.split('\n'))))
+            output = "Could not obtain  the '%s' directory : %s" % ( directory , str ( err ) )
+            logger.error( output )
+            raise JobException( output )
         
-    def createWrapper(self, localWrapperDirectory, stringTemplate):
+    def createWrapper(self, local_directory, template):
         try:
-            f = open(localWrapperDirectory, 'w')
+            f = open(local_directory, 'w')
         except Exception, e:
             raise JobException('Error creating wrapper_drm4g :' + str(e))
         else:
-            f.write(stringTemplate)
+            f.write(template)
             f.close()
 
-    def copyWrapper(self, localWrapperDirectory, remoteWrapperDirectory):
+    def copyWrapper(self, local_directory, remote_directory):
         """
-        Copy wrapper_drm4g file to remote host
+        Copy wrapper_drm4g file to the remote host
         """
-        source_url = 'file://%s' % (localWrapperDirectory)
-        destination_url = 'gsiftp://_/~/%s' % (remoteWrapperDirectory)
+        source_url      = 'file://%s'       % local_directory
+        destination_url = 'gsiftp://_/%s' % remote_directory
         try:
             self.Communicator.copy(source_url, destination_url, 'X')
         except Exception, e:
-            raise JobException('Error copying wrapper_drm4g :' + str(e))
+            raise JobException("Error copying wrapper_drm4g : %s" % str(e) )
 
     # To overload 
-    def jobSubmit(self, remoteFileNameWrapper):
+    def jobSubmit( self , wrapper_dir ) :
         pass
         
-    def jobStatus(self):
+    def jobStatus( self ) :
         pass
         
-    def jobCancel(self):
+    def jobCancel( self ) :
         pass
         
-    def jobTemplate(self, rsl2):
+    def jobTemplate( self , rsl ) :
         pass
 
-class Queue:
+class Queue( object ) :
     
     def __init__(self):
-        self._name           = "NULL"
-        self._nodes          = "0"
-        self._freeNodes      = "0"
-        self._maxTime        = "0"
-        self._maxCpuTime     = "0"
-        self._maxCount       = "0"
-        self._maxRunningJobs = "0"
-        self._maxJobsWoutCpu = "0"
-        self._status         = "NULL"
-        self._dispatchType   = "NULL"
-        self._priority       = "NULL"
-
-    def setName(self, name):
-        self._name = name
-    
-    def getName(self):
-        return self._name
-    Name = property(getName, setName)
-    
-    def setNodes(self, nodes):
-        self._name = nodes
-    
-    def getNodes(self):
-        return self._nodes
-    Nodes = property(getNodes, setNodes)
-    
-    def setFreeNodes(self, freeNodes):
-        self._freeNodes = freeNodes
-    
-    def getFreeNodes(self):
-        return self._freeNodes
-    FreeNodes = property(getFreeNodes, setFreeNodes)
-    
-    def setMaxTime(self, maxTime):
-        self._maxTime = maxTime
-    
-    def getMaxTime(self):
-        return self._maxTime
-    MaxTime = property(getMaxTime, setMaxTime)
-    
-    def setMaxCpuTime(self, maxCpuTime):
-        self._maxCpuTime = maxCpuTime
-    
-    def getMaxCpuTime(self):
-        return self._maxCpuTime
-    MaxCpuTime = property(getMaxCpuTime, setMaxCpuTime)
-    
-    def setMaxCount(self, maxCount):
-        self._maxCount = maxCount
-    
-    def getMaxCount(self):
-        return self._maxCount
-    MaxCount = property(getMaxCount, setMaxCount)
-    
-    def setMaxRunningJobs(self, maxRunningJobs):
-        self._maxRunningJobs = maxRunningJobs
-    
-    def getMaxRunningJobs(self):
-        return self._maxRunningJobs
-    MaxRunningJobs = property(getMaxRunningJobs, setMaxRunningJobs)
-
-    def setMaxJobsWoutCpu(self, maxJobsWoutCpu):
-        self._maxJobsWoutCpu = maxJobsWoutCpu
-    
-    def getMaxJobsWoutCpu(self):
-        return self._maxJobsWoutCpu
-    MaxJobsWoutCpu = property(getMaxJobsWoutCpu, setMaxJobsWoutCpu)
-    
-    def setStatus(self, status):
-        self._status = status
-    
-    def getStatus(self):
-        return self._status
-    Status = property(getStatus, setStatus)
-    
-    def setDispatchType(self, dispatchType):
-        self._dispatchType = dispatchType
-    
-    def getDispatchType(self):
-        return self._dispatchType
-    DispatchType = property(getDispatchType, setDispatchType)
-    
-    def setPriority(self, priority):
-        self._priority = priority
-    
-    def getPriority(self):
-        return self._priority
-    Priority = property(getPriority, setPriority)
+        self.Name           = "NULL"
+        self.Nodes          = "0"
+        self.FreeNodes      = "0"
+        self.MaxTime        = "0"
+        self.MaxCpuTime     = "0"
+        self.MaxCount       = "0"
+        self.MaxRunningJobs = "0"
+        self.MaxJobsWoutCpu = "0"
+        self.Status         = "NULL"
+        self.DispatchType   = "NULL"
+        self.Priority       = "NULL"
 
     def info (self, i):
         """
@@ -269,25 +302,25 @@ class Queue:
             self.MaxJobsWoutCpu + ' QUEUE_STATUS[' + i + ']="' + self.Status + '" QUEUE_DISPATCHTYPE[' + i + ']="'+ \
             self.DispatchType + '" QUEUE_PRIORITY[' + i +']="' + self.Priority + '" '
     
-class HostInformation:
+class HostInformation( object ) :
    
     def __init__(self):
-        self._name       = "NULL"
-        self._arch       = "NULL"
-        self._os         = "NULL"
-        self._osVersion  = "NULL"
-        self._cpuModel   = "NULL"
-        self._cpuMhz     = "0"
-        self._freeCpu    = "0"
-        self._cpuSmp     = "0"
-        self._nodeCount  = "0"
-        self._sizeMemMB  = "0"
-        self._freeMemMB  = "0"
-        self._sizeDiskMB = "0"
-        self._freeDiskMB = "0"
-        self._forkName   = "NULL"
-        self._lrmsName   = "NULL"
-        self._lrmsType   = "NULL"
+        self.Name       = "NULL"
+        self.Arch       = "NULL"
+        self.Os         = "NULL"
+        self.OsVersion  = "NULL"
+        self.CpuModel   = "NULL"
+        self.CpuMhz     = "0"
+        self.FreeCpu    = "0"
+        self.CpuSmp     = "0"
+        self.Nodes       = "0"
+        self.SizeMemMB  = "0"
+        self.FreeMemMB  = "0"
+        self.SizeDiskMB = "0"
+        self.FreeDiskMB = "0"
+        self.ForkName   = "NULL"
+        self.LrmsName   = "NULL"
+        self.LrmsType   = "NULL"
         self._queues     = [] 
  
     def addQueue(self, queue):
@@ -295,118 +328,6 @@ class HostInformation:
         
     def showQueues(self):
         return self._queues
-    
-    def setName(self, name):
-        self._name = name
-        
-    def getName(self):
-        return self._name
-    Name = property(getName, setName)
-
-    def setArch(self, arch):
-        self._arch = arch
-        
-    def getArch(self):
-        return self._arch
-    Arch = property(getArch, setArch)
-
-    def setOs(self, os):
-        self._os = os
-    
-    def getOs(self):
-        return self._os
-    Os = property(getOs, setOs)
-    
-    def setOsVersion(self, osVersion):
-        self._osVersion = osVersion
-        
-    def getOsVersion(self):
-        return self._osVersion    
-    OsVersion = property(getOsVersion, setOsVersion)
-
-    def setCpuModel(self, cpuModel):
-        self._cpuModel = cpuModel
-    
-    def getCpuModel(self):
-        return self._cpuModel
-    CpuModel = property(getCpuModel, setCpuModel)
-    
-    def setCpuMhz(self, cpuMhz):
-        self._cpuMhz = cpuMhz
-
-    def getCpuMhz(self):
-        return self._cpuMhz
-    CpuMhz = property(getCpuMhz, setCpuMhz)
-
-    def setFreeCpu(self, freeCpu):
-        self._freeCpu = freeCpu
-        
-    def getFreeCpu(self):
-        return self._freeCpu
-    FreeCpu = property(getFreeCpu, setFreeCpu)
-
-    def setCpuSmp(self, cpuSmp):
-        self._cpuSmp = cpuSmp
-        
-    def getCpuSmp(self):
-        return self._cpuSmp 
-    CpuSmp = property(getCpuSmp, setCpuSmp)
-    
-    def setNodeCount(self, nodeCount):
-        self._nodeCount = nodeCount
-        
-    def getNodeCount(self):
-        return self._nodeCount
-    NodeCount = property(getNodeCount, setNodeCount)
-    
-    def setSizeMemMB(self, sizeMemMB):
-        self._sizeMemMB = sizeMemMB
-    
-    def getSizeMemMB(self):
-        return self._sizeMemMB 
-    SizeMemMB = property(getSizeMemMB, setSizeMemMB)
-
-    def setFreeMemMB(self, freeMemMB):
-        self._freeMemMB = freeMemMB
-        
-    def getFreeMemMB(self):
-        return self._freeMemMB  
-    FreeMemMB = property(getFreeMemMB, setFreeMemMB)    
-    
-    def setSizeDiskMB(self, sizeDiskMB):
-        self._sizeDiskMB = sizeDiskMB
-    
-    def getSizeDiskMB(self):
-        return self._sizeDiskMB
-    SizeDiskMB = property(getSizeDiskMB, setSizeDiskMB)
-
-    def setFreeDiskMB(self, freeDiskMB):
-        self._freeDiskMB = freeDiskMB
-        
-    def getFreeDiskMB(self):
-        return self._freeDiskMB    
-    FreeDiskMB = property(getFreeDiskMB, setFreeDiskMB)
-    
-    def setForkName(self, forkName):
-        self._forkName = forkName
-        
-    def getForkName(self):
-        return self._forkName    
-    ForkName = property(getForkName, setForkName)
-    
-    def setLrmsName(self, lrmsName):
-        self._lrmsName = lrmsName
-    
-    def getLrmsName(self):
-        return self._lrmsName
-    LrmsName = property(getLrmsName, setLrmsName)
-    
-    def setLrmsType(self, lrmsType):
-        self._lrmsType = lrmsType
-        
-    def getLrmsType(self):
-        return self._lrmsType
-    LrmsType = property(getLrmsType, setLrmsType)
 
     def info (self): 
         """
@@ -416,7 +337,7 @@ class HostInformation:
         info_host = 'HOSTNAME="' + self.Name + '" ARCH="' + self.Arch + '" OS_NAME="' + \
             self.Os + '" OS_VERSION="' + self.OsVersion + '" CPU_MODEL="' + self.CpuModel + \
             '" CPU_MHZ=' + self.CpuMhz + ' CPU_FREE=' + self.FreeCpu + ' CPU_SMP=' + self.CpuSmp + \
-            ' NODECOUNT=' + self.NodeCount + ' SIZE_MEM_MB=' + self.SizeMemMB + ' FREE_MEM_MB=' + \
+            ' NODECOUNT=' + self.Nodes + ' SIZE_MEM_MB=' + self.SizeMemMB + ' FREE_MEM_MB=' + \
             self.FreeMemMB + ' SIZE_DISK_MB=' + self.SizeDiskMB + ' FREE_DISK_MB=' + self.FreeDiskMB + \
             ' FORK_NAME="' + self.ForkName + '" LRMS_NAME="' + self.LrmsName + '" LRMS_TYPE="' + self.LrmsType + '" '
         info_queue = ""

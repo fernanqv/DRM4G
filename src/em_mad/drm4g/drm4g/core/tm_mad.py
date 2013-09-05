@@ -4,16 +4,13 @@ import os
 import re
 import time
 import logging
-from drm4g.utils.url import urlparse
-from drm4g.utils.dynamic import ThreadPool
-from drm4g.core.configure import readHostList, parserHost, CheckConfigFile
-from drm4g.utils.message import Send
-from drm4g.global_settings import COMMUNICATOR
-from drm4g.utils.importlib import import_module
-import traceback
+from drm4g.utils.url       import urlparse
+from drm4g.utils.dynamic   import ThreadPool
+from drm4g.core.configure  import Configuration
+from drm4g.utils.message   import Send
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 
@@ -67,11 +64,12 @@ class GwTmMad (object):
     message = Send()
     
     def __init__(self):
-        self._max_thread       = 100
-        self._min_thread       = 5
-        self._config_file_time = None
-        self._lock             = threading.Lock()
-        self._com_list         = { }
+        self._max_thread  = 100
+        self._min_thread  = 5
+        self._lock        = threading.Lock()
+        self._resources   = dict()
+        self._com_obj     = dict()
+        self._configure   = None
   
     def do_INIT(self, args):
         """
@@ -81,8 +79,8 @@ class GwTmMad (object):
         @type args : string 
         """
         out = 'INIT - - SUCCESS -'
-        self.message.stdout(out)
-        self.logger.debug(out)
+        self.message.stdout( out )
+        self.logger.debug( out )
 
     def do_START(self, args):
         """
@@ -90,9 +88,9 @@ class GwTmMad (object):
         @param args : arguments of operation
         @type args : string 
         """
-        out = 'START %s - SUCCESS -' % (args.split()[1])    
-        self.message.stdout(out)
-        self.logger.debug(out)
+        out = 'START %s - SUCCESS -' % ( args.split( ) [ 1 ] )    
+        self.message.stdout( out )
+        self.logger.debug( out )
         
     def do_END(self, args):
         """
@@ -100,9 +98,9 @@ class GwTmMad (object):
         @param args : arguments of operation
         @type args : string 
         """
-        out = 'END %s - SUCCESS -' % (args.split()[1])
-        self.message.stdout(out)
-        self.logger.debug(out)
+        out = 'END %s - SUCCESS -' % ( args.split( ) [ 1 ] )
+        self.message.stdout( out )
+        self.logger.debug( out )
   
     def do_FINALIZE(self, args):
         """
@@ -110,10 +108,10 @@ class GwTmMad (object):
         @param args : arguments of operation
         @type args : string
         """
-        out = 'FINALIZE %s - SUCCESS -' % (args.split()[1])
-        self.message.stdout(out)
-        self.logger.debug(out)
-        sys.exit(0)
+        out = 'FINALIZE %s - SUCCESS -' % ( args.split( ) [ 1 ] )
+        self.message.stdout( out )
+        self.logger.debug( out )
+        sys.exit( 0 )
  
     def do_MKDIR(self, args):
         """
@@ -123,17 +121,14 @@ class GwTmMad (object):
         """
         OPERATION, JID, TID, EXE_MODE, SRC_URL, DST_URL = args.split()
         try:
-            com = self._updateCom(urlparse(SRC_URL).host)
-            com.rmDirectory(SRC_URL)
-            com.mkDirectory(SRC_URL)
-            out = 'MKDIR %s - SUCCESS -' % (JID)
-        except Exception, e:
-            out = 'MKDIR %s - FAILURE %s' % (JID, str(e))
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            out1 = ', '.join([str(exc_type), fname, str(exc_tb.tb_lineno)])
-        self.message.stdout(out)
-        self.logger.debug(out1)
+            com = self._update_com( urlparse( SRC_URL ).host )
+            com.rmDirectory( SRC_URL )
+            com.mkDirectory( SRC_URL )
+            out = 'MKDIR %s - SUCCESS -' % ( JID )
+        except Exception, err :
+            out = 'MKDIR %s - FAILURE %s' % ( JID , str( err ) )
+        self.message.stdout( out )
+        self.logger.debug( out , exc_info=1 )
         
     def do_RMDIR(self, args):
         """
@@ -143,16 +138,13 @@ class GwTmMad (object):
         """
         OPERATION, JID, TID, EXE_MODE, SRC_URL, DST_URL = args.split()
         try:
-            com = self._updateCom(urlparse(SRC_URL).host)            
-            com.rmDirectory(SRC_URL)
-            out = 'RMDIR %s - SUCCESS -' % (JID)
-        except Exception, e:
-            out = 'RMDIR %s - FAILURE %s' % (JID, str(e))
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            out1 = ', '.join([str(exc_type), fname, str(exc_tb.tb_lineno)])
-        self.message.stdout(out)        
-        self.logger.debug(out1)
+            com = self._update_com( urlparse( SRC_URL ).host )            
+            com.rmDirectory( SRC_URL )
+            out = 'RMDIR %s - SUCCESS -' % ( JID )
+        except Exception , err :
+            out = 'RMDIR %s - FAILURE %s' % ( JID , str( err ) )
+        self.message.stdout( out )        
+        self.logger.debug( out, exc_info=1 )
     
     def do_CP(self, args):
         """
@@ -167,25 +159,21 @@ class GwTmMad (object):
         else:
             url = SRC_URL
         try:
-            com = self._updateCom(urlparse(url).host)
-            com.copy(SRC_URL, DST_URL, EXE_MODE)
-            out = 'CP %s %s SUCCESS -' % (JID, TID)
-        except Exception, e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            out1 = ', '.join([str(exc_type), fname, str(exc_tb.tb_lineno)])
-            self.logger.warning(out1)
-            self.logger.warning('Error copying from %s to %s : %s' %(SRC_URL, DST_URL, str(e)))
-            time.sleep(60)
+            com = self._update_com( urlparse( url ).host )
+            com.copy( SRC_URL , DST_URL , EXE_MODE )
+            out = 'CP %s %s SUCCESS -' % ( JID , TID )
+        except Exception, err :
+            self.logger.warning( 'Error copying from %s to %s : %s' %( SRC_URL , DST_URL, str( err ) ) , exc_info=1 )
+            time.sleep( 60 )
             try:
-                self.logger.debug('Copying again from %s to %s' % (SRC_URL, DST_URL))
-                com = self._updateCom(urlparse(SRC_URL).host)
-                com.copy(SRC_URL, DST_URL, EXE_MODE)
+                self.logger.debug( 'Copying again from %s to %s' % ( SRC_URL , DST_URL ) )
+                com = self._update_com( urlparse( SRC_URL ).host )
+                com.copy( SRC_URL , DST_URL , EXE_MODE )
                 out = 'CP %s %s SUCCESS -' % (JID, TID)
-            except Exception, e:
-                out = 'CP %s %s FAILURE %s' % (JID, TID, str(e))   
-        self.message.stdout(out)
-        self.logger.debug(out)
+            except Exception, err :
+                out = 'CP %s %s FAILURE %s' % ( JID , TID , str( err ) )   
+        self.message.stdout( out )
+        self.logger.debug(out , exc_info=1 )
         
     methods = {'INIT'    : do_INIT,
                'START'   : do_START,
@@ -200,8 +188,8 @@ class GwTmMad (object):
         Choose the OPERATION through the command line
         """
         try:
-            pool = ThreadPool(self._min_thread, self._max_thread)
-            self._config_file_time = CheckConfigFile()
+            pool = ThreadPool( self._min_thread , self._max_thread )
+            self._configure = Configuration()
             while True:
                 input = sys.stdin.readline().split()
                 self.logger.debug(' '.join(input))
@@ -214,44 +202,39 @@ class GwTmMad (object):
                     out = 'WRONG COMMAND'
                     self.message.stdout(out)
                     self.logger.debug(out)
-        except Exception, e: 
-            self.logger.warning(str(e))
+        except Exception , err : 
+            self.logger.warning( str ( err , exc_info=1 ) )
     
-    def _updateCom(self, host):
-        self._lock.acquire()
-        try:
-            if self._config_file_time.test() or not self._com_list or not self._com_list.has_key(host):
-                hostList = readHostList()
-                hostConf = parserHost(host, hostList[host])
-                self.logger.warning(hostConf.HOST)
-                if not self._com_list.has_key(host):
-                    communicator = self._createCom(hostConf)
-                else:
-                    oldHostConf, oldCommunicator = self._com_list[host]
-                    if hostConf.com_attrs() != oldHostConf.com_attrs():
-                        oldCommunicator.close()
-                        communicator = self._createCom(hostConf)
-                    else:
-                        communicator = self._com_list[host][1]
-                self._com_list[host] = (hostConf, communicator)
-                return communicator
-            else:
-                self.logger.warning(str(self._com_list.get(host)[1])) 
-                return self._com_list[host][1]
-        finally:
-            self._lock.release() 
-            
-    def _createCom(self, hostConf):
-        try:
-            com               = getattr(import_module(COMMUNICATOR[hostConf.SCHEME]), 'Communicator')()
-            com.hostName      = hostConf.HOST
-            com.userName      = hostConf.USERNAME
-            com.workDirectory = hostConf.TEMP_DIR
-            com.keyFile       = hostConf.SSH_KEY_FILE
-            com.port          = hostConf.PORT
-            com.connect()
-            return com
-        except Exception, e:
-            out = "It couldn't be connected to %s : %s" %(hostConf.HOST, str(e))
-            self.logger.warning(out)
-            raise Exception(out)
+    def _update_com(self, host):
+        with self._lock :
+            if not self._com_obj.has_key( host ) or self._configure.check_update() :
+                self._configure.load()
+                errors = self._configure.check()
+                if errors :
+                    self.logger.error ( ' '.join( errors ) )
+                    raise Exception ( ' '.join( errors ) )
+                for resname, resdict in self._configure.resources.iteritems() :
+                    if '_VO_' in host :
+                        _ , vo = host.split( '_VO_' )
+                        if self._configure.resources[resname][ 'vo' ] != vo :
+                            continue
+                    else :
+                        if resname != host :
+                            continue
+                    if not self._com_obj.has_key( host ) :
+                        self._resources[resname] = self._configure.resources[resname]
+                        com                      = self._configure.make_resources()[resname]['Communicator']
+                        self._com_obj[host]      = com
+                        return com
+                    for key in ['communicator' , 'username', 'frontend' , 'public_key' ] :
+                        try :
+                            if self._resources[resname][key] != self._configure.resources[resname][key] :
+                                self._com_obj[ host ][ 'Communicator' ].close()
+                                self._com_obj[ host ] = self._configure.make_resources()[resname]['Communicator']
+                                return self._com_obj[ host ]
+                        except Exception:
+                            pass
+                    return self._com_obj[ host ]
+            else : 
+                return self._com_obj[ host ]
+                     

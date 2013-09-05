@@ -6,18 +6,18 @@ import traceback
 import logging.config
 from os.path import dirname, join
 
-if sys.version_info < (2,4) and sys.version_info > (3,0):
-    print 'The version number of the Python has to be > = 2.4 and < 3.0'
+if sys.version_info < (2,5) and sys.version_info > (3,0):
+    print 'The version number of the Python has to be > = 2.5 and < 3.0'
     sys.exit(-1)
 try:
     sys.path.insert(0, join(dirname(dirname(os.path.abspath(__file__))), 'libexec'))
-    from drm4g.global_settings import PATH_LOGGER
+    from drm4g import FILE_LOGGER, DRM4G_DIR  
     try:
-        logging.config.fileConfig(PATH_LOGGER)
+        logging.config.fileConfig(FILE_LOGGER, {"DRM4G_DIR": DRM4G_DIR})
     except :
         pass
 except Exception, e:
-    print 'Caught exception: %s: %s' % (e.__class__, str(e))
+    print 'Caught exception: %s' % str(e)
     traceback.print_exc(file=sys.stdout)
     sys.exit(-1)
 from optparse import OptionParser

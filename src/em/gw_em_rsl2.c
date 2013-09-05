@@ -194,12 +194,14 @@ char* gw_generate_wrapper_rsl2 (gw_job_t *job)
         	
   	rc = snprintf(rsl_buffer, sizeof(char) * GW_RSL_LENGTH,
     		"<job>"
+  			" <directory>.gw_%s_%i</directory>"
             " <executable>.gw_%s_%i/.wrapper</executable>"
             " %s"
             " <stdout>.gw_%s_%i/stdout.wrapper</stdout>"
             " <stderr>.gw_%s_%i/stderr.wrapper</stderr>"
             " <count>%d</count>"
             " <jobType>%s</jobType>",
+            job->owner, job->id,
             job->owner, job->id,
             job_environment,
             job->owner, job->id,

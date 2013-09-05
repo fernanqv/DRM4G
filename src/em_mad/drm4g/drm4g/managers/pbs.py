@@ -1,9 +1,9 @@
+import re
 import drm4g.managers 
 from string import Template
-import re
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 # The programs needed by these utilities. If they are not in a location
@@ -13,18 +13,10 @@ QSUB     = 'LANG=POSIX qsub'     #qsub - submit pbs job
 QSTAT    = 'LANG=POSIX qstat'    #qstat - show status of pbs batch jobs
 QDEL     = 'LANG=POSIX qdel'     #qdel - delete pbs batch job
 
-class Resource (drm4g.managers.Resource):
+class Resource (drm4g.managers.Resource): 
 
-    def lrmsProperties(self):
-        return ('PBS', 'PBS') 
-
-    def queueProperties(self, queueName):
-        queue              = drm4g.managers.Queue()
-        queue.Name         = queueName
-        queue.DispatchType = 'batch'
-        queue.Nodes        = self.TotalCpu
-        queue.FreeNodes    = self.FreeCpu
-        out, err = self.Communicator.execCommand('%s -q %s' % (QSTAT, queueName))
+    def additional_queue_properties(self, queue):
+        out, err = self.Communicator.execCommand('%s -q %s' % (QSTAT, queue.Name))
         #output line --> Queue Memory CPU_Time Walltime Node Run Que Lm State
         try:
             queueName, _, cpuTime, wallTime, _, _, _, lm = val.split()[0:8]
@@ -107,7 +99,7 @@ class Job (drm4g.managers.Job):
         else:
             args += '#PBS -l nodes=$count\n'
         args += '#PBS -v %s\n' % (','.join(['%s=%s' %(k, v) for k, v in parameters['environment'].items()]))
-        args += 'cd $directory\n'
+        args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 

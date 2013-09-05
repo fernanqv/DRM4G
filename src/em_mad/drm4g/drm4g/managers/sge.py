@@ -1,9 +1,9 @@
-import drm4g.managers
 import re
+import drm4g.managers
 from string import Template
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 # The programs needed by these utilities. If they are not in a location
@@ -16,16 +16,8 @@ QDEL  = 'LANG=POSIX qdel'
 
 class Resource (drm4g.managers.Resource):
 
-    def lrmsProperties(self):
-        return ('SGE', 'SGE')
-
-    def queueProperties(self, queueName):
-        queue              = drm4g.managers.Queue()
-        queue.Name         = queueName
-        queue.DispatchType = 'batch'
-        queue.Nodes        = self.TotalCpu
-        queue.FreeNodes    = self.FreeCpu
-        out, err = self.Communicator.execCommand('%s -sq %s' % (QCONF, queueName))
+    def additional_queue_properties(self, queue):
+        out, err = self.Communicator.execCommand('%s -sq %s' % (QCONF, queue.Name))
         if err:
             raise drm4g.managers.ResourceException(' '.join(err.split('\n')))
         reWalltime = re.compile(r'h_rt\s*(\d+):(\d+):\d+')
@@ -86,8 +78,8 @@ class Job (drm4g.managers.Job):
     def jobTemplate(self, parameters):
         args  = '#!/bin/bash\n'
         args += '#$ -N JID_%s\n' % (parameters['environment']['GW_JOB_ID'])
-        if parameters['PROJECT']: 
-            args += '#$ -P $PROJECT\n'
+        if parameters['project']: 
+            args += '#$ -P $project\n'
         if parameters['queue'] != 'default':
             args += '#$ -q $queue\n'
         args += '#$ -o $stdout\n'
@@ -101,7 +93,7 @@ class Job (drm4g.managers.Job):
         if int(parameters['count']) > 1:
             args += '#$ -pe $parallel_env $count\n'
         args += '#$ -v %s\n' % (','.join(['%s=%s' %(k, v) for k, v in parameters['environment'].items()]))
-        args += 'cd $directory\n'
+        args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 

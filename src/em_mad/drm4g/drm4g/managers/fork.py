@@ -1,26 +1,15 @@
+import os
 import drm4g.managers 
 from string import Template
-import os
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 SH = '/bin/bash'
 
-class Resource (drm4g.managers.Resource):    
-
-
-    def lrmsProperties(self):
-        return ('FORK' ,'FORK')
-
-    def queueProperties(self, queueName):
-        queue              = drm4g.managers.Queue()
-        queue.Name         = queueName
-        queue.Nodes        = self.TotalCpu
-        queue.FreeNodes    = self.FreeCpu
-        queue.DispatchType = 'Immediate'
-        return queue
+class Resource (drm4g.managers.Resource):
+    pass
 
 class Job (drm4g.managers.Job):
     
@@ -52,7 +41,7 @@ class Job (drm4g.managers.Job):
     def jobTemplate(self, parameters):
         line  = '#!/bin/bash\n'
         line += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
-        line += 'cd $directory\n' 
+        line += '\n' 
         line += 'nohup $executable 2> $stderr > $stdout &\n' 
         line += 'echo $$!\n'
         return Template(line).safe_substitute(parameters)

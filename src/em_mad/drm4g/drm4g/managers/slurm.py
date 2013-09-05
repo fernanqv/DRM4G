@@ -1,9 +1,9 @@
+import re
 import drm4g.managers 
 from string import Template
-import re
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id: slurm.py 1643 2012-12-11 10:54:31Z carlos $"
 
 # The programs needed by these utilities. If they are not in a location
@@ -13,17 +13,7 @@ SQUEUE  = 'squeue'   #show status of jobs
 SCANCEL = 'scancel'  #delete a job
 
 class Resource (drm4g.managers.Resource):
-
-    def lrmsProperties(self):
-        return ('SLURM', 'SLURM')
-
-    def queueProperties(self, queueName):
-        queue              = drm4g.managers.Queue()
-        queue.Name         = queueName
-        queue.Nodes        = self.TotalCpu
-        queue.FreeNodes    = self.FreeCpu
-        queue.DispatchType = 'batch' 
-        return queue
+    pass
 
 class Job (drm4g.managers.Job):
    
@@ -74,7 +64,7 @@ class Job (drm4g.managers.Job):
             args += '#SBATCH --ntasks-per-node=$ppn'
         args += '#SBATCH --ntasks=$count\n'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
-        args += 'cd $directory\n'
+        args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 

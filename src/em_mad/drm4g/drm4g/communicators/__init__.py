@@ -1,8 +1,11 @@
-__version__  = '0.1'
+import logging
+from drm4g import REMOTE_JOBS_DIR, SSH_PORT
+
+__version__  = '1.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-__all__ = ['ComException', 'Communicator']
+logger  = logging.getLogger(__name__)
 
 class ComException(Exception):
     """
@@ -17,11 +20,11 @@ class Communicator(object):
     interact with computing resources. 
     """
     def __init__(self):
-        self._path_work = "NULL"
-        self._host      = "NULL"
-        self._username  = "NULL"
-        self._port      = "NULL"
-        self._key_file  = "NULL"
+        self.work_directory = REMOTE_JOBS_DIR
+        self.port           = SSH_PORT
+        self.username       = None
+        self.frontend       = None
+        self.public_key     = None 
 
     def connect(self):
         """
@@ -72,7 +75,7 @@ class Communicator(object):
         """
         pass
 
-    def close(self, force = True):
+    def close(self):
         """
         Close the connection.
         """
@@ -86,39 +89,7 @@ class Communicator(object):
         @rtype: boolean
         """
         pass
-
-    def setWorkDir(self, path_work_directory):
-        self._path_work = path_work_directory
-
-    def getWorkDir(self):
-        return self._path_work
-
-    def setHostName(self, host_name):
-        self._host = host_name
-
-    def getHostName(self):
-        return self._host
-
-    def setUserName(self, username):
-        self._username = username
-
-    def getUserName(self):
-        return self._username
+  
     
-    def setPort(self, port):
-        self._port = port
-
-    def getPort(self):
-        return self._port
     
-    def setKeyFile(self, key_file):
-        self._key_file = key_file
-
-    def getKeyFile(self):
-        return self._key_file
-
-    workDirectory = property(getWorkDir, setWorkDir)
-    hostName      = property(getHostName, setHostName)
-    userName      = property(getUserName, setUserName)
-    port          = property(getPort, setPort)
-    keyFile       = property(getKeyFile, setKeyFile)
+    

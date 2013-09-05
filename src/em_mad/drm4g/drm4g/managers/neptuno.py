@@ -1,10 +1,10 @@
-import drm4g.managers.slurm 
-from string import Template
-from drm4g.managers import sec_to_H_M_S
 import re
+import drm4g.managers.slurm 
+from string         import Template
+from drm4g.managers import sec_to_H_M_S
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id:$"
 
 # The programs needed by these utilities. If they are not in a location
@@ -14,9 +14,7 @@ SQUEUE  = 'squeue'   #show status of jobs
 SCANCEL = 'scancel'  #delete a job
 
 class Resource (drm4g.managers.slurm.Resource):
-    
-    def lrmsProperties(self):
-        return ('NEPTUNO', 'NEPTUNO')
+    pass
 
 class Job (drm4g.managers.slurm.Job):
     
@@ -35,7 +33,7 @@ class Job (drm4g.managers.slurm.Job):
         args += '#MOAB -l nodes=$count\n'
         args += '#MOAB -V'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
-        args += 'cd $directory\n'
+        args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 
