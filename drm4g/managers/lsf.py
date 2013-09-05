@@ -1,9 +1,9 @@
+import re
 import drm4g.managers 
 from string import Template
-import re
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '0.1'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id:$"
 
 # The programs needed by these utilities. If they are not in a location
@@ -13,17 +13,7 @@ BJOBS = 'bjobs'  #show status of jobs
 BKILL = 'bkill'  #delete a job
 
 class Resource (drm4g.managers.Resource):
-
-    def lrmsProperties(self):
-        return ('LSF', 'LSF')
-
-    def queueProperties(self, queueName):
-        queue              = drm4g.managers.Queue()
-        queue.Name         = queueName
-        queue.Nodes        = self.TotalCpu
-        queue.FreeNodes    = self.FreeCpu
-        queue.DispatchType = 'batch' 
-        return queue
+    pass
 
 class Job (drm4g.managers.Job):
    
@@ -70,6 +60,6 @@ class Job (drm4g.managers.Job):
         if parameters.has_key('ppn'): 
             args += '#BSUB -R"span[ptile=$ppn]"'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
-        args += 'cd $directory\n'
+        args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)

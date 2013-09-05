@@ -1,9 +1,9 @@
+import re
 import drm4g.managers 
 from string import Template
-import re
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '1.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 # The programs needed by these utilities. If they are not in a location
@@ -13,30 +13,8 @@ LLSUBMIT = 'llsubmit'   #submit ajob
 LLQ      = 'llq'        #show jobs' status
 LLCANCEL = 'llcancel'   #delete ajob
 
-class Resource (drm4g.managers.Resource):
-
-    def hostProperties(self):
-        return ('NULL', 'NULL', 'NULL', 'NULL')
-
-    def cpuProperties(self):
-        return ('NULL', '0')
-
-    def memProperties(self):
-        return ('0', '0')
-    
-    def diskProperties(self):
-        return ('0', '0')
-
-    def lrmsProperties(self):
-        return ('Loadleveler', 'Loadleveler') 
- 
-    def queueProperties(self, queueName):
-        queue              = drm4g.managers.Queue()
-        queue.DispatchType = 'batch'
-        queue.Name         = queueName
-        queue.Nodes        = self.TotalCpu
-        queue.FreeNodes    = self.FreeCpu
-        return queue
+class Resource (drm4g.managers.Resource): 
+    pass
 
 class Job (drm4g.managers.Job):
    
@@ -111,7 +89,7 @@ class Job (drm4g.managers.Job):
             args += '#@ account_no = $PROJECT\n'
         args += '#@ queue\n'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
-        args += 'cd $directory\n'
+        args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 

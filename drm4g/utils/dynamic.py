@@ -17,7 +17,8 @@ pool.add_task(func, arg)
 
 threads_active = 0
 threads_min    = 1
-lock = Lock()
+timeout        = 1
+lock           = Lock()
 
 class Worker(Thread):
     """
@@ -32,20 +33,21 @@ class Worker(Thread):
     def run(self):
         while True:
             try:
-                try: func, args, kargs = self.tasks.get(timeout = 0.5) 
+                try: 
+                    func, args, kargs = self.tasks.get( timeout  ) 
                 except Queue.Empty:
-                    lock.acquire()
-                    try:
+                    with lock : 
                         global threads_active, threads_min
                         if threads_active > threads_min:
 			    threads_active -= 1
 			    break
                         else : continue
-                    finally: lock.release()
                 except Exception: sys.exit(-1)
                 else:
-                    try: func(*args, **kargs)
-                    except Exception, e: print e
+                    try: 
+                        func(*args, **kargs)
+                    except Exception, e: 
+                        print e
             except Exception: pass
 
 class ThreadPool:
@@ -55,12 +57,10 @@ class ThreadPool:
     def __init__(self, num_threads_min, num_threads_max):
         self.threads_max = num_threads_max
         self.tasks = Queue.Queue()
-        lock.acquire()
-        global threads_active, threads_min
-        try: 
+        with lock :
+            global threads_active, threads_min
             threads_active =  num_threads_min
-            threads_min = num_threads_min
-        finally: lock.release()
+            threads_min    = num_threads_min
         for _ in range(num_threads_min): 
             Worker(self.tasks)
 
@@ -68,13 +68,11 @@ class ThreadPool:
         """
         Add a task to the queue
         """
-        lock.acquire()
-        global threads_active
-        try: 
+        with lock :
+            global threads_active
             try:
                 if threads_active < self.threads_max: 
                     Worker(self.tasks)
                     threads_active += 1
                 self.tasks.put((func, args, kargs))
             except Exception, e: print e 
-        finally: lock.release()

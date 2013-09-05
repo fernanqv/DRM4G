@@ -33,68 +33,15 @@ setup(){
          exit 1
     fi
 
-    if [ -z ${GW_MAD} ]
-    then
-        printf "`date`: Checking remote job home... "
-
-        RMT_JOB_HOME=`pwd`/.gw_${GW_USER}_${GW_JOB_ID}
-      
-        echo "done."
+    printf "`date`: Checking remote job home... "
  
-        printf "`date`: Removing remote job home... " 
-   
-        rm -rf ${RMT_JOB_HOME}
-      
-        if [ $? -ne 0 ]; then
-            echo "failed."
-            exit 1;
-        else
-            echo "done."
-        fi
+    RMT_JOB_HOME=`dirname $0`
+
+    cd ${RMT_JOB_HOME}
     
-        GLOBUS_CP=globus-url-copy
-        
-        printf "`date`: Creating remote job home... "
-
-        mkdir -p ${RMT_JOB_HOME}
-
-        if [ $? -ne 0 ]; then
-            echo "failed."
-            exit 1;
-        else
-            echo "done."
-        fi
-        
-        printf "`date`: Staging-in job environment file... "
-
-        SRC_URL="$JOB_ENV_URL"
-	        
-        DST_URL="file:${RMT_JOB_HOME}/job.env"
- 
-        ${GLOBUS_CP} ${SRC_URL} ${DST_URL}
-
-        if [ $? -ne 0 ]; then
-	    echo "failed."
-            exit 1;
-        else
-    	    echo "done."
-        fi        
-        
-        STAGE=1    
-    else
-        printf "`date`: Checking remote job home... "
- 
-        RMT_JOB_HOME=${GW_RUNDIR}.gw_${GW_USER}_${GW_JOB_ID}
-    
-        echo "done."
-
-        STAGE=0
-    fi
+    echo "done."
 
     printf "`date`: Checking job environment... "
-         
-    # Warning! Check it well!
-    cd ${RMT_JOB_HOME}
     
     source ./job.env
 	
@@ -295,51 +242,14 @@ transfer_input_files(){
             ;;
             
         file:/*)
-            FILE_NAME=`echo $SRC_FILE | awk -F/ '{print $NF}'`
-            FILE_PATH=`echo $SRC_FILE | awk -F: '{print $2}'`
-            
-            if [ -z "$DST_FILE" ]; then
-                DST_FILE=$FILE_NAME
-            fi
-	
-            SRC_URL="${GW_STAGING_URL}${FILE_PATH}"
 
-            DST_URL="file:${RMT_JOB_HOME}/${DST_FILE}"
-
-            printf "`date`: Staging-in absolute local file \"${SRC_FILE}\" as \"${DST_FILE}\"... "
-             
-            ${GLOBUS_CP} ${SRC_URL} ${DST_URL}
-
-            if [ $? -ne 0 ]; then
-                echo "failed."
-            else
-                echo "done."
-            fi
             ;;
         
         /*)
-            printf "`date`: Skipping staging-in of absolute remote file \"$SRC_FILE\"... "
-            echo "done."
+
             ;;
         
         *)
-            if [ -z "$DST_FILE" ]; then
-                DST_FILE=$SRC_FILE
-            fi
-
-            SRC_URL="${GW_STAGING_URL}/${GW_JOB_HOME}/${SRC_FILE}"	        
-            
-            DST_URL="file:${RMT_JOB_HOME}/${DST_FILE}"
-
-            printf "`date`: Staging-in local file \"${SRC_FILE}\" as \"${DST_FILE}\"... "
-             
-            ${GLOBUS_CP} ${SRC_URL} ${DST_URL}
-
-            if [ $? -ne 0 ]; then
-                echo "failed."
-            else
-                echo "done."
-            fi
             ;;
         esac
 	
@@ -388,40 +298,24 @@ transfer_output_files(){
 
             SRC_URL="file:${RMT_JOB_HOME}/${SRC_FILE}"
             DST_URL="${DST_FILE}"
+            printf "`date`: Staging-out file \"${SRC_FILE}\" as \"${DST_FILE}\"... "
+
+            ${GLOBUS_CP} ${SRC_URL} ${DST_URL}
+
+            if [ $? -ne 0 ]; then
+                echo "failed."
+            else
+                echo "done."
+            fi
             ;;
 
         file:/*)
-            FILE_PATH=`echo $DST_FILE | awk -F: '{print $2}'`
-            FILE_NAME=`echo $DST_FILE | awk -F/ '{print $NF}'`
-
-            if [ -z "$SRC_FILE" ]; then
-                SRC_FILE=$FILE_NAME
-            fi
-
-            SRC_URL="file:${RMT_JOB_HOME}/${SRC_FILE}"
-            DST_URL="${GW_STAGING_URL}/${FILE_PATH}"
             ;;
 
         *)
-            if [ -z "$SRC_FILE" ]; then
-                SRC_FILE=$DST_FILE
-            fi
-
-            SRC_URL="file:${RMT_JOB_HOME}/${SRC_FILE}"
-            DST_URL="${GW_STAGING_URL}/${GW_JOB_HOME}/${DST_FILE}"
             ;;
         esac
 
-
-        printf "`date`: Staging-out file \"${SRC_FILE}\" as \"${DST_FILE}\"... "
-
-        ${GLOBUS_CP} ${SRC_URL} ${DST_URL}
-
-        if [ $? -ne 0 ]; then
-            echo "failed."
-        else
-            echo "done."
-        fi
     done
 
     IFS=$SAVED_IFS
@@ -437,14 +331,10 @@ JOB_ENV_URL=$1
 
 setup
 
-if [ $STAGE -eq 1 ]; then
-  transfer_input_files
-fi
+transfer_input_files
 
 execution
 
-if [ $STAGE -eq 1 ]; then
-  transfer_output_files
-fi
+transfer_output_files
 
 echo "REAL_TIME=$SECONDS"
