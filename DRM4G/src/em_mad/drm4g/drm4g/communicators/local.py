@@ -1,6 +1,7 @@
 import subprocess
 import os
 import re
+import logging
 import drm4g.communicators
 from drm4g.communicators import ComException
 from drm4g.utils.url     import urlparse
@@ -8,6 +9,8 @@ from drm4g.utils.url     import urlparse
 __version__  = '1.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
+
+logger  = logging.getLogger(__name__)
 
 class Communicator(drm4g.communicators.Communicator):
     """
@@ -27,7 +30,9 @@ class Communicator(drm4g.communicators.Communicator):
         to_dir = self._set_dir(urlparse(url).path)
         out, err = self.execCommand("mkdir -p %s" % to_dir )
         if err:
-            raise ComException( "Could not create %s directory" % to_dir )  
+            output = "Could not create %s directory: %s " % ( to_dir , ' '.join( err.split( '\n' ) ) )
+            logger.error( output )
+            raise ComException( output )  
         
     def copy(self, source_url, destination_url, execution_mode):
         if 'file://' in source_url:
@@ -38,7 +43,9 @@ class Communicator(drm4g.communicators.Communicator):
             to_dir   = urlparse(destination_url).path
         out, err = self.execCommand("cp -r %s %s" % (from_dir,to_dir))
         if err:
-            raise ComException("Could not copy from %s to %s" % (from_dir, to_dir))
+            output = "Could not copy from %s to %s : %s" % ( from_dir, to_dir , ' '.join( err.split( '\n' ) ) )
+            logger.error( output )
+            raise ComException( output )
         if execution_mode == 'X':
             os.chmod(to_dir, 0755)#execution permissions
             
@@ -46,11 +53,17 @@ class Communicator(drm4g.communicators.Communicator):
         to_dir   = self._set_dir(urlparse(url).path)    
         out, err = self.execCommand("rm -rf %s" % to_dir )
         if err:
-            raise ComException("Could not remove %s directory" % to_dir )
+            output = "Could not remove %s directory: %s " % ( to_dir , ' '.join( err.split( '\n' ) ) )
+            logger.error( output )
+            raise ComException( output )
     
     def checkOutLock(self, url):   
         to_dir = self._set_dir(urlparse(url).path)
         return os.path.isfile( '%s/.lock' % to_dir )
+   
+    def close(self):
+        pass
+
 
     #internal
     def _set_dir(self, path):

@@ -64,13 +64,12 @@ class GwTmMad (object):
     message = Send()
     
     def __init__(self):
-        self._max_thread  = 100
-        self._min_thread  = 5
-        self._lock        = threading.Lock()
-        self._resources   = dict()
-        self._com_obj     = dict()
-        self._configure   = None
-  
+        self._max_thread   = 100
+        self._min_thread   = 5
+        self._lock         = threading.Lock()
+        self._communicator = dict ()
+        self._configure    = None
+    
     def do_INIT(self, args):
         """
         INIT: Initializes the MAD, JID should be max number of jobs.
@@ -203,38 +202,24 @@ class GwTmMad (object):
                     self.message.stdout(out)
                     self.logger.debug(out)
         except Exception , err : 
-            self.logger.warning( str ( err , exc_info=1 ) )
+            self.logger.warning( str ( err ) , exc_info=1 )
     
     def _update_com(self, host):
         with self._lock :
-            if not self._com_obj.has_key( host ) or self._configure.check_update() :
+            if self._configure.check_update() or not self._configure.resources :
                 self._configure.load()
                 errors = self._configure.check()
                 if errors :
                     self.logger.error ( ' '.join( errors ) )
                     raise Exception ( ' '.join( errors ) )
-                for resname, resdict in self._configure.resources.iteritems() :
-                    if '_VO_' in host :
-                        _ , vo = host.split( '_VO_' )
-                        if self._configure.resources[resname][ 'vo' ] != vo :
-                            continue
-                    else :
-                        if resname != host :
-                            continue
-                    if not self._com_obj.has_key( host ) :
-                        self._resources[resname] = self._configure.resources[resname]
-                        com                      = self._configure.make_resources()[resname]['Communicator']
-                        self._com_obj[host]      = com
-                        return com
-                    for key in ['communicator' , 'username', 'frontend' , 'public_key' ] :
-                        try :
-                            if self._resources[resname][key] != self._configure.resources[resname][key] :
-                                self._com_obj[ host ][ 'Communicator' ].close()
-                                self._com_obj[ host ] = self._configure.make_resources()[resname]['Communicator']
-                                return self._com_obj[ host ]
-                        except Exception:
-                            pass
-                    return self._com_obj[ host ]
-            else : 
-                return self._com_obj[ host ]
-                     
+            for resname, resdict in self._configure.resources.iteritems() :
+                if '_VO_' in host :
+                    _ , vo = host.split( '_VO_' )
+                    if self._configure.resources[resname][ 'vo' ] != vo :
+                        continue
+                else :
+                    if resname != host :
+                        continue
+                if not self._communicator.has_key( resname ): 
+                    self._communicator[ resname ] = self._configure.make_communicators()[resname]
+                return self._communicator[ resname ]

@@ -230,7 +230,8 @@ class Job (object):
             return self._status
     
     def refreshJobStatus(self):
-        self._status = self.jobStatus()
+        with self._lock :
+            self._status = self.jobStatus()
     
     def get_abs_directory(self, directory ):
         out, err = self.Communicator.execCommand( 'ls -d %s' % directory )
