@@ -67,14 +67,17 @@ class GwImMad (object):
         """
         OPERATION, HID, HOST, ARGS = args.split()
         try:
-            config = Configuration()
+            config        = Configuration()
             config.load()
-            errors = config.check()
+            errors        = config.check()
             assert not errors, ' '.join( errors )
-            self._resources = config.make_resources()
+            self._resources     = config.make_resources()
+            communicators = config.make_communicators()
             hosts = ""
-            for resname, resdict in self._resources.iteritems() :
-                hosts += " " + resdict['Resource'].hosts() 
+            for resname in self._resources.keys() :
+                self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
+                hosts = hosts + " " + self._resources[ resname ] [ 'Resource' ].hosts()
+                self._resources[ resname ][ 'Resource' ].Communicator.close() 
             out = 'DISCOVER %s SUCCESS %s' % ( HID , hosts  )
         except Exception , err :
             out = 'DISCOVER - FAILURE %s' % str( err )
@@ -93,6 +96,7 @@ class GwImMad (object):
             for resname, resdict in self._resources.iteritems() :
                 if HOST in resdict['Resource'].host_list :
                     info = resdict['Resource'].host_properties( HOST )
+                    resdict['Resource'].Communicator.close()
                     break
             assert info, "Host '%s' is not avaible" % HOST
             out = 'MONITOR %s SUCCESS %s' % (HID , info )
