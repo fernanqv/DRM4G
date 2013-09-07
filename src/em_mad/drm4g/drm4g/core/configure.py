@@ -119,6 +119,25 @@ class Configuration(object):
                 logger.debug( "'%s' passed the check with flying colours" % resname )
         return errors
                 
+    def make_communicators(self):
+        """
+        """
+        communicators = dict()
+        for name, resdict in self.resources.iteritems():
+            try:
+                communicator                    = import_module(COMMUNICATORS[ resdict[ 'communicator' ] ] )
+                com_object                      = getattr( communicator , 'Communicator' ) ()
+                com_object.username             = resdict.get( 'username' )
+                com_object.frontend             = resdict.get( 'frontend' )
+                com_object.public_key           = resdict.get( 'public_key' )
+                communicators[name]             = com_object
+            except Exception, err:
+                output = "Failed creating communicator for resource '%s' : %s" % ( name, str( err ) )
+                logger.warning( output , exc_info=1 )
+                raise ConfigureException( output )
+        return communicators 
+
+
     def make_resources(self):
         """
         Make communicator and manager objects corresponding to the configured resources.
@@ -128,30 +147,18 @@ class Configuration(object):
         resources = dict()
         for name, resdict in self.resources.iteritems():
             try:
-                resources[name]                 = dict()
-
-                communicator                    = import_module(COMMUNICATORS[resdict['communicator']])
-                manager                         = import_module(RESOURCE_MANAGERS[resdict['lrms']])
-
-                com_object                      = getattr(communicator, 'Communicator') ()
-                com_object.username             = resdict.get('username')
-                com_object.frontend             = resdict.get('frontend')
-                com_object.public_key           = resdict.get('public_key')
-
-                resource_object                 = getattr(manager, 'Resource') ()
-                resource_object.name            = name
-                resource_object.features        = resdict
-                resource_object.Communicator    = com_object
-                
-                job_object                      = getattr(manager, 'Job') ()
-                job_object.Communicator         = com_object
-                                                            
-                resources[name]['Communicator'] = com_object
-                resources[name]['Resource']     = resource_object
-                resources[name]['Job']          = job_object
+                resources[name]                      = dict()
+                manager                              = import_module(RESOURCE_MANAGERS[ resdict[ 'lrms' ] ] )
+                resource_object                      = getattr( manager , 'Resource' ) ()
+                resource_object.name                 = name
+                resource_object.features             = resdict
+                job_object                           = getattr( manager , 'Job' ) ()
+                job_object.resfeatures               = resdict
+                resources[name]['Resource']          = resource_object
+                resources[name]['Job']               = job_object
             except Exception, err:
                 output = "Failed creating objects for resource '%s' of type : %s" % ( name, str( err ) )
-                logger.warning( output )
+                logger.warning( output , exc_info=1 )
                 raise ConfigureException( output )
         return resources
 

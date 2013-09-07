@@ -23,10 +23,11 @@ except ImportError:
 
 import socket
 import re
+import logging
 import drm4g.communicators
+from drm4g.communicators import ComException, logger
 from drm4g               import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT  
 from drm4g.utils.url     import urlparse
-from drm4g.communicators import ComException
 
 __version__  = '1.0'
 __author__   = 'Carlos Blanco'
@@ -36,16 +37,15 @@ class Communicator (drm4g.communicators.Communicator):
     """
     Create a SSH session to remote resources.  
     """
+    _lock  = __import__('threading').Lock()
+    _sem   = __import__('threading').Semaphore(SFTP_CONNECTIONS)
+    _trans = None    
  
-    def __init__(self):
-        self._lock  = __import__('threading').Lock()
-        self._sem   = __import__('threading').Semaphore(SFTP_CONNECTIONS)
-        self._trans = None    
-    
     def connect(self):
         with self._lock :
-            if not ( self._trans or self._trans.is_authenticated( ) ) :
+            if not self._trans or not self._trans.is_authenticated( ) :
                 logger.debug("Opening ssh connection ... ")
+                keys = None
                 if not self.public_key :
                     logger.debug("Trying ssh-agent ... " )
                     agent = paramiko.Agent()
@@ -89,7 +89,8 @@ class Communicator (drm4g.communicators.Communicator):
                         raise ComException( output )
                 for key in keys:
                     try:
-                        sock = socket.socket()
+                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                         try:
                             sock.settimeout( SSH_CONNECT_TIMEOUT )
                         except:
@@ -110,7 +111,7 @@ class Communicator (drm4g.communicators.Communicator):
                     except Exception:
                         logger.warning( "Bad '%s' key." % key ) 
             if not self._trans :
-                output = "Authentication failed to '%s'. Try to execute `ssh -vvv -p %d %s@%s` and see the response." % ( self.frontend , self.port, self.usdername, self.frontend )
+                output = "Authentication failed to '%s'. Try to execute `ssh -vvv -p %d %s@%s` and see the response." % ( self.frontend , self.port, self.username, self.frontend )
                 logger.error( output )
                 raise ComException( output )
         
@@ -154,7 +155,7 @@ class Communicator (drm4g.communicators.Communicator):
             try: 
                 sftp.close()
             except Exception, err:
-                logger.warning( "Could not close the sftp connection to '%s': %s" % ( self.frontend , str(err) )
+                logger.warning( "Could not close the sftp connection to '%s': %s" % ( self.frontend , str(err) ) )
         finally:
             self._sem.release()
             
@@ -173,7 +174,7 @@ class Communicator (drm4g.communicators.Communicator):
         try: 
             sftp.close()
         except Exception, err:
-            logger.warning( "Could not close the sftp connection to '%s': %s" % ( self.frontend , str(err) )
+            logger.warning( "Could not close the sftp connection to '%s': %s" % ( self.frontend , str(err) ) )
         return output
 
     def close(self, force = True):
@@ -181,13 +182,13 @@ class Communicator (drm4g.communicators.Communicator):
             try: 
                 self._trans.close()
             except Exception, err: 
-                logger.warning( "Could not close the SSH connection to '%s': %s" % ( self.frontend , str(err) )
+                logger.warning( "Could not close the SSH connection to '%s': %s" % ( self.frontend , str(err) ) )
             
     #internal
     def _set_dir(self, path):
         work_directory =  re.compile( r'^~' ).sub( self.work_directory , path )
         if work_directory[0] == r'~' :
-            return ".%s"  work_directory[ 1: ]
+            return ".%s" %  work_directory[ 1: ]
         else :
             return  work_directory
 
