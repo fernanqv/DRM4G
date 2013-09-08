@@ -91,7 +91,7 @@ class Configuration(object):
                         errors.append( output )
             else :
                 if not 'ncores' in reslist :
-                    output = "'ncores' key is mandatory '%s' resource" % resname
+                    output = "'ncores' key is mandatory for '%s' resource" % resname
                     logger.error( output )
                     errors.append( output )
                 if not 'queue' in reslist :
@@ -121,6 +121,9 @@ class Configuration(object):
                 
     def make_communicators(self):
         """
+        Make communicator objects corresponding to the configured resources.
+
+        Return a dictionary, mapping the resource name into the corresponding objects.
         """
         communicators = dict()
         for name, resdict in self.resources.iteritems():
@@ -140,7 +143,7 @@ class Configuration(object):
 
     def make_resources(self):
         """
-        Make communicator and manager objects corresponding to the configured resources.
+        Make manager objects corresponding to the configured resources.
 
         Return a dictionary, mapping the resource name into the corresponding objects.
         """

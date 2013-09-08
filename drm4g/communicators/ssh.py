@@ -115,11 +115,15 @@ class Communicator (drm4g.communicators.Communicator):
                 logger.error( output )
                 raise ComException( output )
         
-    def execCommand(self, command):
+    def execCommand(self, command , input=None ):
         self.connect()
         with self._lock :
             channel = self._trans.open_session()
         channel.exec_command( command )
+        if input :
+            for line in input.split():
+                channel.makefile('wb', -1).write( '%s\n' % line )
+                channel.makefile('wb', -1).flush()
         stdout = ''.join( channel.makefile('rb', -1).readlines( ) )
         stderr = ''.join( channel.makefile_stderr('rb', -1).readlines( ) )
         return stdout , stderr

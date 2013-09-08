@@ -32,12 +32,14 @@ class Communicator(object):
         """
         pass
 
-    def execCommand(self, command):
+    def execCommand(self, command , input=None ):
         """
         Execute command and return stdout and stderr.
         
         @param command: a shell command to execute.
         @type command: string
+        @param input: optional input argument
+        @type input: string
         @return: stdout and stderr associated with the command executed
         @rtype: tuple of string (stdout, stderr)
         """
