@@ -16,14 +16,20 @@ class Communicator(drm4g.communicators.Communicator):
     """
     Interact with local resources using shell commands 
     """
-        
-    def execCommand(self, command):
+    def connect(self):
+        logger.debug( "Your are using the local communicator" )     
+
+    def execCommand(self, command, input=None ):
         command_proc = subprocess.Popen(command,
             shell = True,
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE,
             env = os.environ)
-        stdout, stderr = command_proc.communicate()
+        if input :
+            for line in input.split():
+                stdout, stderr = command_proc.communicate("%s\n" % line)
+        else :
+            stdout, stderr = command_proc.communicate()
         return stdout , stderr 
         
     def mkDirectory(self, url):

@@ -31,7 +31,7 @@ class Resource (object):
         self.Communicator  = None
         self.host_list     = []
     
-    def _ldapsearch(filt = '' , attr = '*', bdii = 'lcg-bdii.cern.ch:2170', base = 'Mds-Vo-name=local,o=grid' ) :
+    def _ldapsearch( filt = '' , attr = '*', bdii = 'lcg-bdii.cern.ch:2170', base = 'Mds-Vo-name=local,o=grid' ) :
         """ 
         Wrapper for ldapserch.
         Input parameters:
