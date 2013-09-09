@@ -1,6 +1,8 @@
 import re
+import logging
 import drm4g.managers
-from os.path        import basename
+from os.path        import basename , dirname , exists
+from string         import Template
 from drm4g          import REMOTE_VOS_DIR
 from drm4g.managers import JobException
 
@@ -8,7 +10,9 @@ __version__  = '1.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-X509_USER_PROXY = 'X509_USER_PROXY=%s/x509up.%s' % REMOTE_VOS_DIR
+logger = logging.getLogger(__name__)
+
+X509_USER_PROXY = 'X509_USER_PROXY=' +  REMOTE_VOS_DIR + '/x509up.%s'
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.
 CREAM_SUBMIT = '%s glite-ce-job-submit' % X509_USER_PROXY  
@@ -17,19 +21,29 @@ CREAM_DEL    = '%s glite-ce-job-cancel' % X509_USER_PROXY
 CREAM_PURGE  = '%s glite-ce-job-purge'  % X509_USER_PROXY
 
 # Regular expressions for parsing.
-re_status       = re.compile( "Status\s*=\s*\[(.*)\]" )
-re_input_files  = re.compile( "GW_INPUT_FILES\s*=\s*\"(.*)\"" )
-re_output_files = re.compile( "GW_OUTPUT_FILES\s*=\s*\"(.*)\"" )
+re_status          = re.compile( "Status\s*=\s*\[(.*)\]" )
+re_input_files     = re.compile( "GW_INPUT_FILES\s*=\s*\"(.*)\"" )
+re_output_files    = re.compile( "GW_OUTPUT_FILES\s*=\s*\"(.*)\"" )
+re_executable_file = re.compile( "GW_EXECUTABLE\s*=\s*\"(.*)\"" )
 
 def sandbox_files(env_file):
+
+    def executable_file(env):
+        re_executable = re_executable_file.search(env)
+        executable    = re_executable.groups()[0].split()[0]
+        if executable.startswith( "file:" ) or ( executable.startswith( "/" ) and exists ( executable  ) ) :
+            return basename ( executable )
+        elif not executable.startswith( "gsiftp:" ) :
+            return executable
+        else :
+            return None
+
     def parse_files(env, type, re_exp):
         files_to_copy = []
         files         = re_exp.search(env)
         if files:
-            print files.groups()[0]
             for file in files.groups()[0].split(','):
-                print file
-                if "gsiftp://" in file: 
+                if file.startswith( "gsiftp://" ) : 
                     continue
                 if " " in file:
                     file0, file1 = file.split()
@@ -42,8 +56,11 @@ def sandbox_files(env_file):
     with open( env_file , "r" ) as f :
         line_env = ' '.join( f.readlines() )
     f.close()
-    input_files  = parse_files( line_env , 'input' , re_input_files )
-    output_files = parse_files( line_env , 'output' , re_output_files )
+    input_files      = parse_files( line_env , 'input' , re_input_files )
+    output_files     = parse_files( line_env , 'output' , re_output_files )
+    executable_file = executable_file(line_env)
+    if executable_file :
+        input_files.append( executable_file )
     return input_files, output_files
 
 class Resource (drm4g.managers.Resource):
@@ -82,8 +99,9 @@ class Job (drm4g.managers.Job):
             raise JobException( output )
 
     def jobSubmit(self, wrapper_file):
-        cmd = 's -a -r %s-%s %s' % ( 
-                                     CREAM_SUBMIT % self.resfeatures[ 'vo' ] , 
+        cmd = '%s -a -r %s:8443/%s-%s %s' % ( 
+                                     CREAM_SUBMIT % self.resfeatures[ 'vo' ] ,
+                                     self.resfeatures[ 'host' ] ,
                                      self.resfeatures[ 'jm' ] , 
                                      self.resfeatures[ 'queue' ] ,
                                      wrapper_file 
@@ -96,8 +114,8 @@ class Job (drm4g.managers.Job):
                 output = "Error submitting job after renewing the proxy: %s" %  err 
                 logger.error( output )
                 raise JobException( output )
-        else :
-            output = "Error submitting job: %s" % err
+        if err :
+            output = "Error submitting job: %s %s" % ( out, err )
             logger.error( output )
             raise JobException( output )
         return out[ out.find("https://"): ].strip() #cream_id
@@ -153,6 +171,7 @@ class Job (drm4g.managers.Job):
             raise JobException( output )
         
     def jobTemplate(self, parameters):
+        dir_temp   = dirname( parameters['executable'] )
         executable = basename( parameters['executable'] ) 
         stdout     = basename( parameters['stdout'] ) 
         stderr     = basename( parameters['stderr'] ) 
@@ -161,20 +180,25 @@ class Job (drm4g.managers.Job):
         args += 'Executable = "%s";\n' % executable
         args += 'StdOutput = "%s";\n'  % stdout
         args += 'StdError = "%s";\n'   % stderr
-        args += 'QueueName = "$queue";\n'
         args += 'CpuNumber = $count;\n'
 
-        input_sandbox, output_sandbox = sandbox_files(self.job_env_file)
+        input_sandbox, output_sandbox = sandbox_files( self.resfeatures[ 'env_file' ] )
         if input_sandbox:
-            args += 'InputSandbox = {%s};' % (','.join(['"%s"' % (f) for f in input_sandbox]))
+            args += 'InputSandbox = {"job.env", "%s" , %s};\n' % ( executable , 
+                                                                   ','.join(['"%s"' % (f) for f in input_sandbox])
+                                                                    )
+        else :
+            args += 'InputSandbox = {"job.env", "%s"};\n' % executable 
+        args += 'InputSandboxBaseURI = "gsiftp://%s/%s";\n' % ( self.resfeatures[ 'frontend' ] , dir_temp )
         if output_sandbox:
-            args += 'OutputSandbox = {"%s", "%s", %s};' % (
-                                                           stdout ,
-                                                           stderr ,
-                                                           ', '.join( [ '"%s"' % (f) for f in output_sandbox ] ) ,
-                                                           )
+            args += 'OutputSandbox = {"stdout.execution" , "stderr.execution" , "%s", "%s", %s};\n' % (
+                                                                                                    stdout ,
+                                                                                                    stderr ,
+                                                                                                    ', '.join( [ '"%s"' % (f) for f in output_sandbox ] ) ,
+                                                                                                    )
         else:
-            args += 'OutputSandbox = {"%s", "%s"};' % ( stdout , stderr )                           
+            args += 'OutputSandbox = {"stdout.execution" , "stderr.execution" , "%s" , "%s"};\n' % ( stdout , stderr )                        
+        args += 'OutputSandboxBaseDestURI = "gsiftp://%s/%s";\n' % ( self.resfeatures[ 'frontend' ] , dir_temp )
         requirements = ''
         if parameters.has_key('maxWallTime'):  
             requirements += '(other.GlueCEPolicyMaxWallClockTime <= $maxWallTime)' 
@@ -186,7 +210,8 @@ class Job (drm4g.managers.Job):
             if requirements: 
                 requirements += ' && '
             requirements += ' (other.GlueHostMainMemoryRAMSize <= $maxMemory) '
-        args += 'Requirements=%s;\n' % (requirements)
+        if requirements :
+            args += 'Requirements=%s;\n' % (requirements)
         args += 'Environment={%s};\n' % (','.join(['"%s=%s"' %(k, v) for k, v in parameters['environment'].items()]))
         args += ']'
         return Template(args).safe_substitute(parameters)
