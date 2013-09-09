@@ -63,8 +63,8 @@ class GwEmMad (object):
 
     def __init__(self):
         self._callback_interval = 30 #seconds
-        self._max_thread        = 100
-        self._min_thread        = 5
+        self._max_thread        = 20
+        self._min_thread        = 3
         self._job_list          = List()
         self._configure         = None  
         self._communicators     = dict()
@@ -97,13 +97,14 @@ class GwEmMad (object):
             rsl['project']      = job.resfeatures.get('project')
             rsl['parallel_env'] = job.resfeatures.get('parallel_env')
             if '_VO_' in HOST :
-                host , _                     = HOST.split('_VO_')
-                job.resfeatures['jm']        = JM
-                job.resfeatures['env_file']  = join( dirname(RSL) , "job.env" )
-                job.resfeatures['queue']     = rsl[ 'queue' ]
+                host , _                    = HOST.split('_VO_')
+                job.resfeatures['host']     = host
+                job.resfeatures['jm']       = JM
+                job.resfeatures['env_file'] = join( dirname(RSL) , "job.env" )
+                job.resfeatures['queue']    = rsl[ 'queue' ]
             else :
                 host = HOST
-            # Update remote directories 
+            # Update remote directories
             ABS_REMOTE_JOBS_DIR   = job.get_abs_directory( REMOTE_JOBS_DIR )
             for key in [ "stdout" , "stderr" , "executable" ] :
                 rsl[key] = join( ABS_REMOTE_JOBS_DIR , rsl[key] )
@@ -159,7 +160,7 @@ class GwEmMad (object):
         """
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
-            HOST, remote_job_id = HOST_JM.split( ':' )
+            HOST, remote_job_id = HOST_JM.split( ':' , 1 )
             job , communicator  = self._update_resource( HOST )            
             job.Communicator    = communicator
             job.JobId           = remote_job_id
@@ -169,7 +170,7 @@ class GwEmMad (object):
         except Exception, err:
             out = 'RECOVER %s FAILURE %s' % ( JID , str( err ) )    
         self.message.stdout(out)
-        self.logger.debug(out)
+        self.logger.debug(out , exc_info=1 )
             
     def do_CALLBACK(self):
         """
@@ -235,7 +236,7 @@ class GwEmMad (object):
                 self.logger.debug(' '.join(input))
                 OPERATION = input[0].upper()
                 if len(input) == 4 and self.methods.has_key(OPERATION):
-                    if OPERATION == 'FINALIZE' or OPERATION == 'INIT' \
+                    if OPERATION == 'FINALIZE' or OPERATION == 'INIT' or OPERATION == 'SUBMIT' \
                         or OPERATION == 'RECOVER':
                         self.methods[OPERATION](self, ' '.join(input))
                     else:
@@ -260,11 +261,11 @@ class GwEmMad (object):
                     _ , vo = host.split( '_VO_' )
                     if self._configure.resources[resname][ 'vo' ] != vo :
                          continue
-                if resname != host : 
+                elif resname != host : 
                     continue
                 if not self._communicators.has_key( resname ) :
                     self._communicators[ resname ] = self._configure.make_communicators()[resname]
-                job          = self._configure.make_resources()[ resname ]['Job']     
+                job          = self._configure.make_resources()[ resname ]['Job']
                 communicator = self._communicators[ resname ]
                 return job , communicator
 
