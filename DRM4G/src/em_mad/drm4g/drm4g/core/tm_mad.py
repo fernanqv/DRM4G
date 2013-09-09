@@ -64,7 +64,7 @@ class GwTmMad (object):
     message = Send()
     
     def __init__(self):
-        self._max_thread   = 100
+        self._max_thread   = 10
         self._min_thread   = 5
         self._lock         = threading.Lock()
         self._communicator = dict ()
@@ -217,9 +217,8 @@ class GwTmMad (object):
                     _ , vo = host.split( '_VO_' )
                     if self._configure.resources[resname][ 'vo' ] != vo :
                         continue
-                else :
-                    if resname != host :
-                        continue
+                elif resname != host :
+                    continue
                 if not self._communicator.has_key( resname ): 
                     self._communicator[ resname ] = self._configure.make_communicators()[resname]
                 return self._communicator[ resname ]

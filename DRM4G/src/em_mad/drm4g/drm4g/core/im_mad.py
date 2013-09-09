@@ -4,7 +4,6 @@ import threading
 import logging
 from drm4g.core.configure  import Configuration
 from drm4g.managers        import HostInformation
-from drm4g.utils.dynamic   import ThreadPool
 from drm4g.utils.message   import Send
 
 __version__  = '1.0'
@@ -45,8 +44,6 @@ class GwImMad (object):
     message = Send()
     
     def __init__(self):
-        self._min_thread = 4
-        self._max_thread = 10
         self._resources  = dict()
  
     def do_INIT(self, args):
@@ -71,8 +68,8 @@ class GwImMad (object):
             config.load()
             errors        = config.check()
             assert not errors, ' '.join( errors )
-            self._resources     = config.make_resources()
-            communicators = config.make_communicators()
+            self._resources  = config.make_resources()
+            communicators    = config.make_communicators()
             hosts = ""
             for resname in self._resources.keys() :
                 self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
@@ -82,7 +79,7 @@ class GwImMad (object):
         except Exception , err :
             out = 'DISCOVER - FAILURE %s' % str( err )
         self.message.stdout( out )
-        self.logger.debug( out )
+        self.logger.debug( out , exc_info=1 )
  
     def do_MONITOR(self, args):
         """
@@ -103,7 +100,7 @@ class GwImMad (object):
         except Exception , err :
             out = 'MONITOR %s FAILURE %s' % (HID , str( err ) )
         self.message.stdout(out)
-        self.logger.debug(out)
+        self.logger.debug( out , exc_info=1 )
  
     def do_FINALIZE(self, args):
         """
@@ -127,16 +124,12 @@ class GwImMad (object):
         Choose the OPERATION through the command line
         """
         try:
-            pool = ThreadPool(self._min_thread, self._max_thread)
             while True:
                 input = sys.stdin.readline().split()
                 self.logger.debug(' '.join(input))
                 OPERATION = input[0].upper()
                 if len(input) == 4 and self.methods.has_key(OPERATION):
-                    if OPERATION != 'MONITOR':
-                        self.methods[OPERATION](self, ' '.join(input))
-                    else:
-                        pool.add_task(self.methods[OPERATION], self, ' '.join(input))
+                    self.methods[OPERATION](self, ' '.join(input))
                 else:
                     out = 'WRONG COMMAND'
                     self.message.stdout(out)
