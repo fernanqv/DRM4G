@@ -125,7 +125,7 @@ class Resource (object):
         # First search
         filt   = "(&(objectclass=GlueCE)(GlueCEInfoHostName=%s))" % ( host )
         attr   = '*'
-        bdii   = self.features[ 'ldap' ]
+        bdii   = self.features[ 'bdii' ]
         result = self.ldapsearch( filt , attr , bdii )
     
         for value in result :
@@ -147,7 +147,7 @@ class Resource (object):
         # Second search    
         filt   = "(&(objectclass=GlueHostOperatingSystem)(GlueSubClusterName=%s))"  % ( host )
         attr   = '*'
-        bdii   = self.features[ 'ldap' ]
+        bdii   = self.features[ 'bdii' ]
         result = self.ldapsearch( filt , attr , bdii )
         
         try :        

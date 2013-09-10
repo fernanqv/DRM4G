@@ -84,7 +84,7 @@ class Configuration(object):
                     logger.error( output )
                     errors.append( output )
             if resdict.has_key( 'vo' ) :
-                for key in [ "ldap" , "myproxy_server" ]:
+                for key in [ "bdii" , "myproxy_server" ]:
                     if not key in reslist :
                         output = "'%s' has to be '%s' key" % (resname, key)
                         logger.error( output )
@@ -110,9 +110,9 @@ class Configuration(object):
                 output = "'%s' has a wrong lrms: '%s'" % ( resname , resdict[ 'lrms' ] )
                 logger.error( output )
                 errors.append( output )
-            public_key = resdict.get( 'public_key' )
-            if public_key and not os.path.isfile( os.path.expanduser( public_key ) ) :
-                output = "'%s' does not exist '%s' resource" % ( public_key , resname )
+            private_key = resdict.get( 'private_key' )
+            if private_key and not os.path.isfile( os.path.expanduser( private_key ) ) :
+                output = "'%s' does not exist '%s' resource" % ( private_key , resname )
                 logger.error( output )
                 errors.append( output )
             if not errors:
@@ -132,7 +132,7 @@ class Configuration(object):
                 com_object                      = getattr( communicator , 'Communicator' ) ()
                 com_object.username             = resdict.get( 'username' )
                 com_object.frontend             = resdict.get( 'frontend' )
-                com_object.public_key           = resdict.get( 'public_key' )
+                com_object.private_key           = resdict.get( 'private_key' )
                 communicators[name]             = com_object
             except Exception, err:
                 output = "Failed creating communicator for resource '%s' : %s" % ( name, str( err ) )
