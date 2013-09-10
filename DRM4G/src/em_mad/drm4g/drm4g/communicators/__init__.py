@@ -24,7 +24,7 @@ class Communicator(object):
         self.port           = SSH_PORT
         self.username       = None
         self.frontend       = None
-        self.public_key     = None 
+        self.private_key     = None 
 
     def connect(self):
         """
