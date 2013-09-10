@@ -46,7 +46,7 @@ class Communicator (drm4g.communicators.Communicator):
             if not self._trans or not self._trans.is_authenticated( ) :
                 logger.debug("Opening ssh connection ... ")
                 keys = None
-                if not self.public_key :
+                if not self.private_key :
                     logger.debug("Trying ssh-agent ... " )
                     agent = paramiko.Agent()
                     keys  = agent.get_keys()
@@ -71,20 +71,20 @@ class Communicator (drm4g.communicators.Communicator):
                                 logger.error( output )
                                 raise ComException( output )
                 else:
-                    logger.debug("Trying '%s' key ... " % self.public_key )
-                    public_key_path = expanduser( self.public_key )
-                    if not exists(public_key_path):
+                    logger.debug("Trying '%s' key ... " % self.private_key )
+                    private_key_path = expanduser( self.private_key )
+                    if not exists(private_key_path):
                         output = "'ssh-agent' is running but without any keys"
                         logger.error( output )
                         raise ComException( output )
                     for pkey_class in (RSAKey, DSSKey):
                         try :
-                            key  = pkey_class.from_private_key_file( public_key_path )
+                            key  = pkey_class.from_private_key_file( private_key_path )
                             keys = (key,)
                         except Exception : 
                             pass
                     if not keys :
-                        output = "Impossible to load '%s' key "  % self.public_key
+                        output = "Impossible to load '%s' key "  % self.private_key
                         logger.error( output )
                         raise ComException( output )
                 for key in keys:

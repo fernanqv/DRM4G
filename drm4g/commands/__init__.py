@@ -17,7 +17,9 @@ class ManagementUtility( cmd.Cmd ):
 
     def do_myproxy_check(self, line):
         """
-        Check if user certificate is valid.
+        Check if user certificate is valid. You have to indicate the resource.
+        
+        Example : myproxy_check localhost
         """
         self.do_check_resources( line )
         if not self.config.resources.has_key( line ) :
@@ -38,7 +40,9 @@ class ManagementUtility( cmd.Cmd ):
     
     def do_myproxy_upload(self, line ):
         """
-        It uploads the credential to a myproxy-server.
+        It uploads the credential to a myproxy-server. You have to indicate the resource.
+        
+        Example : myproxy_upload localhost
         """
         import getpass
         self.do_check_resources( line )
@@ -77,12 +81,14 @@ class ManagementUtility( cmd.Cmd ):
 
     def do_myproxy_download(self, line ):
         """
-        It  retrieves  a  proxy  credential  from  the myproxy-server.
+        It  retrieves  a  proxy  credential  from  the myproxy-server. You have to indicate the resource.
+        
+        Example : myproxy_download localhost
         """
         import getpass
         self.do_check_resources( line )
         if not self.config.resources.has_key( line ) :
-            print "'%s' is not a resource. The resources avaible are: " % line
+            print "'%s' is not a resource. The resources available are: " % line
             self.do_list_resources( line )
         else :
             resource  = self.config.resources[ line ]
