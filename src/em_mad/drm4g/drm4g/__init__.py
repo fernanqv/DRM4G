@@ -35,7 +35,7 @@ SSH_CONNECT_TIMEOUT = 30 # seconds
 SFTP_CONNECTIONS    = 4
 
 # Proxy
-PROXY_THRESHOLD     = 600 # Proxy threshold in seconds.
+PROXY_THRESHOLD     = 178 # Proxy threshold in hours.
     
 COMMUNICATORS = {
                  "ssh"   : "drm4g.communicators.ssh",
