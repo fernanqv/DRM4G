@@ -213,9 +213,9 @@ class GwTmMad (object):
                     self.logger.error ( ' '.join( errors ) )
                     raise Exception ( ' '.join( errors ) )
             for resname, resdict in self._configure.resources.iteritems() :
-                if '_VO_' in host :
-                    _ , vo = host.split( '_VO_' )
-                    if self._configure.resources[resname][ 'vo' ] != vo :
+                if '_' in host :
+                    _resname , _ = host.split( '_' )
+                    if resname != _resname :
                         continue
                 elif resname != host :
                     continue

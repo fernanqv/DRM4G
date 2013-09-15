@@ -63,7 +63,7 @@ class GwEmMad (object):
 
     def __init__(self):
         self._callback_interval = 30 #seconds
-        self._max_thread        = 20
+        self._max_thread        = 10
         self._min_thread        = 3
         self._job_list          = List()
         self._configure         = None  
@@ -96,8 +96,8 @@ class GwEmMad (object):
             rsl                 = Rsl2Parser(RSL).parser()
             rsl['project']      = job.resfeatures.get('project')
             rsl['parallel_env'] = job.resfeatures.get('parallel_env')
-            if '_VO_' in HOST :
-                host , _                    = HOST.split('_VO_')
+            if '_' in HOST :
+                _ , host                    = HOST.split('_')
                 job.resfeatures['host']     = host
                 job.resfeatures['jm']       = JM
                 job.resfeatures['env_file'] = join( dirname(RSL) , "job.env" )
@@ -188,6 +188,7 @@ class GwEmMad (object):
                     if oldStatus != newStatus:
                         if newStatus == 'DONE' or newStatus == 'FAILED':
                             self._job_list.delete(JID)
+                            time.sleep ( 0.1 )
                         out = 'CALLBACK %s SUCCESS %s' % ( JID , newStatus )
                         self.message.stdout( out )
                         self.logger.debug( out )
@@ -257,9 +258,9 @@ class GwEmMad (object):
                     self.logger.error ( ' '.join( errors ) )
                     raise Exception ( ' '.join( errors ) )
             for resname, resdict in self._configure.resources.iteritems() :
-                if '_VO_' in host :
-                    _ , vo = host.split( '_VO_' )
-                    if self._configure.resources[resname][ 'vo' ] != vo :
+                if '_' in host :
+                    _resname , _ = host.split( '_' )
+                    if resname != _resname :
                          continue
                 elif resname != host : 
                     continue

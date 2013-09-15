@@ -44,7 +44,7 @@ class Resource (object):
         'objectClass':        List of classes in response
         'attr':               Dictionary of attributes
         """
-        cmd = 'ldapsearch -x -LLL -h %s -b %s "%s" "%s"' % ( bdii, base, filt, attr )
+        cmd = 'ldapsearch -x -LLL -l 5 -h %s -b %s "%s" "%s"' % ( bdii, base, filt, attr )
         out, err = self.Communicator.execCommand( cmd )
         assert not err, err
         
@@ -106,11 +106,11 @@ class Resource (object):
         """
         filt   = '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM))' % ( self.features[ 'vo' ] )
         attr   = 'GlueCEHostingCluster'
-        bdii   = self.features['ldap']
+        bdii   = self.features['bdii']
         result = self.ldapsearch( filt , attr , bdii )
         hosts  = []
         for value in result :
-            host = "%s_VO_%s" % ( value['attr'][attr] , self.features[ 'vo' ] )
+            host = "%s_%s" % ( self.name , value['attr'][attr] )
             hosts.append(host)
         return hosts
         
@@ -118,7 +118,7 @@ class Resource (object):
         """
         It will return a string with the features.
         """
-        host , _       = host.split( '_VO_' )
+        _ , host       = host.split( '_' )
         host_info      = HostInformation()
         host_info.Name = host
         
@@ -180,7 +180,7 @@ class Resource (object):
     def _free_cores(self , host ) :
         """
         """
-        cmd = "gwhost $(gwhost | grep %s | awk '{print $1 }') -x" % host 
+        cmd = "gwhost $( gwhost -f | grep -B 1 %s | grep HOST_ID | awk -F = {'print $2'}) -x" % host 
         command_proc = subprocess.Popen( cmd ,
                 shell  = True,
                 stdout = subprocess.PIPE,

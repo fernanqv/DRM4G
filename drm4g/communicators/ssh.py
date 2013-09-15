@@ -7,13 +7,14 @@ try:
     from paramiko.rsakey import RSAKey
 except ImportError:
     try:
-        GW_LOCATION  = dirname( dirname ( abspath( __file__ ) ) )
-        cryptos_path = join( 'utils' , 'Cryptos' )
+        GW_LOCATION = dirname( dirname ( abspath( __file__ ) ) )
+        cryptos_path = join( GW_LOCATION , 'utils' , 'Cryptos' )
         if platform.architecture()[0] == '32bit':
             crypto_package = 'Crypto_i686'
         else:
             crypto_package = 'Crypto_x86_64'
         sys.path.append( join( cryptos_path , crypto_package ) )
+        sys.path.append( join( GW_LOCATION , 'utils' ) )         
         import paramiko
         from paramiko.dsskey import DSSKey
         from paramiko.rsakey import RSAKey
@@ -89,8 +90,7 @@ class Communicator (drm4g.communicators.Communicator):
                         raise ComException( output )
                 for key in keys:
                     try:
-                        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                        sock = socket.socket()
                         try:
                             sock.settimeout( SSH_CONNECT_TIMEOUT )
                         except:
