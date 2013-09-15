@@ -78,7 +78,7 @@ class Configuration(object):
         for resname, resdict in self.resources.iteritems() :
             logger.debug("Checking resource '%s' ..." % resname)
             reslist = resdict.keys( )
-            for key in [ 'frontend' , 'lrms' , 'communicator' ] :
+            for key in [ 'enable' , 'frontend' , 'lrms' , 'communicator' ] :
                 if not key in reslist :
                     output = "'%s' resource does not have '%s' key" % (resname, key)
                     logger.error( output )
@@ -128,11 +128,13 @@ class Configuration(object):
         communicators = dict()
         for name, resdict in self.resources.iteritems():
             try:
+                if not resdict[ 'enable' ] : 
+                    continue 
                 communicator                    = import_module(COMMUNICATORS[ resdict[ 'communicator' ] ] )
                 com_object                      = getattr( communicator , 'Communicator' ) ()
                 com_object.username             = resdict.get( 'username' )
                 com_object.frontend             = resdict.get( 'frontend' )
-                com_object.private_key           = resdict.get( 'private_key' )
+                com_object.private_key          = resdict.get( 'private_key' )
                 communicators[name]             = com_object
             except Exception, err:
                 output = "Failed creating communicator for resource '%s' : %s" % ( name, str( err ) )
@@ -150,6 +152,8 @@ class Configuration(object):
         resources = dict()
         for name, resdict in self.resources.iteritems():
             try:
+                if not resdict[ 'enable' ] : 
+                    continue
                 resources[name]                      = dict()
                 manager                              = import_module(RESOURCE_MANAGERS[ resdict[ 'lrms' ] ] )
                 resource_object                      = getattr( manager , 'Resource' ) ()

@@ -86,7 +86,7 @@ class Job (drm4g.managers.Job):
         output = "The proxy 'x509up.%s' has probably expired" %  self.resfeatures[ 'vo' ]  
         logger.debug( output )
         X509_USER_PROXY = "X509_USER_PROXY=%s/proxy" % REMOTE_VOS_DIR
-        cmd = "%s voms-proxy-init -ignorewarn -timeout 30 -valid 24:00 -voms %s -noregen -out %s/x509up.%s" % (
+        cmd = "%s voms-proxy-init -ignorewarn -timeout 30 -valid 24:00 -q -voms %s -noregen -out %s/x509up.%s" % (
                                                                                                          X509_USER_PROXY ,
                                                                                                          self.resfeatures[ 'vo' ] ,
                                                                                                          REMOTE_VOS_DIR ,
@@ -107,14 +107,17 @@ class Job (drm4g.managers.Job):
                                      wrapper_file 
                                      )
         out, err = self.Communicator.execCommand( cmd )
-        if ( 'The proxy has EXPIRED' in err ) or ( ' is not accessible' in err ) :
+        logger.info(cmd)
+        logger.info(out + err)
+        if ( 'The proxy has EXPIRED' in out ) or ( ' is not accessible' in err ) :
             self._renew_proxy()
             out , err = self.Communicator.execCommand( cmd )
-            if err : 
-                output = "Error submitting job after renewing the proxy: %s" %  err 
+            logger.info(out + err)
+            if not 'https://' in out : 
+                output = "Error submitting job after renewing the proxy: %s %s" %  ( err , out ) 
                 logger.error( output )
                 raise JobException( output )
-        if err :
+        if not 'https://' in out :
             output = "Error submitting job: %s %s" % ( out, err )
             logger.error( output )
             raise JobException( output )
@@ -123,7 +126,7 @@ class Job (drm4g.managers.Job):
     def jobStatus(self):
         cmd = '%s %s' % ( CREAM_STATUS % self.resfeatures[ 'vo' ] , self.JobId )
         out, err = self.Communicator.execCommand( cmd )
-        if 'The proxy has EXPIRED' in err :
+        if 'The proxy has EXPIRED' in out :
             self._renew_proxy()
             out , err = self.Communicator.execCommand( cmd )
             if "ERROR" in err: 
@@ -143,7 +146,7 @@ class Job (drm4g.managers.Job):
     def jobCancel(self):
         cmd = '%s -N %s' % (CREAM_DEL % self.resfeatures[ 'vo' ]  , self.JobId )
         out, err = self.Communicator.execCommand( cmd )
-        if 'The proxy has EXPIRED' in err :
+        if 'The proxy has EXPIRED' in out :
             self._renew_proxy()
             out , err = self.Communicator.execCommand( cmd )
             if "ERROR" in err:
@@ -158,7 +161,7 @@ class Job (drm4g.managers.Job):
     def jobPurge(self):
         cmd = '%s -N %s' % (CREAM_PURGE % self.resfeatures[ 'vo' ] , self.JobId )
         out, err = self.Communicator.execCommand( cmd )
-        if 'The proxy has EXPIRED' in err :
+        if 'The proxy has EXPIRED' in out :
             self._renew_proxy()
             out , err = self.Communicator.execCommand( cmd )
             if "ERROR" in err:

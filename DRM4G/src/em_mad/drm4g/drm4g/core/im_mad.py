@@ -71,10 +71,15 @@ class GwImMad (object):
             self._resources  = config.make_resources()
             communicators    = config.make_communicators()
             hosts = ""
-            for resname in self._resources.keys() :
-                self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
-                hosts = hosts + " " + self._resources[ resname ] [ 'Resource' ].hosts()
-                self._resources[ resname ][ 'Resource' ].Communicator.close() 
+            for resname in sorted( self._resources.keys() ) :
+                if not config.resources[ resname ][ 'enable' ] : 
+                    continue
+                try :
+                    self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
+                    hosts = hosts + " " + self._resources[ resname ] [ 'Resource' ].hosts()
+                    self._resources[ resname ][ 'Resource' ].Communicator.close() 
+                except Exception , err :
+                    self.logger.error( err , exc_info=1 )
             out = 'DISCOVER %s SUCCESS %s' % ( HID , hosts  )
         except Exception , err :
             out = 'DISCOVER - FAILURE %s' % str( err )
