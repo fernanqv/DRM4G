@@ -21,12 +21,22 @@ L{HostKeys}
 """
 
 import base64
+import binascii
 from Crypto.Hash import SHA, HMAC
 import UserDict
 
 from paramiko.common import *
 from paramiko.dsskey import DSSKey
 from paramiko.rsakey import RSAKey
+from paramiko.util import get_logger
+
+
+class InvalidHostKey(Exception):
+
+    def __init__(self, line, exc):
+        self.line = line
+        self.exc = exc
+        self.args = (line, exc)
 
 
 class HostKeyEntry:
@@ -39,7 +49,7 @@ class HostKeyEntry:
         self.hostnames = hostnames
         self.key = key
 
-    def from_line(cls, line):
+    def from_line(cls, line, lineno=None):
         """
         Parses the given line of text to find the names for the host,
         the type of key, and the key data. The line is expected to be in the
@@ -52,9 +62,12 @@ class HostKeyEntry:
         @param line: a line from an OpenSSH known_hosts file
         @type line: str
         """
+        log = get_logger('paramiko.hostkeys')
         fields = line.split(' ')
         if len(fields) < 3:
             # Bad number of fields
+            log.info("Not enough fields found in known_hosts in line %s (%r)" %
+                     (lineno, line))
             return None
         fields = fields[:3]
 
@@ -63,12 +76,16 @@ class HostKeyEntry:
 
         # Decide what kind of key we're looking at and create an object
         # to hold it accordingly.
-        if keytype == 'ssh-rsa':
-            key = RSAKey(data=base64.decodestring(key))
-        elif keytype == 'ssh-dss':
-            key = DSSKey(data=base64.decodestring(key))
-        else:
-            return None
+        try:
+            if keytype == 'ssh-rsa':
+                key = RSAKey(data=base64.decodestring(key))
+            elif keytype == 'ssh-dss':
+                key = DSSKey(data=base64.decodestring(key))
+            else:
+                log.info("Unable to handle key of type %s" % (keytype,))
+                return None
+        except binascii.Error, e:
+            raise InvalidHostKey(line, e)
 
         return cls(names, key)
     from_line = classmethod(from_line)
@@ -148,13 +165,18 @@ class HostKeys (UserDict.DictMixin):
         @raise IOError: if there was an error reading the file
         """
         f = open(filename, 'r')
-        for line in f:
+        for lineno, line in enumerate(f):
             line = line.strip()
             if (len(line) == 0) or (line[0] == '#'):
                 continue
-            e = HostKeyEntry.from_line(line)
+            e = HostKeyEntry.from_line(line, lineno)
             if e is not None:
-                self._entries.append(e)
+                _hostnames = e.hostnames
+                for h in _hostnames:
+                    if self.check(h, e.key):
+                        e.hostnames.remove(h)
+                if len(e.hostnames):
+                    self._entries.append(e)
         f.close()
 
     def save(self, filename):
@@ -303,7 +325,7 @@ class HostKeys (UserDict.DictMixin):
         @rtype: str
         """
         if salt is None:
-            salt = randpool.get_bytes(SHA.digest_size)
+            salt = rng.read(SHA.digest_size)
         else:
             if salt.startswith('|1|'):
                 salt = salt.split('|')[2]

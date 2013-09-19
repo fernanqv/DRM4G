@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2009  Robey Pointer <robeypointer@gmail.com>
+# Copyright (C) 2003-2011  Robey Pointer <robeypointer@gmail.com>
 #
 # This file is part of paramiko.
 #
@@ -18,9 +18,9 @@
 
 """
 I{Paramiko} (a combination of the esperanto words for "paranoid" and "friend")
-is a module for python 2.3 or greater that implements the SSH2 protocol for
+is a module for python 2.5 or greater that implements the SSH2 protocol for
 secure (encrypted and authenticated) connections to remote machines.  Unlike
-SSL (aka TLS), the SSH2 protocol does not require heirarchical certificates
+SSL (aka TLS), the SSH2 protocol does not require hierarchical certificates
 signed by a powerful central authority.  You may know SSH2 as the protocol that
 replaced C{telnet} and C{rsh} for secure access to remote shells, but the
 protocol also includes the ability to open arbitrary channels to remote
@@ -45,34 +45,29 @@ receive data over the encrypted session.
 Paramiko is written entirely in python (no C or platform-dependent code) and is
 released under the GNU Lesser General Public License (LGPL).
 
-Website: U{http://www.lag.net/paramiko/}
+Website: U{https://github.com/paramiko/paramiko/}
 
-@version: 1.7.6 (Fanny)
-@author: Robey Pointer
-@contact: robeypointer@gmail.com
-@license: GNU Lesser General Public License (LGPL)
+Mailing list: U{paramiko@librelist.com<mailto:paramiko@librelist.com>}
 """
 
 import sys
 
-if sys.version_info < (2, 2):
-    raise RuntimeError('You need python 2.2 for this module.')
+if sys.version_info < (2, 5):
+    raise RuntimeError('You need python 2.5+ for this module.')
 
 
-__author__ = "Robey Pointer <robeypointer@gmail.com>"
-__date__ = "1 Nov 2009"
-__version__ = "1.7.6 (Fanny)"
-__version_info__ = (1, 7, 6)
+__author__ = "Jeff Forcier <jeff@bitprophet.org>"
+__version__ = "1.11.0"
 __license__ = "GNU Lesser General Public License (LGPL)"
 
 
-from transport import randpool, SecurityOptions, Transport
+from transport import SecurityOptions, Transport
 from client import SSHClient, MissingHostKeyPolicy, AutoAddPolicy, RejectPolicy, WarningPolicy
 from auth_handler import AuthHandler
 from channel import Channel, ChannelFile
 from ssh_exception import SSHException, PasswordRequiredException, \
     BadAuthenticationType, ChannelException, BadHostKeyException, \
-    AuthenticationException
+    AuthenticationException, ProxyCommandFailure
 from server import ServerInterface, SubsystemHandler, InteractiveQuery
 from rsakey import RSAKey
 from dsskey import DSSKey
@@ -90,6 +85,7 @@ from agent import Agent, AgentKey
 from pkey import PKey
 from hostkeys import HostKeys
 from config import SSHConfig
+from proxy import ProxyCommand
 
 # fix module names for epydoc
 for c in locals().values():
@@ -104,6 +100,8 @@ from common import AUTH_SUCCESSFUL, AUTH_PARTIALLY_SUCCESSFUL, AUTH_FAILED, \
 
 from sftp import SFTP_OK, SFTP_EOF, SFTP_NO_SUCH_FILE, SFTP_PERMISSION_DENIED, SFTP_FAILURE, \
      SFTP_BAD_MESSAGE, SFTP_NO_CONNECTION, SFTP_CONNECTION_LOST, SFTP_OP_UNSUPPORTED
+
+from common import io_sleep
 
 __all__ = [ 'Transport',
             'SSHClient',
@@ -124,6 +122,8 @@ __all__ = [ 'Transport',
             'BadAuthenticationType',
             'ChannelException',
             'BadHostKeyException',
+            'ProxyCommand',
+            'ProxyCommandFailure',
             'SFTP',
             'SFTPFile',
             'SFTPHandle',
@@ -138,4 +138,5 @@ __all__ = [ 'Transport',
             'AgentKey',
             'HostKeys',
             'SSHConfig',
-            'util' ]
+            'util',
+            'io_sleep' ]

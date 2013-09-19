@@ -129,7 +129,7 @@ class Configuration(object):
         for name, resdict in self.resources.iteritems():
             try:
                 if not resdict[ 'enable' ] : 
-                    continue 
+                    continue
                 communicator                    = import_module(COMMUNICATORS[ resdict[ 'communicator' ] ] )
                 com_object                      = getattr( communicator , 'Communicator' ) ()
                 com_object.username             = resdict.get( 'username' )

@@ -38,7 +38,6 @@ class ManagementUtility( cmd.Cmd ):
                     cmd = "MYPROXY_SERVER=%s myproxy-info" % resource[ 'myproxy_server' ] 
                     print "\tExecuting command ... ", cmd 
                     out, err = communicator.execCommand( cmd )
-                    communicator.close()
                     print "\t", out , err
     
     def do_upload_proxy(self, line ):
@@ -75,10 +74,8 @@ class ManagementUtility( cmd.Cmd ):
                         cmd = "MYPROXY_SERVER=%s myproxy-init -S" % resource[ 'myproxy_server' ]
                         print "\tExecuting command ... ", cmd 
                         out , err = communicator.execCommand( cmd , input = '\n'.join( [ grid_passwd, proxy_passwd, proxy_passwd ] ) )
-                        communicator.close()
                         print "\t", out , err
                     else :
-                        communicator.close()
                         print "\t", err
 
     def do_download_proxy(self, line ):
@@ -111,7 +108,6 @@ class ManagementUtility( cmd.Cmd ):
                                                                                 )
                     print "\tExecuting command ... ", cmd 
                     out, err = communicator.execCommand( cmd , input = proxy_passwd )
-                    communicator.close()
                     print "\t", out , err 
         
     def do_check_frontends(self , line ):
@@ -128,7 +124,6 @@ class ManagementUtility( cmd.Cmd ):
                 print "\t\tThe front-end %s is not reachable" % communicator.frontend 
                 print "\t\t" , err
             print "\t\tThe front-end %s is reachable" % communicator.frontend
-            communicator.close()
 
     def do_list_resources(self, line):
         """
