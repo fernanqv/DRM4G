@@ -25,6 +25,7 @@
 #include <string.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <syslog.h>
 
 static void gw_scheduler_init (gw_scheduler_t * sched);
 
@@ -98,9 +99,9 @@ void gw_scheduler_loop(gw_scheduler_function_t scheduler, void *user_arg)
 	    
         sprintf(log, "%s/" GW_VAR_DIR "/sched.log", GW_LOCATION);
         sprintf(conf,"%s/" GW_ETC_DIR "/sched.conf",GW_LOCATION);
-        
+
+#ifndef GWSYSLOG
     	rc = truncate(log, 0);
-	
         fd_log = fopen(log,"a");
             
         if (fd_log == NULL)
@@ -115,6 +116,9 @@ void gw_scheduler_loop(gw_scheduler_function_t scheduler, void *user_arg)
             setbuf(fd_log,NULL);
                 
         free(log);
+#else
+        openlog("GridWayShed", LOG_PID, GWSYSLOG);
+#endif
     }
           	
   	setbuf(stdout,NULL);  	
@@ -389,13 +393,22 @@ static void gw_scheduler_init (gw_scheduler_t * sched)
 
 void gw_scheduler_print (const char mode, const char *str_format,...)
 {
-    va_list ap;
+#ifndef GWSYSLOG
+
     time_t  the_time;
     
     char str[26];
+#else
+    char *str_syslog;
 
+    str_syslog = (char*) malloc(sizeof(char)*(10+strlen(str_format)));
+    sprintf(str_syslog, "[%c] %s", mode, str_format);
+#endif
+
+    va_list ap;
     va_start(ap, str_format);
 
+#ifndef GWSYSLOG
     if (fd_log != NULL)
     {
         the_time = time(NULL);
@@ -411,7 +424,28 @@ void gw_scheduler_print (const char mode, const char *str_format,...)
         fprintf(fd_log,"%s [%c]: ", str, mode);
         vfprintf(fd_log,str_format,ap);
     }
-        
+#else
+    switch(mode)
+    {
+
+    case 'I':
+    	vsyslog(LOG_INFO, str_syslog, ap);
+    	break;
+
+    case 'E':
+    	vsyslog(LOG_ERR, str_syslog, ap);
+    	break;
+    case 'W':
+    	vsyslog(LOG_WARNING, str_syslog, ap);
+    	break;
+    case 'D':
+    	vsyslog(LOG_DEBUG, str_syslog, ap);
+    	break;
+    }
+
+    free(str_syslog);
+
+#endif
     return;
 }
 
