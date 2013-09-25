@@ -12,7 +12,7 @@ ifdef GW_LOCATION
 	@chmod a+x $(GW_LOCATION)/bin/gw_im_mad_drm4g.py
 	@chmod a+x $(GW_LOCATION)/bin/gw_tm_mad_drm4g.py
 	@chmod a+x $(GW_LOCATION)/bin/gw_em_mad_drm4g.py
-	@chmod a+x $(GW_LOCATION)/bin/drm4g.py
+	@chmod a+x $(GW_LOCATION)/bin/drm4g
 	@find $(GW_LOCATION) -depth -name .svn -exec rm -rf '{}' \;
 	@echo "DRM4G MAD successfully installed"
 else
