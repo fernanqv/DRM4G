@@ -49,7 +49,7 @@ const char * usage =
 "  %CPU         free CPU ratio\n"
 "  MEM(F/T)     system memory: F = Free, T = Total\n"
 "  DISK(F/T)    secondary storage: F = Free, T = Total\n"
-"  NODES(U/F/T) number of slots: U = used by GridWay, F = free, T = total\n"
+"  CORES(U/F/T) number of slots: U = used by GridWay, F = free, T = total\n"
 "  LRMS         local resource management system, the jobmanager name\n"
 "  HOSTNAME     FQDN of this host\n\n"
 "QUEUE FIELD INFORMATION\n"
