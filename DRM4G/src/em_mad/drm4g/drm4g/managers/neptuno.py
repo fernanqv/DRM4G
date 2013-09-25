@@ -5,7 +5,7 @@ from drm4g.managers import sec_to_H_M_S
 
 __version__  = '1.0'
 __author__   = 'Carlos Blanco'
-__revision__ = "$Id:$"
+__revision__ = "$Id$"
 
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.

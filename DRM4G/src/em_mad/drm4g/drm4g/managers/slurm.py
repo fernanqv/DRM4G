@@ -4,7 +4,7 @@ from string import Template
 
 __version__  = '1.0'
 __author__   = 'Carlos Blanco'
-__revision__ = "$Id: slurm.py 1643 2012-12-11 10:54:31Z carlos $"
+__revision__ = "$Id$"
 
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.
