@@ -822,7 +822,7 @@ void gw_client_print_host_status_header()
     char head_string[210];
     
     sprintf(head_string,"%-3s %-4s %-15s %-6s %13s %-18s %-30s",
-    "HID","PRI","OS","ARCH","NODES(U/F/T)","LRMS","HOSTNAME");
+    "HID","PRI","OS","ARCH","CORES(U/F/T)","LRMS","HOSTNAME");
     
     bold();
     underline(); 
