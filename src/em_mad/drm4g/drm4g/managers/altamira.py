@@ -6,7 +6,7 @@ import time
 
 __version__ = '0.1'
 __author__  = 'Carlos Blanco'
-__revision__ = "$Id: marenostrum.py 1359 2012-01-16 10:11:25Z carlos $"
+__revision__ = "$Id$"
 
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.

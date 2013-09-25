@@ -6,7 +6,7 @@ from drm4g import REMOTE_VOS_DIR
 
 __version__  = '1.0'
 __author__   = 'Carlos Blanco'
-__revision__ = "$Id:$"
+__revision__ = "$Id$"
 
 class ManagementUtility( cmd.Cmd ):
     """
