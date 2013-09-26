@@ -45,6 +45,7 @@ class GwImMad (object):
     
     def __init__(self):
         self._resources  = dict()
+        self._config     = None
  
     def do_INIT(self, args):
         """
@@ -64,15 +65,16 @@ class GwImMad (object):
         """
         OPERATION, HID, HOST, ARGS = args.split()
         try:
-            config        = Configuration()
-            config.load()
-            errors        = config.check()
+            self._config  = Configuration()
+            self._config.load()
+            errors        = self._config.check()
             assert not errors, ' '.join( errors )
-            self._resources  = config.make_resources()
-            communicators    = config.make_communicators()
+            
+            self._resources  = self._config.make_resources()
+            communicators    = self,_config.make_communicators()
             hosts = ""
             for resname in sorted( self._resources.keys() ) :
-                if not config.resources[ resname ][ 'enable' ] : 
+                if not self._config.resources[ resname ][ 'enable' ] : 
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
@@ -96,11 +98,13 @@ class GwImMad (object):
         try:
             info = ""
             for resname, resdict in self._resources.iteritems() :
+                if not self._config.resources[ resname ][ 'enable' ] : 
+                    raise "Resource '%s' is not enable" % resname 
                 if HOST in resdict['Resource'].host_list :
                     info = resdict['Resource'].host_properties( HOST )
                     resdict['Resource'].Communicator.close()
                     break
-            assert info, "Host '%s' is not avaible" % HOST
+            assert info, "Host '%s' is not available" % HOST
             out = 'MONITOR %s SUCCESS %s' % (HID , info )
         except Exception , err :
             out = 'MONITOR %s FAILURE %s' % (HID , str( err ) )
