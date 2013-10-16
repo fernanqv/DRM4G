@@ -1,5 +1,4 @@
-
-__all__ = ["communicators", "core", "handlers", "utils", "commands"]
+__all__ = ["communicators", "core", "managers", "utils", "commands"]
 
 __version__  = '1.0'
 __author__   = 'Carlos Blanco'
@@ -16,13 +15,15 @@ if sys.version_info < (2,5) and sys.version_info > (3,0):
 # Default values used in DRM4G package.#
 ########################################
 CONFIG_FILE_LOCATIONS = [
-                         expandvars("$HOME/.drm4g/drm4g.conf"),
+                         expandvars("$HOME/.drm4g/etc/drm4g.conf"),
                          expandvars("$GW_LOCATION/etc/drm4g.conf"),
+                         expandvars("$HOME/.wrf4g/etc/drm4g.conf"),
+                         expandvars("$WRF4G_LOCATION/etc/drm4g.conf"),
                          ]
 for file in CONFIG_FILE_LOCATIONS :
     if exists(file) :
-        DRM4G_DIR         = dirname(file)
-        FILE_LOGGER       = join(DRM4G_DIR, "logger.conf")
+        DRM4G_DIR         = dirname ( dirname(file) )
+        FILE_LOGGER       = join(DRM4G_DIR, "etc" , "logger.conf")
         DRM4G_CONFIG_FILE = file
 assert DRM4G_CONFIG_FILE, "dm4g.conf does not exist, please provide one"
 
