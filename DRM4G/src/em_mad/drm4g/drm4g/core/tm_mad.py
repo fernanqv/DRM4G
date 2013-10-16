@@ -137,8 +137,9 @@ class GwTmMad (object):
         """
         OPERATION, JID, TID, EXE_MODE, SRC_URL, DST_URL = args.split()
         try:
-            com = self._update_com( urlparse( SRC_URL ).host )            
-            com.rmDirectory( SRC_URL )
+            com = self._update_com( urlparse( SRC_URL ).host )
+            if not com.checkOutLock( SRC_URL ) :            
+                com.rmDirectory( SRC_URL )
             out = 'RMDIR %s - SUCCESS -' % ( JID )
         except Exception , err :
             out = 'RMDIR %s - FAILURE %s' % ( JID , str( err ) )
