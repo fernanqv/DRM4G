@@ -90,12 +90,14 @@ class GwEmMad (object):
         try:
             HOST, JM = HOST_JM.rsplit('/',1)
             # Init Job class
-            job , communicator  = self._update_resource( HOST )
-            job.Communicator    = communicator
+            job , communicator   = self._update_resource( HOST )
+            job.Communicator     = communicator
             # Parse rsl
-            rsl                 = Rsl2Parser(RSL).parser()
-            rsl['project']      = job.resfeatures.get('project')
-            rsl['parallel_env'] = job.resfeatures.get('parallel_env')
+            rsl                                  = Rsl2Parser(RSL).parser()
+            rsl['project']                       = job.resfeatures.get( 'project' )
+            rsl['parallel_env']                  = job.resfeatures.get( 'parallel_env' )
+            rsl['environment']['WRF4G_SCRATCH']  = job.resfeatures.get( 'scratch' )
+            rsl['environment']['WRF4G_LOCALSCP'] = job.resfeatures.get( 'local_scratch' ) 
             if '_' in HOST :
                 _ , host                    = HOST.split('_')
                 job.resfeatures['host']     = host
