@@ -47,7 +47,7 @@ class Configuration(object):
         logger.debug("Reading file '%s' ..." % DRM4G_CONFIG_FILE)
         try: 
             try:
-                file = open(DRM4G_CONFIG_FILE, 'r')
+                file   = open(DRM4G_CONFIG_FILE, 'r')
                 parser = ConfigParser.SafeConfigParser()
                 try:
                     parser.readfp(file, DRM4G_CONFIG_FILE)
@@ -55,11 +55,16 @@ class Configuration(object):
                     output = "Configuration file '%s' is unreadable or malformed: %s" %(DRM4G_CONFIG_FILE, str(err))
                     logger.error(output)
                     raise ConfigureException(output)
+                
+                self.resources['DEFAULT'] = dict()
                 for sectname in parser.sections():
                     logger.debug("Reading configuration for resource '%s'." % sectname)
-                    self.resources[sectname] = dict(parser.items(sectname))
+                    default = self.resources['DEFAULT'].copy()
+                    default.update( dict( parser.items( sectname ) ) )
+                    self.resources[sectname] = default
                     logger.debug("Resource '%s' defined by: %s.",
                                  sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[sectname].iteritems())]))
+                del self.resources['DEFAULT'] 
             except Exception, err:
                 output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err)) 
                 logger.error(output)
@@ -73,7 +78,7 @@ class Configuration(object):
         
         Return a list with the errors.
         """
-        logger.debug("Checking file '%s' ..." % DRM4G_CONFIG_FILE)
+        logger.debug( "Checking file '%s' ..." % DRM4G_CONFIG_FILE )
         errors = []
         for resname, resdict in self.resources.iteritems() :
             logger.debug("Checking resource '%s' ..." % resname)
@@ -83,18 +88,12 @@ class Configuration(object):
                     output = "'%s' resource does not have '%s' key" % (resname, key)
                     logger.error( output )
                     errors.append( output )
-            if resdict.has_key( 'vo' ) :
-                for key in [ "bdii" , "myproxy_server" ]:
-                    if not key in reslist :
-                        output = "'%s' has to be '%s' key" % (resname, key)
-                        logger.error( output )
-                        errors.append( output )
             else :
                 if not 'ncores' in reslist :
                     output = "'ncores' key is mandatory for '%s' resource" % resname
                     logger.error( output )
                     errors.append( output )
-                if not 'queue' in reslist :
+                if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                     self.resources[resname]['queue'] = "default"
                     output = "'queue' key will be called 'default' for '%s' resource" % resname
                     logger.debug( output )
@@ -130,12 +129,12 @@ class Configuration(object):
             try:
                 if not resdict[ 'enable' ] : 
                     continue
-                communicator                    = import_module(COMMUNICATORS[ resdict[ 'communicator' ] ] )
-                com_object                      = getattr( communicator , 'Communicator' ) ()
-                com_object.username             = resdict.get( 'username' )
-                com_object.frontend             = resdict.get( 'frontend' )
-                com_object.private_key          = resdict.get( 'private_key' )
-                communicators[name]             = com_object
+                communicator            = import_module(COMMUNICATORS[ resdict[ 'communicator' ] ] )
+                com_object              = getattr( communicator , 'Communicator' ) ()
+                com_object.username     = resdict.get( 'username' )
+                com_object.frontend     = resdict.get( 'frontend' )
+                com_object.private_key  = resdict.get( 'private_key' )
+                communicators[name]     = com_object
             except Exception, err:
                 output = "Failed creating communicator for resource '%s' : %s" % ( name, str( err ) )
                 logger.warning( output , exc_info=1 )
@@ -154,15 +153,15 @@ class Configuration(object):
             try:
                 if not resdict[ 'enable' ] : 
                     continue
-                resources[name]                      = dict()
-                manager                              = import_module(RESOURCE_MANAGERS[ resdict[ 'lrms' ] ] )
-                resource_object                      = getattr( manager , 'Resource' ) ()
-                resource_object.name                 = name
-                resource_object.features             = resdict
-                job_object                           = getattr( manager , 'Job' ) ()
-                job_object.resfeatures               = resdict
-                resources[name]['Resource']          = resource_object
-                resources[name]['Job']               = job_object
+                resources[name]             = dict()
+                manager                     = import_module(RESOURCE_MANAGERS[ resdict[ 'lrms' ] ] )
+                resource_object             = getattr( manager , 'Resource' ) ()
+                resource_object.name        = name
+                resource_object.features    = resdict
+                job_object                  = getattr( manager , 'Job' ) ()
+                job_object.resfeatures      = resdict
+                resources[name]['Resource'] = resource_object
+                resources[name]['Job']      = job_object
             except Exception, err:
                 output = "Failed creating objects for resource '%s' of type : %s" % ( name, str( err ) )
                 logger.warning( output , exc_info=1 )
