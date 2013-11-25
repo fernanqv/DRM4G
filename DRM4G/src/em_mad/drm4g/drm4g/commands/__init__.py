@@ -30,15 +30,15 @@ class ManagementUtility( cmd.Cmd ):
                 print "\t'%s' is not a resource. The resources available are: " % line
             else :
                 resource  = self.config.resources[ line ]
-                if not resource.has_key( 'myproxy_server' ) :
-                    print "\tPlease, check '%s' configuration. The key 'myproxy_server' is not available" % line
-                else :
-                    communicator = self.config.make_communicators()[ line ]
-                    communicator.connect()
+                communicator = self.config.make_communicators()[ line ]
+                communicator.connect()
+                if resource.has_key( 'myproxy_server' ) :
                     cmd = "MYPROXY_SERVER=%s myproxy-info" % resource[ 'myproxy_server' ] 
-                    print "\tExecuting command ... ", cmd 
-                    out, err = communicator.execCommand( cmd )
-                    print "\t", out , err
+                else :
+                    cmd = "myproxy-info"
+                print "\tExecuting command ... ", cmd 
+                out, err = communicator.execCommand( cmd )
+                print "\t", out , err
     
     def do_upload_proxy(self, line ):
         """
@@ -53,30 +53,30 @@ class ManagementUtility( cmd.Cmd ):
             if not self.config.resources.has_key( line ) :
                 print "\t'%s' is not a resource. The resources avaible are: " % line
             else :
-                resource  = self.config.resources[ line ]
-                if not resource.has_key( 'myproxy_server' ) :
-                    print "\tPlease, check '%s' configuration. The key 'myproxy_server' is not available" % line
-                else :    
-                    communicator = self.config.make_communicators()[ line ]
-                    communicator.connect()
-                    print "\tCreating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR
-                    cmd = "mkdir -p %s" % REMOTE_VOS_DIR
-                    print "\tExecuting command ... ", cmd 
-                    communicator.execCommand( cmd )
-                    out, err = communicator.execCommand( cmd )
-                    if not err :
-                        message      = '\tInsert your GRID pass: '
-                        grid_passwd  = getpass.getpass(message)
+                resource  = self.config.resources[ line ]    
+                communicator = self.config.make_communicators()[ line ]
+                communicator.connect()
+                print "\tCreating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR
+                cmd = "mkdir -p %s" % REMOTE_VOS_DIR
+                print "\tExecuting command ... ", cmd 
+                communicator.execCommand( cmd )
+                out, err = communicator.execCommand( cmd )
+                if not err :
+                    message      = '\tInsert your GRID pass: '
+                    grid_passwd  = getpass.getpass(message)
         
-                        message      = '\tInsert MyProxy password: '
-                        proxy_passwd = getpass.getpass(message)
+                    message      = '\tInsert MyProxy password: '
+                    proxy_passwd = getpass.getpass(message)
         
+                    if resource.has_key( 'myproxy_server' ) :
                         cmd = "MYPROXY_SERVER=%s myproxy-init -S" % resource[ 'myproxy_server' ]
-                        print "\tExecuting command ... ", cmd 
-                        out , err = communicator.execCommand( cmd , input = '\n'.join( [ grid_passwd, proxy_passwd, proxy_passwd ] ) )
-                        print "\t", out , err
                     else :
-                        print "\t", err
+                        cmd = "myproxy-init -S"
+                    print "\tExecuting command ... ", cmd 
+                    out , err = communicator.execCommand( cmd , input = '\n'.join( [ grid_passwd, proxy_passwd, proxy_passwd ] ) )
+                    print "\t", out , err
+                else :
+                    print "\t", err
 
     def do_download_proxy(self, line ):
         """
@@ -92,23 +92,23 @@ class ManagementUtility( cmd.Cmd ):
                 print "\t'%s' is not a resource. The resources available are: " % line
                 self.do_list_resources( line )
             else :
-                resource  = self.config.resources[ line ]
-                if not resource.has_key( 'myproxy_server' ) :
-                    print "\tPlease, check '%s' configuration. The key 'myproxy_server' is not available" % line
-                else :    
-                    communicator = self.config.make_communicators()[ line ]
-                    communicator.connect()
+                resource  = self.config.resources[ line ]   
+                communicator = self.config.make_communicators()[ line ]
+                communicator.connect()
                 
-                    message      = '\tInsert MyProxy password: '
-                    proxy_passwd = getpass.getpass(message)
+                message      = '\tInsert MyProxy password: '
+                proxy_passwd = getpass.getpass(message)
          
-                    cmd = "X509_USER_PROXY=%s/proxy MYPROXY_SERVER=%s myproxy-logon -S" % ( 
-                                                                                REMOTE_VOS_DIR , 
-                                                                                resource[ 'myproxy_server' ] 
-                                                                                )
-                    print "\tExecuting command ... ", cmd 
-                    out, err = communicator.execCommand( cmd , input = proxy_passwd )
-                    print "\t", out , err 
+                if resource.has_key( 'myproxy_server' ) :
+                    cmd = "X509_USER_PROXY=%s/proxy MYPROXY_SERVER=%s myproxy-logon -S" % (
+                                                                                           REMOTE_VOS_DIR ,
+                                                                                           resource[ 'myproxy_server' ]
+                                                                                           ) 
+                else :
+                    cmd = "X509_USER_PROXY=%s/proxy myproxy-logon -S" % ( REMOTE_VOS_DIR )
+                print "\tExecuting command ... ", cmd 
+                out, err = communicator.execCommand( cmd , input = proxy_passwd )
+                print "\t", out , err 
         
     def do_check_frontends(self , line ):
         """
