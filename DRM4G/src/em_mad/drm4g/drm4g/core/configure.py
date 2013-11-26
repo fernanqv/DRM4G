@@ -27,7 +27,7 @@ class Configuration(object):
     def __init__(self):
         self.resources  = dict()
         if not os.path.exists( DRM4G_CONFIG_FILE ):
-            assert DRM4G_CONFIG_FILE, "dm4g.conf does not exist, please provide one"
+            assert DRM4G_CONFIG_FILE, "drm4g.conf does not exist, please provide one"
         self.init_time = os.stat( DRM4G_CONFIG_FILE ).st_mtime
         
     def check_update(self):
@@ -48,26 +48,22 @@ class Configuration(object):
         try: 
             try:
                 file   = open(DRM4G_CONFIG_FILE, 'r')
-                parser = ConfigParser.SafeConfigParser()
+                parser = ConfigParser.RawConfigParser()
                 try:
-                    parser.readfp(file, DRM4G_CONFIG_FILE)
+                    parser.readfp( file , DRM4G_CONFIG_FILE )
                 except Exception, err:
-                    output = "Configuration file '%s' is unreadable or malformed: %s" %(DRM4G_CONFIG_FILE, str(err))
-                    logger.error(output)
-                    raise ConfigureException(output)
+                    output = "Configuration file '%s' is unreadable or malformed: %s" % ( DRM4G_CONFIG_FILE , str( err ) )
+                    logger.error( output )
+                    raise ConfigureException( output )
                 
-                self.resources['DEFAULT'] = dict()
                 for sectname in parser.sections():
                     logger.debug("Reading configuration for resource '%s'." % sectname)
-                    default = self.resources['DEFAULT'].copy()
-                    default.update( dict( parser.items( sectname ) ) )
-                    self.resources[sectname] = default
+                    self.resources[sectname] = dict( parser.items( sectname ) )
                     logger.debug("Resource '%s' defined by: %s.",
                                  sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[sectname].iteritems())]))
-                del self.resources['DEFAULT'] 
             except Exception, err:
                 output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err)) 
-                logger.error(output)
+                logger.error(output , exc_info=1 )
                 raise ConfigureException(output)
         finally:
             file.close()
@@ -88,15 +84,14 @@ class Configuration(object):
                     output = "'%s' resource does not have '%s' key" % (resname, key)
                     logger.error( output )
                     errors.append( output )
-            else :
-                if not 'ncores' in reslist :
-                    output = "'ncores' key is mandatory for '%s' resource" % resname
-                    logger.error( output )
-                    errors.append( output )
-                if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
-                    self.resources[resname]['queue'] = "default"
-                    output = "'queue' key will be called 'default' for '%s' resource" % resname
-                    logger.debug( output )
+            if ( not 'ncores' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
+                output = "'ncores' key is mandatory for '%s' resource" % resname
+                logger.error( output )
+                errors.append( output )
+            if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
+                self.resources[resname]['queue'] = "default"
+                output = "'queue' key will be called 'default' for '%s' resource" % resname
+                logger.debug( output )
             if not COMMUNICATORS.has_key( resdict[ 'communicator' ] ) :
                 output = "'%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
                 logger.error( output )
@@ -110,7 +105,7 @@ class Configuration(object):
                 logger.error( output )
                 errors.append( output )
             private_key = resdict.get( 'private_key' )
-            if private_key and not os.path.isfile( os.path.expanduser( private_key ) ) :
+            if private_key and (  not 'PRIVATE KEY' in private_key ) and  os.path.isfile( os.path.expanduser( private_key ) ) :
                 output = "'%s' does not exist '%s' resource" % ( private_key , resname )
                 logger.error( output )
                 errors.append( output )
@@ -127,8 +122,6 @@ class Configuration(object):
         communicators = dict()
         for name, resdict in self.resources.iteritems():
             try:
-                if not resdict[ 'enable' ] : 
-                    continue
                 communicator            = import_module(COMMUNICATORS[ resdict[ 'communicator' ] ] )
                 com_object              = getattr( communicator , 'Communicator' ) ()
                 com_object.username     = resdict.get( 'username' )
@@ -151,8 +144,6 @@ class Configuration(object):
         resources = dict()
         for name, resdict in self.resources.iteritems():
             try:
-                if not resdict[ 'enable' ] : 
-                    continue
                 resources[name]             = dict()
                 manager                     = import_module(RESOURCE_MANAGERS[ resdict[ 'lrms' ] ] )
                 resource_object             = getattr( manager , 'Resource' ) ()
