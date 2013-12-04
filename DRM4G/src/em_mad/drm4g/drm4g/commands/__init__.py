@@ -2,7 +2,7 @@ import cmd
 import os
 import getpass
 import drm4g.core.configure
-from drm4g import REMOTE_VOS_DIR
+from drm4g import REMOTE_VOS_DIR , PROXY_THRESHOLD 
 
 __version__  = '1.0'
 __author__   = 'Carlos Blanco'
@@ -51,7 +51,7 @@ class ManagementUtility( cmd.Cmd ):
         else :
             self.do_check_resources( line )
             if not self.config.resources.has_key( line ) :
-                print "\t'%s' is not a resource. The resources avaible are: " % line
+                print "\t'%s' is not a resource. The resources available are: " % line
             else :
                 resource  = self.config.resources[ line ]    
                 communicator = self.config.make_communicators()[ line ]
@@ -69,9 +69,12 @@ class ManagementUtility( cmd.Cmd ):
                     proxy_passwd = getpass.getpass(message)
         
                     if resource.has_key( 'myproxy_server' ) :
-                        cmd = "MYPROXY_SERVER=%s myproxy-init -S" % resource[ 'myproxy_server' ]
+                        cmd = "MYPROXY_SERVER=%s myproxy-init -S -t %s" % (
+                                                                           resource[ 'myproxy_server' ] ,
+                                                                           PROXY_THRESHOLD 
+                                                                           )
                     else :
-                        cmd = "myproxy-init -S"
+                        cmd = "myproxy-init -S -t %s" % PROXY_THRESHOLD
                     print "\tExecuting command ... ", cmd 
                     out , err = communicator.execCommand( cmd , input = '\n'.join( [ grid_passwd, proxy_passwd, proxy_passwd ] ) )
                     print "\t", out , err
@@ -108,8 +111,41 @@ class ManagementUtility( cmd.Cmd ):
                     cmd = "X509_USER_PROXY=%s/proxy myproxy-logon -S" % ( REMOTE_VOS_DIR )
                 print "\tExecuting command ... ", cmd 
                 out, err = communicator.execCommand( cmd , input = proxy_passwd )
-                print "\t", out , err 
+                print "\t", out , err
         
+    def do_create_proxy(self, line ):
+        """
+        It creates a proxy for 7 days. You only have to indicate the resource.
+        
+        Example : create_proxy localhost
+        """
+        self.do_upload_proxy( line )
+        self.do_download_proxy( line )
+        
+    def do_destroy_proxy(self, line ):
+        """
+        It destroys the proxy on the myproxy-server. You have to indicate the resource.
+        
+        Example : destroy_proxy localhost
+        """
+        if not line :
+            print "\tPlease, provide a resource"
+        else :
+            self.do_check_resources( line )
+            if not self.config.resources.has_key( line ) :
+                print "\t'%s' is not a resource. The resources available are: " % line
+            else :
+                resource     = self.config.resources[ line ]
+                communicator = self.config.make_communicators()[ line ]
+                communicator.connect()
+                if resource.has_key( 'myproxy_server' ) :
+                    cmd = "MYPROXY_SERVER=%s myproxy-destroy" %  resource[ 'myproxy_server' ]                          
+                else :
+                    cmd = "myproxy-destroy" % REMOTE_VOS_DIR 
+                print "\tExecuting command ... ", cmd
+                out , err = communicator.execCommand( cmd )
+                print "\t", out , err
+
     def do_check_frontends(self , line ):
         """
         Check if all frontends are reachable.
