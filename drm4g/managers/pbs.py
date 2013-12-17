@@ -80,7 +80,7 @@ class Job (drm4g.managers.Job):
     def jobTemplate(self, parameters):
         args  = '#!/bin/bash\n'
         args += '#PBS -N JID_%s\n' % (parameters['environment']['GW_JOB_ID'])
-        if parameters['project']:
+        if parameters.has_key('project'):
             args += '#PBS -P $project\n'
         args += '#PBS -q $queue\n'
         args += '#PBS -o $stdout\n'
