@@ -94,10 +94,19 @@ class GwEmMad (object):
             job.Communicator     = communicator
             # Parse rsl
             rsl                                  = Rsl2Parser(RSL).parser()
-            rsl['project']                       = job.resfeatures.get( 'project' )
-            rsl['parallel_env']                  = job.resfeatures.get( 'parallel_env' )
-            rsl['environment']['WRF4G_SCRATCH']  = job.resfeatures.get( 'scratch' )
-            rsl['environment']['WRF4G_LOCALSCP'] = job.resfeatures.get( 'local_scratch' ) 
+            
+            if job.resfeatures.has_key( 'project' ) :
+                rsl['project']      = job.resfeatures[ 'project' ]
+            
+            if job.resfeatures.has_key( 'parallel_env' ) :
+                rsl['parallel_env'] = job.resfeatures[ 'parallel_env' ]
+                
+            if job.resfeatures.has_key( 'scratch' ) :
+                rsl['environment']['WRF4G_SCRATCH']  = job.resfeatures[ 'scratch' ]
+            
+            if job.resfeatures.has_key( 'local_scratch' ) :
+                rsl['environment']['WRF4G_LOCALSCP'] = job.resfeatures[ 'local_scratch' ]
+             
             if '_' in HOST :
                 _ , host                    = HOST.split('_')
                 job.resfeatures['host']     = host

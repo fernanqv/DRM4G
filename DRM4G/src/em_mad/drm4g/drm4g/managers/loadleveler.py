@@ -85,7 +85,7 @@ class Job (drm4g.managers.Job):
             args += '#@ resources = ConsumableMemory($maxMemory)\n'
         if parameters.has_key('ppn'):
             args += '#@ tasks_per_node = $ppn'
-        if parameters[ 'project' ] :
+        if parameters.has_key('project') :
             args += '#@ account_no = $project\n'
         args += '#@ queue\n'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
