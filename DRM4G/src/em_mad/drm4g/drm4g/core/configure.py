@@ -57,14 +57,16 @@ class Configuration(object):
                     raise ConfigureException( output )
                 
                 for sectname in parser.sections():
-                    logger.debug("Reading configuration for resource '%s'." % sectname)
-                    self.resources[sectname] = dict( parser.items( sectname ) )
-                    logger.debug("Resource '%s' defined by: %s.",
-                                 sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[sectname].iteritems())]))
+                    if sectname.startswith('resource:'):
+                        name                   = sectname.split( ':' , 1 )[ 1 ]
+                        logger.debug(" Reading configuration for resource '%s'." % name )
+                        self.resources[ name ] = dict( parser.items( sectname ) )
+                        logger.debug("Resource '%s' defined by: %s.",
+                                 sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name].iteritems())]))
             except Exception, err:
                 output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err)) 
-                logger.error(output , exc_info=1 )
-                raise ConfigureException(output)
+                logger.error( output )
+                raise ConfigureException( output )
         finally:
             file.close()
             
