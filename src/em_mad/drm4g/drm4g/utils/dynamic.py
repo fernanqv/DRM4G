@@ -1,6 +1,7 @@
 import Queue
-from threading import Thread
-from threading import Lock
+from __future__  import with_statement
+from threading   import Thread
+from threading   import Lock
 import sys
 
 __version__ = '0.1'
