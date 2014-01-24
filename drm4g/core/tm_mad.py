@@ -4,6 +4,7 @@ import os
 import re
 import time
 import logging
+from __future__            import with_statement
 from drm4g.utils.url       import urlparse
 from drm4g.utils.dynamic   import ThreadPool
 from drm4g.core.configure  import Configuration

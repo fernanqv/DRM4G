@@ -3,6 +3,7 @@ import xml.dom.minidom
 import os
 import subprocess
 import logging
+from __future__  import with_statement
 
 __version__  = '1.0'
 __author__   = 'Carlos Blanco'

@@ -3,6 +3,7 @@ import re
 import time
 import threading
 import logging
+from __future__              import with_statement
 from os.path                 import join, dirname
 from string                  import Template
 from Queue                   import Queue
@@ -90,10 +91,10 @@ class GwEmMad (object):
         try:
             HOST, JM = HOST_JM.rsplit('/',1)
             # Init Job class
-            job , communicator   = self._update_resource( HOST )
-            job.Communicator     = communicator
+            job , communicator = self._update_resource( HOST )
+            job.Communicator   = communicator
             # Parse rsl
-            rsl                                  = Rsl2Parser(RSL).parser()
+            rsl                = Rsl2Parser(RSL).parser()
             
             if job.resfeatures.has_key( 'project' ) :
                 rsl['project']      = job.resfeatures[ 'project' ]
