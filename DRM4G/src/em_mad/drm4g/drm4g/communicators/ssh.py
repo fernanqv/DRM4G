@@ -1,6 +1,6 @@
 import sys
 import platform
-from os.path import dirname, abspath, join, expanduser, exists
+from os.path     import dirname, abspath, join, expanduser, exists
 
 try:
     GW_LOCATION  = dirname( dirname ( abspath( __file__ ) ) )
@@ -26,6 +26,7 @@ import socket
 import re
 import logging
 import drm4g.communicators
+from __future__             import with_statement
 from drm4g.communicators    import ComException, logger
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT  
 from drm4g.utils.url        import urlparse

@@ -1,6 +1,7 @@
 import re
 import logging
 import drm4g.managers
+from __future__     import with_statement
 from os.path        import basename , dirname , exists
 from string         import Template
 from drm4g          import REMOTE_VOS_DIR
