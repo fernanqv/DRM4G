@@ -90,6 +90,10 @@ class Configuration(object):
                 output = "'ncores' key is mandatory for '%s' resource" % resname
                 logger.error( output )
                 errors.append( output )
+            if resdict.get( 'ncores' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
+                output = "The number of elements in 'ncores' are different to the elements of 'queue'"
+                logger.error( output )
+                errors.append( output )            
             if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 self.resources[resname]['queue'] = "default"
                 output = "'queue' key will be called 'default' for '%s' resource" % resname
