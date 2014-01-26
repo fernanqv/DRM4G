@@ -332,6 +332,7 @@ int gw_job_environment(gw_job_t *job)
     job->max_walltime = NULL;
     job->max_memory = 0;
     job->processes_per_node = 0;
+    job->nodes = 0;
     if ( job->template.num_env != 0 )
     {
         for (i=0;i<job->template.num_env;i++)
@@ -354,8 +355,11 @@ int gw_job_environment(gw_job_t *job)
                 } else if (strcmp("PPN", job->template.environment[i][GW_ENV_VAR]) == 0)
                 {
                     job->processes_per_node = atoi(var);
+                } else if (strcmp("NODES", job->template.environment[i][GW_ENV_VAR]) == 0)
+                {
+                    job->nodes = atoi(var);
+
                 }
- 
                 free(var);                
             }
         }

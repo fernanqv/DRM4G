@@ -38,7 +38,7 @@ setup(){
     FIRST_RMT_JOB_HOME=`pwd`
     
     if [ "${WRF4G_SCRATCH}" ]; then
-        
+      
         RMT_JOB_HOME="${WRF4G_SCRATCH}/${GW_USER}_${GW_JOB_ID}" 
 
     	printf "`date`: Making ${RMT_JOB_HOME}  directory... "
@@ -48,11 +48,11 @@ setup(){
     	mkdir -p ${RMT_JOB_HOME}
     	
     	if [ $? -ne 0 ]; then
-            echo "failed."
+    	    echo "failed."
             exit 1
-        else
-            echo "done."
-        fi
+    	else
+    	    echo "done."
+    	fi
     	
     	printf "`date`: Moving to ${RMT_JOB_HOME} directory... "
     	
@@ -60,7 +60,7 @@ setup(){
     	
     	if [ $? -ne 0 ]; then
     	    echo "failed."
-            exit 1
+    	    exit 1
         else
             echo "done."
         fi
@@ -84,8 +84,8 @@ setup(){
     source ./job.env
 	
     if [ -z "${GW_RESTARTED}" -o -z "${GW_EXECUTABLE}" ]; then
-         echo "failed."
-         exit 1
+        echo "failed."
+        exit 1
     fi
 
     echo "done."
@@ -236,7 +236,7 @@ transfer_input_files(){
     
     if [ -n "$GW_MONITOR" ];
     then
-    	STG_FILES_SAVED=$STG_FILES
+        STG_FILES_SAVED=$STG_FILES
         STG_FILES="$STG_FILES_SAVED,file://$GW_MONITOR .monitor"    
     fi 
     
