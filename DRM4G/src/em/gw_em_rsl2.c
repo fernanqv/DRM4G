@@ -242,6 +242,12 @@ char* gw_generate_wrapper_rsl2 (gw_job_t *job)
         strcat(rsl_buffer, tmp_buffer);
     }
 
+    if (job->nodes > 0)
+        {
+            sprintf(tmp_buffer, " <nodes>%d</nodes", job->nodes);
+            strcat(rsl_buffer, tmp_buffer);
+        }
+
     strcat(rsl_buffer,"</job>");
 
     rsl = strdup(rsl_buffer);
