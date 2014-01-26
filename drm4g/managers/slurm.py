@@ -56,12 +56,16 @@ class Job (drm4g.managers.Job):
         args += '#SBATCH --job-name=JID_%s\n' % (parameters['environment']['GW_JOB_ID'])
         args += '#SBATCH --output=$stdout\n'
         args += '#SBATCH --error=$stderr\n'
+        if parameters['queue'] != 'default':
+            args += '#SBATCH -p $queue\n'
         if parameters.has_key('maxWallTime'): 
             args += '#SBATCH --time=%s\n' % (parameters['maxWallTime'])
         if parameters.has_key('maxMemory'):
             args += '#SBATCH --mem=%s\n' % (parameters['maxMemory'])
         if parameters.has_key('ppn'): 
             args += '#SBATCH --ntasks-per-node=$ppn'
+        if parameters.has_key('nodes'): 
+            args += '#SBATCH --nodes=$nodes'
         args += '#SBATCH --ntasks=$count\n'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
         args += '\n'

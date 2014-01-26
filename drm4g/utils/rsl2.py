@@ -13,7 +13,7 @@ class Rsl2Parser(object):
            stdout = rsl.parse()
   """
   elems_to_parse = ['executable','stdout','stderr','directory','count','jobType',
-                      'queue','maxTime','maxWallTime','maxCpuTime','minMemory','maxMemory','ppn']
+                      'queue','maxTime','maxWallTime','maxCpuTime','minMemory','maxMemory','ppn', 'nodes']
 
   def __init__(self, filename):
     """
