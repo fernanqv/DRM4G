@@ -1,9 +1,11 @@
 import re
+import sys
 import xml.dom.minidom
 import os
 import subprocess
 import logging
-from __future__  import with_statement
+if sys.version_info < ( 2 , 6 ) :
+    from __future__         import with_statement
 
 __version__  = '1.0'
 __author__   = 'Carlos Blanco'
