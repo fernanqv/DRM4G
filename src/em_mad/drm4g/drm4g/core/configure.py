@@ -89,15 +89,15 @@ class Configuration(object):
             if ( not 'ncores' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 output = "'ncores' key is mandatory for '%s' resource" % resname
                 logger.error( output )
-                errors.append( output )
-            if resdict.get( 'ncores' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
-                output = "The number of elements in 'ncores' are different to the elements of 'queue'"
-                logger.error( output )
-                errors.append( output )            
+                errors.append( output )           
             if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 self.resources[resname]['queue'] = "default"
                 output = "'queue' key will be called 'default' for '%s' resource" % resname
                 logger.debug( output )
+            if resdict.get( 'ncores' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
+                output = "The number of elements in 'ncores' are different to the elements of 'queue'"
+                logger.error( output )
+                errors.append( output ) 
             if not COMMUNICATORS.has_key( resdict[ 'communicator' ] ) :
                 output = "'%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
                 logger.error( output )
