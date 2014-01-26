@@ -177,8 +177,9 @@ class Resource (object):
         host_info.Name  = host
         host_info.Nodes = str( totalCores( self.features[ 'ncores' ] ) )
         host_info.Name, host_info.OsVersion, host_info.Arch, host_info.Os  = self.system_information()
-           
-        for queue_name , ncores in [ elem.strip() for elem in zip( self.features[ 'queue' ].split( ',' ) , self.features[ 'ncores' ].split( ',' ) ) ] :
+        
+        q_features = [ ( q_elem.strip() , nc_elem.strip() ) for q_elem , nc_elem in zip( self.features[ 'queue' ].split( ',' ) , self.features[ 'ncores' ].split( ',' ) ) ]
+        for queue_name , ncores in q_features  :
             queue              = Queue()
             queue.Name         = queue_name
             queue.Nodes        = ncores
