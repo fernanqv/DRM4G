@@ -1,7 +1,6 @@
+from __future__       import with_statement
 import Queue
 import sys
-if sys.version_info < ( 2 , 6 ) :
-    from __future__   import with_statement
 from threading        import Thread
 from threading        import Lock
 

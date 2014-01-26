@@ -22,12 +22,11 @@ except Exception, e:
     print 'Caught exception: %s' % str(e)
     sys.exit(-1)
 
+from __future__             import with_statement
 import socket
 import re
 import logging
 import drm4g.communicators
-if sys.version_info < ( 2 , 6 ) :
-    from __future__         import with_statement
 from drm4g.communicators    import ComException, logger
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT  
 from drm4g.utils.url        import urlparse

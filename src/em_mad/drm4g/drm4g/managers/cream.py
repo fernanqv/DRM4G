@@ -1,9 +1,8 @@
+from __future__      import with_statement
 import re
 import sys
 import logging
 import drm4g.managers
-if sys.version_info < ( 2 , 6 ) :
-    from __future__  import with_statement
 from os.path         import basename , dirname , exists
 from string          import Template
 from drm4g           import REMOTE_VOS_DIR
