@@ -3,7 +3,8 @@ import re
 import time
 import threading
 import logging
-from __future__              import with_statement
+if sys.version_info < ( 2 , 6 ) :
+    from __future__          import with_statement
 from os.path                 import join, dirname
 from string                  import Template
 from Queue                   import Queue

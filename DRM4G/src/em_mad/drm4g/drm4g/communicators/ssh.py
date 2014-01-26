@@ -26,7 +26,8 @@ import socket
 import re
 import logging
 import drm4g.communicators
-from __future__             import with_statement
+if sys.version_info < ( 2 , 6 ) :
+    from __future__         import with_statement
 from drm4g.communicators    import ComException, logger
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT  
 from drm4g.utils.url        import urlparse

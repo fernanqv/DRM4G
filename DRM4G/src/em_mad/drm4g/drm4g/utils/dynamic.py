@@ -1,8 +1,9 @@
 import Queue
-from __future__  import with_statement
-from threading   import Thread
-from threading   import Lock
 import sys
+if sys.version_info < ( 2 , 6 ) :
+    from __future__   import with_statement
+from threading        import Thread
+from threading        import Lock
 
 __version__ = '0.1'
 __author__  = 'Carlos Blanco'
