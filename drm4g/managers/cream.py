@@ -1,11 +1,13 @@
 import re
+import sys
 import logging
 import drm4g.managers
-from __future__     import with_statement
-from os.path        import basename , dirname , exists
-from string         import Template
-from drm4g          import REMOTE_VOS_DIR
-from drm4g.managers import JobException
+if sys.version_info < ( 2 , 6 ) :
+    from __future__  import with_statement
+from os.path         import basename , dirname , exists
+from string          import Template
+from drm4g           import REMOTE_VOS_DIR
+from drm4g.managers  import JobException
 
 __version__  = '1.0'
 __author__   = 'Carlos Blanco'
