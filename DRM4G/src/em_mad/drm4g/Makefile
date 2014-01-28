@@ -6,7 +6,7 @@ ifdef GW_LOCATION
 	@cp drm4g_env.py $(GW_LOCATION)/bin/
 	@cp drm4g.py $(GW_LOCATION)/bin/drm4g
 	@cp -rf drm4g $(GW_LOCATION)/libexec/
-	@cp gw_drm4g_wrapper.sh $(GW_LOCATION)/libexec/
+	@cp gw_drm4g_wrapper.sh $(GW_LOCATION)/etc/
 	@cp logger.conf $(GW_LOCATION)/etc/
 	@cp drm4g.conf $(GW_LOCATION)/etc/
 	@chmod a+x $(GW_LOCATION)/bin/gw_im_mad_drm4g.py
