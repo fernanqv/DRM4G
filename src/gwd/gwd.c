@@ -515,6 +515,7 @@ int main(int argc, char **argv)
     char  *log;
     char  *pid_file;
     char  *conf_file;
+    char  *sh_command;
     pid_t  pid, sid;
     int    length;
     gw_boolean_t multiuser  = GW_FALSE, clear_state = GW_FALSE;
@@ -534,10 +535,15 @@ int main(int argc, char **argv)
     	return -1;
     }
 
-    length = strlen(GW_LOCATION) + sizeof(GW_VAR_DIR);
-    log  = (char *) malloc (sizeof(char)*(length + 10));
-    lock = (char *) malloc (sizeof(char)*(length + 8));
-    pid_file = (char *) malloc (sizeof(char)*(length + 8));
+    length     = strlen(GW_LOCATION) + sizeof(GW_VAR_DIR);
+    log        = (char *) malloc (sizeof(char)*(length + 10));
+    lock       = (char *) malloc (sizeof(char)*(length + 8));
+    sh_command = (char *) malloc (sizeof(char)*(length));
+    pid_file   = (char *) malloc (sizeof(char)*(length + 8));
+
+    /* Create GW_VAR_DIR directory*/
+    sprintf(sh_command,"mkdir -m 775 -p %s/" GW_VAR_DIR , GW_LOCATION);
+    system(sh_command);
 
     sprintf(lock, "%s/" GW_VAR_DIR "/.lock", GW_LOCATION);
     sprintf(log, "%s/" GW_VAR_DIR "/gwd.log", GW_LOCATION);
