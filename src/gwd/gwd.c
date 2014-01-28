@@ -538,7 +538,7 @@ int main(int argc, char **argv)
     length     = strlen(GW_LOCATION) + sizeof(GW_VAR_DIR);
     log        = (char *) malloc (sizeof(char)*(length + 10));
     lock       = (char *) malloc (sizeof(char)*(length + 8));
-    sh_command = (char *) malloc (sizeof(char)*(length));
+    sh_command = (char *) malloc (sizeof(char)*(length + 8));
     pid_file   = (char *) malloc (sizeof(char)*(length + 8));
 
     /* Create GW_VAR_DIR directory*/
