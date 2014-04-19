@@ -674,7 +674,7 @@ int main(int argc, char **argv)
        	rc = chdir(log);
 
        	free(log);
-
+        fprintf(stderr,"1ok\n");
        	if (rc != 0)
        	{
             perror("Error, can not change to dir.");
@@ -682,8 +682,7 @@ int main(int argc, char **argv)
        	    exit(-1);
        	}
        	pid_gridway(pid_file);
-       	free(pid_file);
-       	gwd_main();            
+       	gwd_main();       
     } 
     else 
     {
@@ -720,7 +719,6 @@ int main(int argc, char **argv)
             }
 
        	    pid_gridway(pid_file);
-            free(pid_file);
             gwd_main();            
             break;
 
