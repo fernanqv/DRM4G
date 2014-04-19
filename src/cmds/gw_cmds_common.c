@@ -821,8 +821,8 @@ void gw_client_print_host_status_header()
 {
     char head_string[210];
     
-    sprintf(head_string,"%-3s %-4s %-15s %-6s %13s %-18s %-30s",
-    "HID","PRI","OS","ARCH","CORES(U/F/T)","LRMS","HOSTNAME");
+    sprintf(head_string,"%-3s %-6s %13s %-18s %-30s",
+    "HID","ARCH","CORES(U/F/T)","LRMS","HOSTNAME");
     
     bold();
     underline(); 
@@ -844,10 +844,10 @@ void gw_client_print_host_status(gw_msg_host_t * msg)
     int i;
     
     printf("%-3i ",msg->host_id);
-    printf("%-3i ",msg->fixed_priority);    
+    //printf("%-3i ",msg->fixed_priority);    
     
-    snprintf(buffer,sizeof(char)*string_short,"%s%s",msg->os_name, msg->os_version);
-    printf("%-15.15s ",buffer);
+    //snprintf(buffer,sizeof(char)*string_short,"%s%s",msg->os_name, msg->os_version);
+    //printf("%-15.15s ",buffer);
     
     printf("%-6.6s ",msg->arch);
     //printf("%4i ",msg->cpu_mhz);
@@ -891,9 +891,8 @@ void gw_client_print_host_queues(gw_msg_host_t * msg, gw_boolean_t header)
     char buffer[string_short];
     int  i;
     
-    sprintf(head_string,"\n%-20s %-7s %-5s %-5s %-5s %-5s %-5s %-8s %-10s %-8s",
-			"QUEUENAME","SL(F/T)","WALLT","CPUT","COUNT","MAXR","MAXQ",
-			"STATUS","DISPATCH","PRIORITY");
+    sprintf(head_string,"\n%-20s %-7s %-5s %-5s",
+			"QUEUENAME","SL(F/T)","WALLT","CPUT");
     
     bold();
     underline(); 
@@ -912,13 +911,13 @@ void gw_client_print_host_queues(gw_msg_host_t * msg, gw_boolean_t header)
         printf("%-7s ",buffer);
 
         printf("%-5i ",msg->queue_maxtime[i]);
-        printf("%-5i ",msg->queue_maxcputime[i]);
-        printf("%-5i ",msg->queue_maxcount[i]);
+        printf("%-5i\n",msg->queue_maxcputime[i]);
+        /*printf("%-5i ",msg->queue_maxcount[i]);
         printf("%-5i ",msg->queue_maxrunningjobs[i]);
         printf("%-5i ",msg->queue_maxjobsinqueue[i]);
         printf("%-8.8s ",msg->queue_status[i]);
         printf("%-10.10s ",msg->queue_dispatchtype[i]);
-        printf("%-8s\n",msg->queue_priority[i]);
+        printf("%-8s\n",msg->queue_priority[i]);*/
     }
 }
 
