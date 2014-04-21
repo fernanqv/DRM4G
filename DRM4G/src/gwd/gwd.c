@@ -674,7 +674,6 @@ int main(int argc, char **argv)
        	rc = chdir(log);
 
        	free(log);
-        fprintf(stderr,"1ok\n");
        	if (rc != 0)
        	{
             perror("Error, can not change to dir.");
