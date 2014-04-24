@@ -123,7 +123,7 @@ int gw_check_port()
 
     if (bind(socket_, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)
     {
-    	fprintf(stderr,"ERROR: the port %d is not free.\n",gw_conf.gwd_port);
+    	fprintf(stderr,"WARNING: the port %d is not free.\n",gw_conf.gwd_port);
     	return -1;
     }
 
@@ -221,7 +221,7 @@ void gw_kill(char *pid_file)
         }	
         else if (errno == ESRCH)
 	{
-            fprintf(stderr,"ERROR: GridWay daemon is already stopped\n");
+            fprintf(stderr,"WARNING: GridWay daemon is already stopped\n");
             free(pid_file);
 	    exit(-1);
         }
@@ -235,7 +235,7 @@ void gw_kill(char *pid_file)
     }
     else
     {
-        fprintf(stderr,"ERROR: GridWay daemon is already stopped\n");
+        fprintf(stderr,"WARNING: GridWay daemon is already stopped\n");
         free(pid_file);
         exit(-1);
     }
@@ -659,7 +659,7 @@ int main(int argc, char **argv)
 
     if (rc  == -1)
     {
-        fprintf(stderr,"ERROR: update the GWD_PORT variable in file: %s/" GW_ETC_DIR "/gwd.conf\n",GW_LOCATION);
+        fprintf(stderr,"WARNING: update the GWD_PORT variable in file: %s/" GW_ETC_DIR "/gwd.conf\n",GW_LOCATION);
         unlink(lock);
         exit(-1);
     }
