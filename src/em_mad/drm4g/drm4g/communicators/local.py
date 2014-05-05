@@ -22,11 +22,14 @@ class Communicator(drm4g.communicators.Communicator):
     def execCommand(self, command, input=None ):
         command_proc = subprocess.Popen(command,
             shell = True,
+            stdin  = subprocess.PIPE,
             stdout = subprocess.PIPE,
             stderr = subprocess.PIPE,
             env = os.environ)
         if input :
             for line in input.split():
+                command_proc.stdin.write("%s\n" % line)
+                command_proc.stdin.flush()
                 stdout, stderr = command_proc.communicate("%s\n" % line)
         else :
             stdout, stderr = command_proc.communicate()
