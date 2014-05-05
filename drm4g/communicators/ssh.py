@@ -1,3 +1,4 @@
+from __future__             import with_statement
 import sys
 import platform
 from os.path     import dirname, abspath, join, expanduser, exists
@@ -22,7 +23,6 @@ except Exception, e:
     print 'Caught exception: %s' % str(e)
     sys.exit(-1)
 
-from __future__             import with_statement
 import socket
 import re
 import logging
