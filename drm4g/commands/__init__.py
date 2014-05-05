@@ -76,7 +76,7 @@ class ManagementUtility( cmd.Cmd ):
                     else :
                         cmd = "myproxy-init -S -t %s" % PROXY_THRESHOLD
                     print "\tExecuting command ... ", cmd 
-                    out , err = communicator.execCommand( cmd , input = '\n'.join( [ grid_passwd, proxy_passwd, proxy_passwd ] ) )
+                    out , err = communicator.execCommand( cmd , input = '\n'.join( [ grid_passwd, proxy_passwd ] ) )
                     print "\t", out , err
                 else :
                     print "\t", err
