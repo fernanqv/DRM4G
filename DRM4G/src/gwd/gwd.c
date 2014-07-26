@@ -140,13 +140,12 @@ int gw_check_port()
 
 void pid_gridway(char *pid_file)
 {
-     int fd;
+     FILE *fd;
 
      fd = fopen(pid_file, "w");
      if (fd == NULL)
      {
          fprintf(stderr,"ERROR: opening gwd.pid file (%s)\n",pid_file);
-	 free(pid_file);
 	 exit(-1);
      }
      fprintf(fd,"%i",getpid());
@@ -158,7 +157,7 @@ void pid_gridway(char *pid_file)
 
 int read_pid_gridway(char *pid_file)
 {
-    int fd;
+    FILE *fd;
     int pid;
 
     fd = fopen(pid_file, "r");
