@@ -426,17 +426,17 @@ am__relativize = \
     dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
   done; \
   reldir="$$dir2"
-ACLOCAL = ${SHELL} /home/carlos/Escritorio/eclipse/DRM4G/config/missing --run aclocal-1.11
+ACLOCAL = ${SHELL} /home/carlos/workspace/DRM4G/config/missing --run aclocal-1.11
 ALLOCA = 
-AMTAR = ${SHELL} /home/carlos/Escritorio/eclipse/DRM4G/config/missing --run tar
+AMTAR = ${SHELL} /home/carlos/workspace/DRM4G/config/missing --run tar
 AR = ar
-AUTOCONF = ${SHELL} /home/carlos/Escritorio/eclipse/DRM4G/config/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/carlos/Escritorio/eclipse/DRM4G/config/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/carlos/Escritorio/eclipse/DRM4G/config/missing --run automake-1.11
-AWK = mawk
+AUTOCONF = ${SHELL} /home/carlos/workspace/DRM4G/config/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/carlos/workspace/DRM4G/config/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/carlos/workspace/DRM4G/config/missing --run automake-1.11
+AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=none
-CFLAGS = -g -O2
+CFLAGS =  -Wall -g -DGWIMDEBUG -DGWJOBDEBUG -DGWHOSTDEBUG -DGWEMDEBUG -DGWDMDEBUG  -DGWTMDEBUG -DGWUSERDEBUG -DGWSCHEDDEBUG
 CPP = gcc -E
 CPPFLAGS = 
 CXX = g++
@@ -472,7 +472,7 @@ LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/carlos/Escritorio/eclipse/DRM4G/config/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/carlos/workspace/DRM4G/config/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
 NMEDIT = 
@@ -497,10 +497,10 @@ STRIP = strip
 VERSION = 5.8.0
 YACC = bison -y
 YFLAGS = 
-abs_builddir = /home/carlos/Escritorio/eclipse/DRM4G/src
-abs_srcdir = /home/carlos/Escritorio/eclipse/DRM4G/src
-abs_top_builddir = /home/carlos/Escritorio/eclipse/DRM4G
-abs_top_srcdir = /home/carlos/Escritorio/eclipse/DRM4G
+abs_builddir = /home/carlos/workspace/DRM4G/src
+abs_srcdir = /home/carlos/workspace/DRM4G/src
+abs_top_builddir = /home/carlos/workspace/DRM4G
+abs_top_srcdir = /home/carlos/workspace/DRM4G
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 ac_ct_DUMPBIN = 
@@ -529,8 +529,8 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/carlos/Escritorio/eclipse/DRM4G/config/install-sh
-java_home = 
+install_sh = ${SHELL} /home/carlos/workspace/DRM4G/config/install-sh
+java_home = /usr/lib/jvm/java-8-oracle
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -540,7 +540,7 @@ mandir = ${datarootdir}/man
 mkdir_p = /bin/mkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /home/carlos/drm4g
+prefix = /home/carlos/gw_drm4g
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -591,7 +591,7 @@ DRMAA = $(srcdir)/drmaa
 DRMAA_PACK = $(srcdir)/$(DRMAA_SRC_DIR)/org/ggf/drmaa
 DRMAA1_PACK = $(srcdir)/$(DRMAA1_SRC_DIR)/org/ggf/drmaa
 SSH = $(srcdir)/ssh
-JAVA_HOME = 
+JAVA_HOME = /usr/lib/jvm/java-8-oracle
 
 # --------------------------------
 # Object Dependencies
@@ -992,7 +992,7 @@ __srcdir__drmaa_libDrmaaJNI_la_LINK = $(LIBTOOL) --tag=CC --mode=link $(LINK)
 # ----------------------------
 # TESTS
 # ----------------------------
-#testdir = /home/carlos/drm4g/test/
+#testdir = /home/carlos/gw_drm4g/test/
 #__srcdir__test_gwtest_SOURCES = test/gw_test.c \
 #        $(CMDS)/gw_cmds_common.c \
 #        $(CLIENT_SRC) \

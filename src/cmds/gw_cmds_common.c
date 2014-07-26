@@ -821,8 +821,8 @@ void gw_client_print_host_status_header()
 {
     char head_string[210];
     
-    sprintf(head_string,"%-3s %-6s %13s %-18s %-30s",
-    "HID","ARCH","CORES(U/F/T)","LRMS","HOSTNAME");
+    sprintf(head_string,"%-3s %-6s %13s %-10s %-20s",
+    "HID","ARCH","JOBS(R/T)","LRMS","HOST");
     
     bold();
     underline(); 
@@ -840,7 +840,7 @@ void gw_client_print_host_status(gw_msg_host_t * msg)
 {
     int string_short=GW_MSG_STRING_SHORT;
     char buffer[string_short];
-    int freenodecount;
+    int activejobs;
     int i;
     
     printf("%-3i ",msg->host_id);
@@ -865,19 +865,26 @@ void gw_client_print_host_status(gw_msg_host_t * msg)
         snprintf(buffer,sizeof(char)*string_short,"%liM/%liM",msg->free_disk_mb,msg->size_disk_mb);
     printf("%18s ",buffer);*/
 
-    freenodecount = 0;
+    /*freenodecount = 0;
     for (i=0; i<msg->number_of_queues; i++)
     {
-        if (msg->queue_freenodecount[i] > freenodecount)
-            freenodecount = msg->queue_freenodecount[i];
+        //if (msg->queue_freenodecount[i] > freenodecount)
+      freenodecount = freenodecount + msg->queue_freenodecount[i];
+    }*/
+
+    activejobs = 0;
+    for (i=0; i<msg->number_of_queues; i++)
+    {
+    	activejobs = activejobs + msg->queue_active_jobs[i];
     }
     
-    snprintf(buffer,sizeof(char)*string_short,"%i/%i/%i",msg->used_slots,freenodecount,msg->nodecount);
+
+    snprintf(buffer,sizeof(char)*string_short,"%i/%i",activejobs, msg->running_jobs);
     printf("%13s ",buffer);
 
-    printf("%-18.18s ",msg->lrms_name);
+    printf("%-10.10s ",msg->lrms_name);
     
-    printf("%-30s\n",msg->hostname);    
+    printf("%-20s\n",msg->hostname);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -891,8 +898,8 @@ void gw_client_print_host_queues(gw_msg_host_t * msg, gw_boolean_t header)
     char buffer[string_short];
     int  i;
     
-    sprintf(head_string,"\n%-20s %-7s %-5s %-5s",
-			"QUEUENAME","SL(F/T)","WALLT","CPUT");
+    sprintf(head_string,"\n%-15s %-9s %-5s %-5s %-5s %-5s",
+			"QUEUENAME","JOBS(R/T)","WALLT","CPUT","MAXR","MAXQ");
     
     bold();
     underline(); 
@@ -904,17 +911,16 @@ void gw_client_print_host_queues(gw_msg_host_t * msg, gw_boolean_t header)
     
     for (i=0;i<msg->number_of_queues;i++)
     {
-        printf("%-20.20s ",msg->queue_name[i]);
+        printf("%-15.15s ",msg->queue_name[i]);
         
-        sprintf(buffer,"%3i/%-3i",msg->queue_freenodecount[i],
-                        msg->queue_nodecount[i]);
-        printf("%-7s ",buffer);
+        sprintf(buffer,"%4i/%-4i",msg->queue_active_jobs[i], msg->queue_running_jobs[i]);
+        printf("%-9s ",buffer);
 
         printf("%-5i ",msg->queue_maxtime[i]);
-        printf("%-5i\n",msg->queue_maxcputime[i]);
-        /*printf("%-5i ",msg->queue_maxcount[i]);
+        printf("%-5i ",msg->queue_maxcputime[i]);
         printf("%-5i ",msg->queue_maxrunningjobs[i]);
-        printf("%-5i ",msg->queue_maxjobsinqueue[i]);
+        printf("%-5i\n",msg->queue_maxjobsinqueue[i]);
+        /*printf("%-5i ",msg->queue_maxcount[i]);
         printf("%-8.8s ",msg->queue_status[i]);
         printf("%-10.10s ",msg->queue_dispatchtype[i]);
         printf("%-8s\n",msg->queue_priority[i]);*/
@@ -1150,8 +1156,8 @@ void gw_client_print_host_status_xml(gw_msg_host_t * msg)
     freenodecount = 0;
     for (i=0; i<msg->number_of_queues; i++)
     {
-        if (msg->queue_freenodecount[i] > freenodecount)
-            freenodecount = msg->queue_freenodecount[i];
+        //if (msg->queue_freenodecount[i] > freenodecount)
+        freenodecount = freenodecount + msg->queue_freenodecount[i];
     }
     
     printf("    <RUNNING_JOBS>%i</RUNNING_JOBS>\n",msg->running_jobs);

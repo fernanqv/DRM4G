@@ -42,7 +42,7 @@ void gw_rm_job_match(int client_socket, int job_id)
     gw_msg_match_t msg;
     gw_boolean_t   match;
     int            length;
-    int            gwfreenc;
+    int            slots;
     
     msg.msg_type = GW_MSG_JOB_MATCH;
     length       = sizeof(gw_msg_match_t);
@@ -89,14 +89,15 @@ void gw_rm_job_match(int client_socket, int job_id)
                         msg.match[number_of_queues] = 1;
                         msg.rank [number_of_queues] = gw_host_compute_rank(host,j,job->template.rank);
 
-                        gwfreenc = host->queue_nodecount[j] - host->used_slots;
-            
-                        if ( host->queue_freenodecount[j] < gwfreenc )
-                            msg.slots[number_of_queues] = host->queue_freenodecount[j];
-                        else if ( gwfreenc > 0)
-                            msg.slots[number_of_queues] = gwfreenc;
+                        if (host->queue_maxjobsinqueue[j] > 0 )
+                              slots = host->queue_maxjobsinqueue[j] - host->queue_running_jobs[j] ;
                         else
-                            msg.slots[number_of_queues] = 0;
+                              slots = host->queue_maxrunningjobs[j] - host->queue_active_jobs[j];
+
+                        if (host->queue_active_jobs[j] > host->queue_maxrunningjobs[j])
+                        	slots = 0;
+
+                        msg.slots[number_of_queues] = slots;
                     }
                     else
                     {

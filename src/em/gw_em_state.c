@@ -26,6 +26,7 @@
 #include "gw_em.h"
 #include "gw_em_rsl.h"
 #include "gw_log.h"
+#include "gw_host.h"
 
 
 /* -------------------------------------------------------------------------- */
@@ -64,6 +65,9 @@ void gw_em_pending(void *_job_id)
         gw_am_trigger(&(gw_em.am), "GW_EM_CANCEL", _job_id); 
     else
       	free(_job_id);
+
+    if ( current_em_state == GW_EM_STATE_ACTIVE )
+    	gw_host_dec_ajobs_nb(job->history->host, job->history->queue);
       	    
     if ( current_em_state == GW_EM_STATE_PENDING )
     {
@@ -119,7 +123,6 @@ void gw_em_active(void *_job_id)
       	    
     if ( current_em_state == GW_EM_STATE_ACTIVE )
     {
-    	gw_job_print (job,"EM",'I',"Execution state is ACTIVE.\n");
         pthread_mutex_unlock(&(job->mutex));      
         return;
     }        
@@ -130,6 +133,8 @@ void gw_em_active(void *_job_id)
 
     job->em_state = GW_EM_STATE_ACTIVE;
     
+    gw_host_inc_ajobs_nb(job->history->host, job->history->queue);
+
     if (job->last_checkpoint_time == 0)
     	job->last_checkpoint_time = time(NULL);
     	
@@ -176,6 +181,9 @@ void gw_em_suspended(void *_job_id)
     else
       	free(_job_id);
       	    
+    if ( current_em_state == GW_EM_STATE_ACTIVE )
+        gw_host_dec_ajobs_nb(job->history->host, job->history->queue);
+
     if ( current_em_state == GW_EM_STATE_SUSPENDED )
     {
         gw_job_print (job,"EM",'I',"Execution state is SUSPENDED.\n");
@@ -234,6 +242,9 @@ void gw_em_done(void *_job_id)
             
     current_state = job->job_state;
     
+    if ( current_em_state == GW_EM_STATE_ACTIVE )
+        	gw_host_dec_ajobs_nb(job->history->host, job->history->queue);
+
     if ( current_state == GW_JOB_STATE_MIGR_CANCEL )
     {
         if ( current_em_state == GW_EM_STATE_ACTIVE )
@@ -295,6 +306,9 @@ void gw_em_failed(void *_job_id)
 
     /* -------------------------------------------------------------------- */
     
+    if ( current_em_state == GW_EM_STATE_ACTIVE )
+        	gw_host_dec_ajobs_nb(job->history->host, job->history->queue);
+
     if (  (current_em_state == GW_EM_STATE_SUSPENDED)
         ||(current_em_state == GW_EM_STATE_PENDING) )
         job->history->stats[SUSPENSION_TIME] += time(NULL) 

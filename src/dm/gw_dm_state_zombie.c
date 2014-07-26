@@ -91,7 +91,7 @@ void gw_dm_zombie ( void *_job_id )
             
             gw_user_pool_dec_running_jobs(job->user_id);
             
-            gw_host_dec_rjobs(job->history->host);
+            gw_host_dec_rjobs(job->history->host,job->history->queue);
             
 			/* --------       Notify the scheduler      -------- */
 			                                   
@@ -134,7 +134,7 @@ void gw_dm_zombie ( void *_job_id )
 			            
             gw_user_pool_dec_running_jobs(job->user_id);
 
-            gw_host_dec_rjobs(job->history->host);
+            gw_host_dec_rjobs(job->history->host,job->history->queue);
             
 			sprintf(conf_filename, "%s/job.conf", job->directory);	
 			unlink(conf_filename);    

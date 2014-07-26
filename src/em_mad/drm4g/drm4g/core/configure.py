@@ -6,7 +6,7 @@ import ConfigParser
 from drm4g.utils.importlib import import_module
 from drm4g                 import DRM4G_CONFIG_FILE, COMMUNICATORS, RESOURCE_MANAGERS
 
-__version__  = '1.0'
+__version__  = '2.0.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -85,23 +85,30 @@ class Configuration(object):
                     output = "'%s' resource does not have '%s' key" % (resname, key)
                     logger.error( output )
                     errors.append( output )
-            if ( not 'ncores' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
-                output = "'ncores' key is mandatory for '%s' resource" % resname
+            if ( not 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
+                output = "'max_jobs_running' key is mandatory for '%s' resource" % resname
                 logger.error( output )
                 errors.append( output )           
+            if ( not 'max_jobs_in_queue' in reslist ) :
+                self.resources[resname]['max_jobs_in_queue'] = resdict['max_jobs_running']
+                logger.debug( "'max_jobs_in_queue' will be the same as the 'max_jobs_running'" )
             if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 self.resources[resname]['queue'] = "default"
                 output = "'queue' key will be called 'default' for '%s' resource" % resname
                 logger.debug( output )
-            if resdict.get( 'ncores' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
-                output = "The number of elements in 'ncores' are different to the elements of 'queue'"
+            if resdict.get( 'max_jobs_in_queue' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
+                output = "The number of elements in 'max_jobs_in_queue' are different to the elements of 'queue'"
+                logger.error( output )
+                errors.append( output )
+            if resdict.get( 'max_jobs_running' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ):
+                output = "The number of elements in 'max_jobs_running' are different to the elements of 'queue'"
                 logger.error( output )
                 errors.append( output ) 
             if not COMMUNICATORS.has_key( resdict[ 'communicator' ] ) :
                 output = "'%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
                 logger.error( output )
                 errors.append( output )
-            if resdict.has_key( 'ssh' ) :
+            if resdict.has_key( 'ssh' ) and not resdict.has_key( 'username' ) :
                 output = "'username' key is mandatory for 'ssh' communicator, '%s' resource" % resname 
                 logger.error( output )
                 errors.append( output )
@@ -110,12 +117,16 @@ class Configuration(object):
                 logger.error( output )
                 errors.append( output )
             private_key = resdict.get( 'private_key' )
-            if private_key and (  not 'PRIVATE KEY' in private_key ) and  os.path.isfile( os.path.expanduser( private_key ) ) :
+            if not private_key and resdict[ 'communicator' ] == 'ssh' :
+                output = "'private_key' key is mandatory for '%s' resource" % resname
+                logger.error( output )
+                errors.append( output )
+            if private_key and not os.path.isfile( os.path.expanduser( private_key ) ) :
                 output = "'%s' does not exist '%s' resource" % ( private_key , resname )
                 logger.error( output )
                 errors.append( output )
             if not errors:
-                logger.debug( "'%s' passed the check with flying colours" % resname )
+                logger.debug( "'%s' passed the check with flying colors" % resname )
         return errors
                 
     def make_communicators(self):
@@ -138,7 +149,6 @@ class Configuration(object):
                 logger.warning( output , exc_info=1 )
                 raise ConfigureException( output )
         return communicators 
-
 
     def make_resources(self):
         """

@@ -92,6 +92,10 @@ void gw_rm_host_to_msg (gw_host_t *host, gw_msg_host_t *msg)
 				host->queue_maxrunningjobs[i];
 			msg->queue_maxjobsinqueue[number_of_queues] = 
 				host->queue_maxjobsinqueue[i];
+			msg->queue_running_jobs[number_of_queues] =
+				host->queue_running_jobs[i];
+			msg->queue_active_jobs[number_of_queues] =
+				host->queue_active_jobs[i];
 
 			gw_rm_copy_str_short(host->queue_name[i],
 				msg->queue_name[number_of_queues]);

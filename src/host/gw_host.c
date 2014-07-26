@@ -76,6 +76,8 @@ void gw_host_init(gw_host_t *host, char *hostname, int host_id, int fixed_priori
         host->queue_priority[i]       = NULL;
                 
         host->queue_nodecount[i]      = 0;
+        host->queue_running_jobs[i]   = 0;
+        host->queue_active_jobs[i]    = 0;
         host->queue_freenodecount[i]  = 0;
         host->queue_maxtime[i]        = 0;
         host->queue_maxcputime[i]     = 0;
@@ -266,11 +268,23 @@ void gw_host_clear_dynamic_info(int host_id)
 
 /*----------------------------------------------------------------------------*/
 
-void gw_host_dec_rjobs(gw_host_t *host)
+void gw_host_dec_rjobs(gw_host_t *host , char *queue)
 {
     pthread_mutex_lock(&(host->mutex));			
 
+    int i;
+
 	host->running_jobs--;
+
+	for (i=0; i<GW_HOST_MAX_QUEUES; i++)
+	{
+		if ( queue != NULL && strcmp(host->queue_name[i],queue) == 0 )
+		{
+	        	host->queue_running_jobs[i]--;
+	        	break;
+		}
+	}
+
 			
     gw_dm_mad_host_monitor(&gw_dm.dm_mad[0],
                            host->host_id,
@@ -283,9 +297,10 @@ void gw_host_dec_rjobs(gw_host_t *host)
 
 /*----------------------------------------------------------------------------*/
 
-void gw_host_dec_uslots(gw_host_t *host, int slots)
+void gw_host_dec_uslots(gw_host_t *host, int slots ,char *queue)
 {
-    pthread_mutex_lock(&(host->mutex));			
+
+    pthread_mutex_lock(&(host->mutex));
 
 	host->used_slots-= slots;
 			
@@ -300,13 +315,24 @@ void gw_host_dec_uslots(gw_host_t *host, int slots)
 
 /*----------------------------------------------------------------------------*/
 
-void gw_host_dec_slots(gw_host_t *host, int slots)
+void gw_host_dec_slots(gw_host_t *host, int slots , char *queue)
 {
     pthread_mutex_lock(&(host->mutex));			
+
+    int i;
 
 	host->used_slots-= slots;
 	
 	host->running_jobs--;
+
+	for (i=0; i<GW_HOST_MAX_QUEUES; i++)
+	{
+	   if ( queue != NULL && strcmp(host->queue_name[i],queue) == 0 )
+	   {
+	        	host->queue_running_jobs[i]--;
+	        	break;
+	   }
+	}
 				
     gw_dm_mad_host_monitor(&gw_dm.dm_mad[0],
                            host->host_id,
@@ -373,33 +399,106 @@ void gw_host_inc_slots(gw_host_t *host, int slots)
 
 /*----------------------------------------------------------------------------*/
 
-void gw_host_inc_slots_nb(gw_host_t *host, int slots)
+void gw_host_inc_slots_nb(gw_host_t *host, int slots, char *queue)
 {
+
+	int i;
+
 	host->used_slots+= slots;
 	
 	host->running_jobs++;
-				
+
+	for (i=0; i<GW_HOST_MAX_QUEUES; i++)
+	{
+
+		if ( queue != NULL && strcmp(host->queue_name[i],queue) == 0 )
+		{
+			host->queue_running_jobs[i]++;
+			break;
+		}
+
+	}
+
+
     gw_dm_mad_host_monitor(&gw_dm.dm_mad[0],
                            host->host_id,
                            host->used_slots,
                            host->running_jobs,
                            host->hostname);
-}
+
+ }
 
 /*----------------------------------------------------------------------------*/
 
-void gw_host_inc_rjobs_nb(gw_host_t *host)
+void gw_host_inc_rjobs_nb(gw_host_t *host, char *queue)
 {
+
+	int i;
+
 	host->running_jobs++;
+
+	for (i=0; i<GW_HOST_MAX_QUEUES; i++)
+		{
+			if ( queue != NULL && strcmp(host->queue_name[i],queue) == 0 )
+			{
+				host->queue_running_jobs[i]++;
+				break;
+			}
+		}
 				
     gw_dm_mad_host_monitor(&gw_dm.dm_mad[0],
                            host->host_id,
                            host->used_slots,
                            host->running_jobs,
                            host->hostname);
+ }
+
+/*----------------------------------------------------------------------------*/
+
+void gw_host_dec_ajobs_nb(gw_host_t *host, char *queue)
+{
+	pthread_mutex_lock(&(host->mutex));
+
+	int i;
+
+	for (i=0; i<GW_HOST_MAX_QUEUES; i++)
+		{
+			if ( queue != NULL && strcmp(host->queue_name[i],queue) == 0 )
+			{
+			    host->queue_active_jobs[i]--;
+			    break;
+			}
+		}
+
+	pthread_mutex_unlock(&(host->mutex));
+
+}
+
+
+
+/*----------------------------------------------------------------------------*/
+
+void gw_host_inc_ajobs_nb(gw_host_t *host, char *queue)
+{
+	pthread_mutex_lock(&(host->mutex));
+
+	int i;
+
+	for (i=0; i<GW_HOST_MAX_QUEUES; i++)
+		{
+			if ( queue != NULL && strcmp(host->queue_name[i],queue) == 0 )
+			{
+			    host->queue_active_jobs[i]++;
+			    break;
+			}
+		}
+
+	pthread_mutex_unlock(&(host->mutex));
+
 }
 
 /*----------------------------------------------------------------------------*/
+
 
 void gw_host_print(FILE *fd, gw_host_t *host)
 {
