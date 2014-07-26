@@ -50,7 +50,7 @@ gw_return_code_t gw_client_job_submit(char *         template,
 	int       fd;
 	gw_host_t host = {PTHREAD_MUTEX_INITIALIZER,NULL,NULL,NULL,0,0,0,0,"str",
 	"str","str","str","str",1,1,1,1,1,1,1,1,"str","str","str",{"str"},{1},{1},
-	{0},{0},{1},{1},{1},{"str"},{"str"},{"str"}};
+	{0},{0},{0},{0},{1},{1},{1},{"str"},{"str"},{"str"}};
 	
 	*job_id = -1;
 
@@ -207,7 +207,7 @@ gw_return_code_t gw_client_array_submit(char *         template,
 	int       fd;
 	gw_host_t host = {PTHREAD_MUTEX_INITIALIZER,NULL,NULL,NULL,0,0,0,0,"str",
 	"str","str","str","str",1,1,1,1,1,1,1,1,"str","str","str",{"str"},{1},{1},
-	{0},{0},{1},{1},{1},{"str"},{"str"},{"str"}};
+	{0},{0},{0},{0},{1},{1},{1},{"str"},{"str"},{"str"}};
 
  	if ( gw_client.initialize == GW_FALSE )
  	{

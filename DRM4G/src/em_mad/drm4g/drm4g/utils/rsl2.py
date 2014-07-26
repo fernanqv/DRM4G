@@ -1,6 +1,6 @@
 import xml.dom.minidom
 
-__version__ = '0.1'
+__version__ = '2.0.0'
 __author__  = 'Carlos Blanco'
 __revision__ = "$Id$"
 

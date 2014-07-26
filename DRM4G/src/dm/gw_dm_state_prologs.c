@@ -257,7 +257,7 @@ void gw_dm_prolog_failed_cb ( void *_job_id )
 		{
 	   		job->history->next->stats[EXIT_TIME] = time(NULL);
 
-            gw_host_dec_rjobs(job->history->next->host);
+            gw_host_dec_rjobs(job->history->next->host,job->history->next->queue);
 		}   		
    	}
    	
@@ -268,7 +268,7 @@ void gw_dm_prolog_failed_cb ( void *_job_id )
 	if (job->history != NULL)
 	{
 		job->history->reason = GW_REASON_EXECUTION_ERROR;
-        gw_host_dec_uslots(job->history->host, job->template.np);
+        gw_host_dec_uslots(job->history->host, job->template.np,job->history->queue);
 	}
 	
 	if (job->template.reschedule_on_failure == GW_TRUE)

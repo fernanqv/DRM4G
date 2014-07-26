@@ -81,9 +81,13 @@ int gw_dm_dispatch_job (int job_id, int host_id, char *queue_name, int rank)
 
         /* ----- Update Host & User counters ----- */
 
-        gw_host_inc_slots_nb(host, job->template.np);
+        gw_log_print("DM",'E',"antes\n");
+
+        gw_host_inc_slots_nb(host, job->template.np , queue_name);
 
         gw_user_pool_inc_running_jobs(job->user_id, 1);
+
+        gw_log_print("DM",'E',"despues.\n");
  
         /* --------------------------------------- */
         
@@ -137,7 +141,7 @@ int gw_dm_dispatch_job (int job_id, int host_id, char *queue_name, int rank)
 
         /* ----- Update Host ----- */
         
-        gw_host_inc_slots_nb(host, job->template.np);
+        gw_host_inc_slots_nb(host, job->template.np, queue_name);
  
         /* ----------------------- */
 

@@ -584,7 +584,7 @@ void gw_dm_epilog_done_cb ( void *_job_id )
     	case GW_JOB_STATE_MIGR_EPILOG:		    
 			gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_WRAPPER", _job_id);
 
-		    gw_host_dec_rjobs(job->history->next->host);		    
+		    gw_host_dec_rjobs(job->history->next->host,job->history->next->queue);
     		break;
     	
     	case GW_JOB_STATE_STOP_EPILOG: 			
@@ -725,7 +725,7 @@ void gw_dm_epilog_failed_cb ( void *_job_id )
     	case GW_JOB_STATE_MIGR_EPILOG:   	    				    
 			gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_WRAPPER", _job_id);
 
-		    gw_host_dec_rjobs(job->history->next->host);		    
+		    gw_host_dec_rjobs(job->history->next->host,job->history->next->queue);
     		break;
     	
     	case GW_JOB_STATE_STOP_EPILOG: 			

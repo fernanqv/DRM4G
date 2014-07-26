@@ -453,7 +453,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
    	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
     	
-    	gw_host_inc_slots_nb(job->history->host, job->template.np);
+    	gw_host_inc_slots_nb(job->history->host, job->template.np, job->history->queue);
        
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_PROLOG", (void *)id);
         break;
@@ -462,7 +462,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
     	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
         
-       	gw_host_inc_slots_nb(job->history->host, job->template.np);
+       	gw_host_inc_slots_nb(job->history->host, job->template.np,job->history->queue);
         
         gw_job_set_state(job, GW_JOB_STATE_WRAPPER, GW_TRUE);
 
@@ -486,7 +486,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
     	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
     	
-        gw_host_inc_rjobs_nb(job->history->host);
+        gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
                 
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_EPILOG", (void *)id);
         break;
@@ -495,7 +495,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
 
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
                
-        gw_host_inc_rjobs_nb(job->history->host);
+        gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
         
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_EPILOG_FAIL", (void *)id);
         break;
@@ -504,7 +504,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
     	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
                
-        gw_host_inc_rjobs_nb(job->history->host);        
+        gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
 
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_EPILOG_RESTART", (void *)id);
         break;
@@ -513,7 +513,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
        	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
                
-        gw_host_inc_rjobs_nb(job->history->host);
+        gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
 
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_EPILOG_STD", (void *)id);
         break;
@@ -526,7 +526,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
     	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
 
-        gw_host_inc_rjobs_nb(job->history->host);
+        gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
         
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_KILL_EPILOG", (void *)id);
         break;
@@ -539,9 +539,9 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
     	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
     	
-    	gw_host_inc_slots_nb(job->history->host, job->template.np);
+    	gw_host_inc_slots_nb(job->history->host, job->template.np,job->history->queue);
         
-    	gw_host_inc_rjobs_nb(job->history->next->host);
+    	gw_host_inc_rjobs_nb(job->history->next->host,job->history->next->queue);
         				
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_MIGR_PROLOG", (void *)id);
         break;
@@ -550,9 +550,9 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
 
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
 
-    	gw_host_inc_slots_nb(job->history->host, job->template.np);
+    	gw_host_inc_slots_nb(job->history->host, job->template.np,job->history->queue);
   
-    	gw_host_inc_rjobs_nb(job->history->next->host);
+    	gw_host_inc_rjobs_nb(job->history->next->host,job->history->next->queue);
     
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_MIGR_EPILOG", (void *)id);
         break;
@@ -561,7 +561,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
    	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
 
-    	gw_host_inc_slots_nb(job->history->host, job->template.np);
+    	gw_host_inc_slots_nb(job->history->host, job->template.np,job->history->queue);
     	            
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_PRE_WRAPPER", (void *)id);
         break;
@@ -574,7 +574,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
 
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
 
-    	gw_host_inc_rjobs_nb(job->history->host);
+    	gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
 
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_STOP_EPILOG", (void *)id);
         break;

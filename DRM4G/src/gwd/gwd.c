@@ -143,10 +143,10 @@ void pid_gridway(char *pid_file)
      FILE *fd;
 
      fd = fopen(pid_file, "w");
-     if (fd == NULL)
+     if (fd==NULL)
      {
          fprintf(stderr,"ERROR: opening gwd.pid file (%s)\n",pid_file);
-	 exit(-1);
+         exit(-1);
      }
      fprintf(fd,"%i",getpid());
      fclose(fd);
@@ -161,7 +161,7 @@ int read_pid_gridway(char *pid_file)
     int pid;
 
     fd = fopen(pid_file, "r");
-    if (fd == NULL)
+    if (fd==NULL)
     {
 	return -1; 
     }
@@ -376,6 +376,7 @@ void gwd_main()
     {
         gw_log_print("GW",'E',"Error initializing Dispatch Manager.\n");
         unlink(lock);
+
         exit(-1);
     }
     
