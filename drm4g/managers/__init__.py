@@ -6,7 +6,7 @@ import os
 import subprocess
 import logging
 
-__version__  = '1.0'
+__version__  = '2.0.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -145,11 +145,10 @@ class Resource (object):
             queue.FreeNodes      = value['attr']["GlueCEStateFreeCPUs"]
             queue.MaxTime        = value['attr']["GlueCEPolicyMaxWallClockTime"]
             queue.MaxCpuTime     = value['attr']["GlueCEPolicyMaxCPUTime"]
-            queue.MaxRunningJobs = value['attr']["GlueCEPolicyMaxTotalJobs"]
+            queue.MaxJobsInQueue = value['attr']["GlueCEPolicyMaxTotalJobs"]
             queue.MaxRunningJobs = value['attr']["GlueCEPolicyMaxRunningJobs"]
             queue.Status         = value['attr']["GlueCEStateStatus"]
             queue.Priority       = value['attr']["GlueCEPolicyPriority"]
-            queue.MaxJobsWoutCpu = value['attr']["GlueCEStateWaitingJobs"]
             host_info.addQueue(queue)
             host_info.Nodes      = value['attr']["GlueCEInfoTotalCPUs"]
             host_info.LrmsName   = value['attr']["GlueCEUniqueID"].split('/')[1].rsplit('-',1)[0]
@@ -164,6 +163,7 @@ class Resource (object):
             host_info.Os         = result[0]['attr'][ "GlueHostOperatingSystemName" ]
             host_info.OsVersion  = result[0]['attr'][ "GlueHostOperatingSystemVersion" ]
             host_info.Arch       = result[0]['attr'][ "GlueHostArchitecturePlatformType" ]
+            host_info.CpuSmp     = result[0]['attr'][ "GlueHostArchitectureSMPSize" ]
         except Exception, err:
             logger.error("The result of '%s' is wrong: %s " % ( filt , str( result ) ) ) 
   
@@ -175,42 +175,23 @@ class Resource (object):
         """
         host_info       = HostInformation()
         host_info.Name  = host
-        host_info.Nodes = str( totalCores( self.features[ 'ncores' ] ) )
         host_info.Name, host_info.OsVersion, host_info.Arch, host_info.Os  = self.system_information()
         
-        q_features = [ ( q_elem.strip() , nc_elem.strip() ) for q_elem , nc_elem in zip( self.features[ 'queue' ].split( ',' ) , self.features[ 'ncores' ].split( ',' ) ) ]
-        for queue_name , ncores in q_features  :
-            queue              = Queue()
-            queue.Name         = queue_name
-            queue.Nodes        = ncores
-            queue.FreeNodes    = self._free_cores( host )
+        q_features = [ ( q_elem.strip() , jobr_elem.strip() , jobq_elem.strip() ) 
+                      for q_elem , jobr_elem , jobq_elem in zip( 
+                                                  self.features[ 'queue' ].split( ',' ) , 
+                                                  self.features[ 'max_jobs_running' ].split( ',' ) ,
+                                                  self.features[ 'max_jobs_in_queue' ].split( ',' )
+                                                  ) ]
+        for queue_name , max_jobs_running , max_jobs_in_queue in q_features  :
+            queue                = Queue()
+            queue.Name           = queue_name
+            queue.MaxRunningJobs = max_jobs_running 
+            queue.MaxJobsInQueue = max_jobs_in_queue
             host_info.addQueue( self.additional_queue_properties( queue ) )
         host_info.LrmsName = self.features[ 'lrms' ]
         host_info.LrmsType = self.features[ 'lrms' ]
         return host_info.info()
-    
-    def _free_cores(self , host ) :
-        """
-        It returns the free cores of each host
-        """
-        cmd = "gwhost $( gwhost -f | grep -B 1 %s | grep HOST_ID | awk -F = {'print $2'}) -x" % host 
-        command_proc = subprocess.Popen( cmd ,
-                shell  = True,
-                stdout = subprocess.PIPE,
-                stderr = subprocess.PIPE,
-                env    = os.environ)
-        stdout, stderr = command_proc.communicate()
-        if stderr: 
-            output = "Error executing `gwhost` command: %s" % ' '.join( stderr.split( '\n' ) ) 
-            logger.error( output )
-            return "0"
-        out_parser = xml.dom.minidom.parseString(stdout)
-        busy_cores = int(out_parser.getElementsByTagName('USED_SLOTS')[0].firstChild.data)
-        if busy_cores > totalCores( self.features[ 'ncores' ] ) :
-           return "0"
-        else:
-           free_cores = str( totalCores( self.features[ 'ncores' ] ) - busy_cores )
-           return free_cores
        
     def system_information(self):
         """
@@ -303,7 +284,7 @@ class Queue( object ) :
         self.MaxCpuTime     = "0"
         self.MaxCount       = "0"
         self.MaxRunningJobs = "0"
-        self.MaxJobsWoutCpu = "0"
+        self.MaxJobsInQueue = "0"
         self.Status         = "NULL"
         self.DispatchType   = "NULL"
         self.Priority       = "NULL"
@@ -318,7 +299,7 @@ class Queue( object ) :
             ' QUEUE_FREENODECOUNT[' + i + ']=' + self.FreeNodes + ' QUEUE_MAXTIME[' + i +']=' + self.MaxTime + \
             ' QUEUE_MAXCPUTIME[' + i + ']=' + self.MaxCpuTime + ' QUEUE_MAXCOUNT[' + i + ']=' + self.MaxCount + \
             ' QUEUE_MAXRUNNINGJOBS[' + i + ']=' + self.MaxRunningJobs + ' QUEUE_MAXJOBSINQUEUE[' + i + ']=' + \
-            self.MaxJobsWoutCpu + ' QUEUE_STATUS[' + i + ']="' + self.Status + '" QUEUE_DISPATCHTYPE[' + i + ']="'+ \
+            self.MaxJobsInQueue  + ' QUEUE_STATUS[' + i + ']="' + self.Status + '" QUEUE_DISPATCHTYPE[' + i + ']="'+ \
             self.DispatchType + '" QUEUE_PRIORITY[' + i +']="' + self.Priority + '" '
     
 class HostInformation( object ) :

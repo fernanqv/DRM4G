@@ -20,18 +20,18 @@ try:
     from scp                    import SCPClient
 
 except Exception, e:
-    print 'Caught exception: %s' % str(e)
-    sys.exit(-1)
+    exit( 'Caught exception: %s' % str(e) )
 
 import socket
 import re
 import logging
 import drm4g.communicators
+import drm4g.commands
 from drm4g.communicators    import ComException, logger
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT  
 from drm4g.utils.url        import urlparse
 
-__version__  = '1.0'
+__version__  = '2.0.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -48,51 +48,56 @@ class Communicator (drm4g.communicators.Communicator):
             if not self._trans or not self._trans.is_authenticated( ) :
                 logger.debug("Opening ssh connection ... ")
                 keys = None
-                if not self.private_key :
-                    logger.debug("Trying ssh-agent ... " )
-                    agent = Agent()
-                    keys  = agent.get_keys()
-                    if not keys :
-                        try:
-                            status_ssh_agent = agent._conn
-                        except Exception, err :
-                            logger.warning("Probably you are using paramiko version <= 1.7.7.2 : %s " % str( err ) )
-                            status_ssh_agent = agent.conn
-                        if not status_ssh_agent:
-                            output = "'ssh-agent' is not running"
+                logger.debug("Trying ssh-agent ... " )
+                drm4g_agent = drm4g.commands.Agent()
+                drm4g_agent.start()
+                drm4g_agent.update_agent_env()
+                # paramiko agent
+                agent = Agent()
+                keys  = agent.get_keys()
+                if not keys :
+                    logger.error( "Impossible to load '%s' key from the ssh-agent"  % self.private_key )
+                    try:
+                        status_ssh_agent = agent._conn
+                    except Exception, err :
+                        logger.warning("Probably you are using paramiko version <= 1.7.7.2 : %s " % str( err ) )
+                        status_ssh_agent = agent.conn
+                    if not status_ssh_agent:
+                        output = "'ssh-agent' is not running"
+                        logger.error( output )
+                        raise ComException( output )
+                    else:
+                        if agent.get_keys():
+                            output = "ssh-agent is running but none of the keys have been accepted" 
+                            "by remote frontend %s." % self.frontend
                             logger.error( output )
                             raise ComException( output )
                         else:
-                            if agent.get_keys():
-                                output = "ssh-agent is running but none of the keys have been accepted" 
-                                "by remote frontend %s." % self.frontend
-                                logger.error( output )
-                                raise ComException( output )
-                            else:
-                                output = "'ssh-agent' is running but without any keys"
-                                logger.error( output )
-                                raise ComException( output )
-                else:
-                    logger.debug("Trying '%s' key ... " % self.private_key )
-                    private_key_path = expanduser( self.private_key )
-                    if ( not exists( private_key_path ) ) and ( not 'PRIVATE KEY' in  self.private_key ):
-                        output = "'%s'key does not exist" % private_key_path
-                        logger.error( output )
-                        raise ComException( output )
-                    for pkey_class in (RSAKey, DSSKey):
-                        try :
-                            if 'PRIVATE KEY' in self.private_key :
-                                import StringIO
-                                key  = pkey_class.from_private_key( StringIO.StringIO ( self.private_key.strip( "'" ) ) )
-                            else : 
-                                key  = pkey_class.from_private_key_file( private_key_path )
-                            keys = (key,)
-                        except Exception :
-                            pass
-                    if not keys :
-                        output = "Impossible to load '%s' key "  % self.private_key
-                        logger.error( output )
-                        raise ComException( output )
+                            output = "'ssh-agent' is running but without any keys"
+                            logger.error( output )
+                            raise ComException( output )
+                """
+                logger.debug("Trying '%s' key ... " % self.private_key )
+                private_key_path = expanduser( self.private_key )
+                if ( not exists( private_key_path ) ) and ( not 'PRIVATE KEY' in  self.private_key ):
+                    output = "'%s'key does not exist" % private_key_path
+                    logger.error( output )
+                    raise ComException( output )
+                for pkey_class in (RSAKey, DSSKey):
+                    try :
+                        if 'PRIVATE KEY' in self.private_key :
+                            import StringIO
+                            key  = pkey_class.from_private_key( StringIO.StringIO ( self.private_key.strip( "'" ) ) )
+                        else : 
+                            key  = pkey_class.from_private_key_file( private_key_path )
+                        keys = (key,)
+                    except Exception :
+                        pass
+                if not keys :
+                    output = "Impossible to load '%s' key "  % self.private_key
+                    logger.error( output )
+                    raise ComException( output )
+                """
                 for key in keys:
                     try:
                         sock = socket.socket()

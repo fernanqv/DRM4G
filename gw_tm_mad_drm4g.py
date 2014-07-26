@@ -12,12 +12,9 @@ def main():
         GwTmMad().processLine()
     except exceptions.KeyboardInterrupt, e:
         sys.exit(-1)
-    except exceptions.SystemExit, e:
-        print e
-        sys.exit(0)
     except Exception, e:
-        print 'Caught exception: %s: %s' % (e.__class__, str(e))
         traceback.print_exc(file=sys.stdout)
+        exit( 'Caught exception: %s: %s' % (e.__class__, str(e)) )
 
 
 if __name__ == '__main__':
