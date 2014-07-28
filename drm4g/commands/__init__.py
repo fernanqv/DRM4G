@@ -308,20 +308,20 @@ class Proxy( object ):
         logger.debug( "Executing command ... " + cmd ) 
         out, err = self.communicator.execCommand( cmd )
         if not err :
-            message      = 'Insert your GRID pass: '
+            message      = 'Insert your Grid password: '
             grid_passwd  = getpass.getpass(message)
         
             message      = 'Insert MyProxy password: '
             proxy_passwd = getpass.getpass(message)
         
             if self.resource.has_key( 'myproxy_server' ) :
-                cmd = "MYPROXY_SERVER=%s myproxy-init -S --cred_lifetime %d --proxy_lifetime %d" % (
+                cmd = "MYPROXY_SERVER=%s myproxy-init -S --cred_lifetime %s --proxy_lifetime %s" % (
                                                                    self.resource[ 'myproxy_server' ] ,
                                                                    cred_lifetime ,
                                                                    proxy_lifetime
                                                                    )
             else :
-                cmd = "myproxy-init -S --cred_lifetime %d --proxy_lifetime %d" % (
+                cmd = "myproxy-init -S --cred_lifetime %s --proxy_lifetime %s" % (
                                                                                   cred_lifetime ,
                                                                                   proxy_lifetime
                                                                                   )
@@ -334,14 +334,14 @@ class Proxy( object ):
             raise Exception( err )
             
         if self.resource.has_key( 'myproxy_server' ) :
-            cmd = "X509_USER_PROXY=%s/%s MYPROXY_SERVER=%s myproxy-logon -S --proxy_lifetime %d" % (
+            cmd = "X509_USER_PROXY=%s/%s MYPROXY_SERVER=%s myproxy-logon -S --proxy_lifetime %s" % (
                                                                                  REMOTE_VOS_DIR ,
                                                                                    self.resource[ 'myproxy_server' ] ,
                                                                                    self.resource[ 'myproxy_server' ] ,
                                                                                    proxy_lifetime
                                                                                    ) 
         else :
-            cmd = "X509_USER_PROXY=%s/${MYPROXY_SERVER} myproxy-logon -S --proxy_lifetime %d" % ( 
+            cmd = "X509_USER_PROXY=%s/${MYPROXY_SERVER} myproxy-logon -S --proxy_lifetime %s" % ( 
                                                                                                  REMOTE_VOS_DIR ,
                                                                                                  proxy_lifetime
                                                                                                  )
@@ -353,9 +353,13 @@ class Proxy( object ):
             
     def check( self ):
         if self.resource.has_key( 'myproxy_server' ) :
-            cmd = "MYPROXY_SERVER=%s myproxy-info" % self.resource[ 'myproxy_server' ] 
+            cmd = "X509_USER_PROXY=%s/%s MYPROXY_SERVER=%s myproxy-info" % ( 
+                                                                         REMOTE_VOS_DIR ,
+                                                                         self.resource[ 'myproxy_server' ] ,
+                                                                         self.resource[ 'myproxy_server' ] 
+                                                                         )
         else :
-            cmd = "myproxy-info"
+            cmd = "X509_USER_PROXY=%s/${MYPROXY_SERVER} myproxy-info" % REMOTE_VOS_DIR
         logger.debug( "Executing command ... " + cmd ) 
         out, err = self.communicator.execCommand( cmd )
         logger.info( out )
@@ -364,9 +368,13 @@ class Proxy( object ):
     
     def destroy( self ):
         if self.resource.has_key( 'myproxy_server' ) :
-            cmd = "MYPROXY_SERVER=%s myproxy-destroy" %  self.resource[ 'myproxy_server' ]                          
+            cmd = "X509_USER_PROXY=%s/%s MYPROXY_SERVER=%s myproxy-destroy" % ( 
+                                                                         REMOTE_VOS_DIR ,
+                                                                         self.resource[ 'myproxy_server' ] ,
+                                                                         self.resource[ 'myproxy_server' ]
+                                                                         )
         else :
-            cmd = "myproxy-destroy" % REMOTE_VOS_DIR 
+            cmd = "X509_USER_PROXY=%s/${MYPROXY_SERVER} myproxy-destroy" % REMOTE_VOS_DIR
         logger.debug( "Executing command ... " + cmd )
         out , err = self.communicator.execCommand( cmd )
         logger.info( out )
