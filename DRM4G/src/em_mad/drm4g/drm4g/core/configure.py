@@ -88,19 +88,19 @@ class Configuration(object):
             if ( not 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 output = "'max_jobs_running' key is mandatory for '%s' resource" % resname
                 logger.error( output )
-                errors.append( output )           
-            if ( not 'max_jobs_in_queue' in reslist ) :
+                errors.append( output )
+            if ( not 'max_jobs_in_queue' in reslist and ( resdict[ 'lrms' ] != 'cream' ) ) :
                 self.resources[resname]['max_jobs_in_queue'] = resdict['max_jobs_running']
                 logger.debug( "'max_jobs_in_queue' will be the same as the 'max_jobs_running'" )
             if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 self.resources[resname]['queue'] = "default"
                 output = "'queue' key will be called 'default' for '%s' resource" % resname
                 logger.debug( output )
-            if resdict.get( 'max_jobs_in_queue' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
+            if  resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_in_queue' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
                 output = "The number of elements in 'max_jobs_in_queue' are different to the elements of 'queue'"
                 logger.error( output )
                 errors.append( output )
-            if resdict.get( 'max_jobs_running' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ):
+            if  resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_running' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
                 output = "The number of elements in 'max_jobs_running' are different to the elements of 'queue'"
                 logger.error( output )
                 errors.append( output ) 
