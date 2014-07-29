@@ -391,9 +391,10 @@ Usage:
     drm4g resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ]  [ --dbg ]
     drm4g daemon ( start | stop | status | clear ) [ --dbg ]
     drm4g host [ --id=<HID> ] [ --dbg ]
-    drm4g job submit <template>  [ --dbg ]
-    drm4g job status [job_id]  [ --dbg ]
-    drm4g job cancel <job_id> ... [ --dbg ]
+    drm4g job submit  <template>   [ --dbg ]
+    drm4g job status  [job_id]     [ --dbg ]
+    drm4g job cancel  <job_id> ... [ --dbg ]
+    drm4g job history <job_id> ... [ --dbg ]
 Options:
     -h --help
     --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168]
@@ -504,12 +505,13 @@ class ManagementUtility( cmd.Cmd ):
     @docopt_cmd
     def do_job(self, arg):
         """
-    Submit, get status and cancel jobs.
+    Submit, get status and history and cancel jobs.
     
     Usage: 
-        job submit <template> [--dbg] 
-        job status [job_id] [--dbg] 
-        job cancel <job_id> ... [--dbg] 
+        job submit  <template>   [--dbg] 
+        job status  [job_id]     [--dbg] 
+        job cancel  <job_id> ... [--dbg]
+        job history <job_id> ... [--dbg] 
 
     Options:
         --dbg    Debug mode.
@@ -528,6 +530,8 @@ class ManagementUtility( cmd.Cmd ):
                 cmd = '%s/gwps -o Jestxjh '  % ( DRM4G_BIN )
                 if arg['job_id'] :
                     cmd = cmd + arg['job_id'] 
+            elif arg['history']:
+                cmd = '%s/gwhistory  %s' % ( DRM4G_BIN , ' '.join( arg['job_id'] ) )
             else :
                 cmd = '%s/gwkill -9  %s' % ( DRM4G_BIN , ' '.join( arg['job_id'] ) )
             out , err = exec_cmd( cmd )
