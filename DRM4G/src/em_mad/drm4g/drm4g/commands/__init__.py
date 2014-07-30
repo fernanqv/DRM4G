@@ -391,10 +391,10 @@ Usage:
     drm4g resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ]  [ --dbg ]
     drm4g daemon ( start | stop | status | clear ) [ --dbg ]
     drm4g host [ --id=<HID> ] [ --dbg ]
-    drm4g job submit  <template>   [ --dbg ]
-    drm4g job status  [job_id]     [ --dbg ]
+    drm4g job submit  <template> [ --dbg ]
+    drm4g job status  [job_id] [ --dbg ]
     drm4g job cancel  <job_id> ... [ --dbg ]
-    drm4g job history <job_id> ... [ --dbg ]
+    drm4g job history <job_id> [ --dbg ]
 Options:
     -h --help
     --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168]
@@ -406,6 +406,7 @@ Options:
 class ManagementUtility( cmd.Cmd ):
 
     prompt = "drm4g > "
+    intro  = "Welcome to DRM4G interactive shell\n(type help to list the commands)"
     
     config = drm4g.core.configure.Configuration()
 
@@ -508,10 +509,10 @@ class ManagementUtility( cmd.Cmd ):
     Submit, get status and history and cancel jobs.
     
     Usage: 
-        job submit  <template>   [--dbg] 
-        job status  [job_id]     [--dbg] 
+        job submit  <template> [--dbg] 
+        job status  [job_id] [--dbg] 
         job cancel  <job_id> ... [--dbg]
-        job history <job_id> ... [--dbg] 
+        job history <job_id> [--dbg] 
 
     Options:
         --dbg    Debug mode.
@@ -569,8 +570,6 @@ class ManagementUtility( cmd.Cmd ):
                 agent.start()
                 daemon.clear()
         except Exception , err :
-            import traceback
-            traceback.print_exc(file=sys.stdout)
             logger.error( str( err ) )
     
     def do_help( self , arg ):
