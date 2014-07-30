@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 				deps[i] = -1;
 		}
 		else
-			deps[i] = -1;
+			deps[i] = -2;
 
         free(type_dep_str);
 		free(deps_str);    	
