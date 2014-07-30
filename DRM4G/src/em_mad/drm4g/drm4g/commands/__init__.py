@@ -392,14 +392,24 @@ Usage:
     drm4g daemon ( start | stop | status | clear ) [ --dbg ]
     drm4g host [ --id=<HID> ] [ --dbg ]
     drm4g job submit [ --dep <job_id> ... ] <template> [ --dbg ]
-    drm4g job status  [job_id] [ --dbg ]
-    drm4g job cancel  <job_id> ... [ --dbg ]
+    drm4g job status [ <job_id> ] [ --dbg ]
+    drm4g job cancel <job_id> ... [ --dbg ]
+    drm4g job stop <job_id> ... [ --dbg ]
+    drm4g job hold <job_id> ... [ --dbg ]
+    drm4g job release <job_id> ... [ --dbg ]    
+    drm4g job re-schedule <job_id> ... [ --dbg ] 
     drm4g job history <job_id> [ --dbg ]
+
+Arguments:
+    <job_id>                   Job identifier.
+    <template>                 Job template.
+
 Options:
     -h --help
     --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168]
     --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 12]
     --id=<HID>                 List all the information about the host.
+    --dep=<job_id> ...         Define the job dependency list of the job.
     --dbg                      Debug mode.
 """
 
@@ -510,12 +520,21 @@ class ManagementUtility( cmd.Cmd ):
     
     Usage: 
         job submit  [ --dep <job_id> ... ] <template> [--dbg] 
-        job status  [job_id] [--dbg] 
+        job status [ <job_id> ] [--dbg] 
         job cancel  <job_id> ... [--dbg]
-        job history <job_id> [--dbg] 
+        job stop <job_id> ... [ --dbg ]
+        job hold <job_id> ... [ --dbg ]
+        job release <job_id> ... [ --dbg ]    
+        job re-schedule <job_id> ... [ --dbg ] 
+        job history <job_id> [ --dbg ]
+   
+    Arguments:
+        <job_id>               Job identifier.
+        <template>             Job template.
 
     Options:
-        --dbg    Debug mode.
+        --dep=<job_id> ...     Define the job dependency list of the job.
+        --dbg                  Debug mode.
         """
         if arg[ '--dbg' ] :
             logger.setLevel(logging.DEBUG)
@@ -524,18 +543,26 @@ class ManagementUtility( cmd.Cmd ):
             if not daemon.is_alive() :
                raise Exception('DRM4G daemon is stopped.')
             resource = Resource( self.config )
-            resource.check_frontends( info=False ) 
+            resource.check_frontends( info=False )
             if arg['submit']:
                 dependencies = '-d "%s"' % ' '.join( arg['--dep'] ) if arg['--dep'] else ''
                 cmd = '%s/gwsubmit %s -v %s' % ( DRM4G_BIN , dependencies  , arg['<template>'] )
             elif arg['status']:
                 cmd = '%s/gwps -o Jestxjh '  % ( DRM4G_BIN )
-                if arg['job_id'] :
-                    cmd = cmd + arg['job_id'] 
+                if arg['<job_id>'] :
+                    cmd = cmd + arg['<job_id>'] 
             elif arg['history']:
-                cmd = '%s/gwhistory  %s' % ( DRM4G_BIN , ' '.join( arg['job_id'] ) )
+                cmd = '%s/gwhistory  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
+            elif arg['cancel']:
+                cmd = '%s/gwkill -9  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
+            elif arg['stop']: 
+                cmd = '%s/gwkill -t  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )  
+            elif arg['hold']: 
+                cmd = '%s/gwkill -o  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
+            elif arg['release']:
+                cmd = '%s/gwkill -l  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
             else :
-                cmd = '%s/gwkill -9  %s' % ( DRM4G_BIN , ' '.join( arg['job_id'] ) )
+                cmd = '%s/gwkill -s %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
             out , err = exec_cmd( cmd )
             logger.info( out )
             if err :
