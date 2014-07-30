@@ -391,7 +391,7 @@ Usage:
     drm4g resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ]  [ --dbg ]
     drm4g daemon ( start | stop | status | clear ) [ --dbg ]
     drm4g host [ --id=<HID> ] [ --dbg ]
-    drm4g job submit  <template> [ --dbg ]
+    drm4g job submit [ --dep <job_id> ... ] <template> [ --dbg ]
     drm4g job status  [job_id] [ --dbg ]
     drm4g job cancel  <job_id> ... [ --dbg ]
     drm4g job history <job_id> [ --dbg ]
@@ -509,7 +509,7 @@ class ManagementUtility( cmd.Cmd ):
     Submit, get status and history and cancel jobs.
     
     Usage: 
-        job submit  <template> [--dbg] 
+        job submit  [ --dep <job_id> ... ] <template> [--dbg] 
         job status  [job_id] [--dbg] 
         job cancel  <job_id> ... [--dbg]
         job history <job_id> [--dbg] 
@@ -526,7 +526,8 @@ class ManagementUtility( cmd.Cmd ):
             resource = Resource( self.config )
             resource.check_frontends( info=False ) 
             if arg['submit']:
-                cmd = '%s/gwsubmit -v %s' % ( DRM4G_BIN , arg['<template>'] )
+                dependencies = '-d "%s"' % ' '.join( arg['--dep'] ) if arg['--dep'] else ''
+                cmd = '%s/gwsubmit %s -v %s' % ( DRM4G_BIN , dependencies  , arg['<template>'] )
             elif arg['status']:
                 cmd = '%s/gwps -o Jestxjh '  % ( DRM4G_BIN )
                 if arg['job_id'] :
