@@ -2,7 +2,7 @@ import re
 import drm4g.managers 
 from string import Template
 
-__version__  = '2.0.0'
+__version__  = '2.1.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
