@@ -74,7 +74,7 @@ class GwImMad (object):
             communicators    = self._config.make_communicators()
             hosts = ""
             for resname in sorted( self._resources.keys() ) :
-                if self._config.resources[ resname ][ 'enable' ]  == 'False' : 
+                if  self._config.resources[ resname ][ 'enable' ].lower()  == 'false' : 
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
@@ -98,7 +98,7 @@ class GwImMad (object):
         try:
             info = ""
             for resname, resdict in self._resources.iteritems() :
-                if self._config.resources[ resname ][ 'enable' ] == 'False': 
+                if self._config.resources[ resname ][ 'enable' ].lower() == 'false': 
                     raise Exception( "Resource '%s' is not enable" % resname )
                 if HOST in resdict['Resource'].host_list :
                     info = resdict['Resource'].host_properties( HOST )
