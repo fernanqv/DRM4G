@@ -10,7 +10,7 @@ from drm4g.utils.dynamic   import ThreadPool
 from drm4g.core.configure  import Configuration
 from drm4g.utils.message   import Send
 
-__version__  = '2.1.0'
+__version__  = '2.1.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

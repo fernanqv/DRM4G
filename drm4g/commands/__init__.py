@@ -11,7 +11,7 @@ from drm4g                import REMOTE_VOS_DIR , DRM4G_CONFIG_FILE , DRM4G_BIN 
 from drm4g.utils.docopt   import docopt , DocoptExit
 from os.path              import expanduser , join , dirname , exists , basename
 
-__version__  = '2.1.0'
+__version__  = '2.1.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id: __init__.py 1931 2013-09-25 10:46:59Z carlos $"
 
@@ -294,13 +294,18 @@ class Resource( object ):
 class Proxy( object ):
     
     def __init__( self , config , name ):
-        self.config = config
-        self.config.load()
-        if not self.config.resources.has_key( name ) :
-            raise Exception( "'%s' is not a resource." % name )
+        self.config    = config
         self.resource  = self.config.resources[ name ]
         self.communicator = self.config.make_communicators()[ name ]
         self.communicator.connect()
+        if self.resource.has_key( 'myproxy_server' ) :
+            self.prefix = "X509_USER_PROXY=%s/%s MYPROXY_SERVER=%s " % (
+                                                                 REMOTE_VOS_DIR ,
+                                                                 self.resource[ 'myproxy_server' ] ,
+                                                                 self.resource[ 'myproxy_server' ]
+                                                                 )
+        else :
+            self.prefix = "X509_USER_PROXY=%s/${MYPROXY_SERVER} " % REMOTE_VOS_DIR
         
     def create( self , cred_lifetime , proxy_lifetime ):
         logger.debug("Creating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR )
@@ -332,19 +337,7 @@ class Proxy( object ):
                 logger.info( err )
         else :
             raise Exception( err )
-            
-        if self.resource.has_key( 'myproxy_server' ) :
-            cmd = "X509_USER_PROXY=%s/%s MYPROXY_SERVER=%s myproxy-logon -S --proxy_lifetime %s" % (
-                                                                                 REMOTE_VOS_DIR ,
-                                                                                   self.resource[ 'myproxy_server' ] ,
-                                                                                   self.resource[ 'myproxy_server' ] ,
-                                                                                   proxy_lifetime
-                                                                                   ) 
-        else :
-            cmd = "X509_USER_PROXY=%s/${MYPROXY_SERVER} myproxy-logon -S --proxy_lifetime %s" % ( 
-                                                                                                 REMOTE_VOS_DIR ,
-                                                                                                 proxy_lifetime
-                                                                                                 )
+        cmd = self.prefix + "myproxy-logon -S --proxy_lifetime %s" % ( proxy_lifetime )
         logger.debug( "Executing command ... " + cmd ) 
         out, err = self.communicator.execCommand( cmd , input = proxy_passwd )
         logger.info( out )
@@ -352,62 +345,64 @@ class Proxy( object ):
             logger.info( err ) 
             
     def check( self ):
-        if self.resource.has_key( 'myproxy_server' ) :
-            cmd = "X509_USER_PROXY=%s/%s MYPROXY_SERVER=%s myproxy-info" % ( 
-                                                                         REMOTE_VOS_DIR ,
-                                                                         self.resource[ 'myproxy_server' ] ,
-                                                                         self.resource[ 'myproxy_server' ] 
-                                                                         )
-        else :
-            cmd = "X509_USER_PROXY=%s/${MYPROXY_SERVER} myproxy-info" % REMOTE_VOS_DIR
+        cmd = self.prefix + "myproxy-info"
         logger.debug( "Executing command ... " + cmd ) 
         out, err = self.communicator.execCommand( cmd )
+        logger.info( "* Information about credentials stored on the myproxy-server:" )
         logger.info( out )
         if err :
-            logger.info( err )    
+            logger.info( err )   
+        cmd = self.prefix + "grid-proxy-info"
+        logger.debug( "Executing command ... " + cmd )
+        out, err = self.communicator.execCommand( cmd )
+        logger.info( "* Information about the proxy certificate:" )
+        logger.info( out )
+        if err :
+            logger.info( err ) 
     
     def destroy( self ):
-        if self.resource.has_key( 'myproxy_server' ) :
-            cmd = "X509_USER_PROXY=%s/%s MYPROXY_SERVER=%s myproxy-destroy" % ( 
-                                                                         REMOTE_VOS_DIR ,
-                                                                         self.resource[ 'myproxy_server' ] ,
-                                                                         self.resource[ 'myproxy_server' ]
-                                                                         )
-        else :
-            cmd = "X509_USER_PROXY=%s/${MYPROXY_SERVER} myproxy-destroy" % REMOTE_VOS_DIR
+        cmd = self.prefix + "myproxy-destroy" 
         logger.debug( "Executing command ... " + cmd )
         out , err = self.communicator.execCommand( cmd )
         logger.info( out )
         if err : 
             logger.info( err )
+        cmd = self.prefix + "grid-proxy-destroy"
+        logger.debug( "Executing command ... " + cmd )
+        out , err = self.communicator.execCommand( cmd )
+        logger.info( out )
+        if err :
+            logger.info( err )
 
 help_info = """
-DRM4G is a framework for Distributed Computing Infrastructures (DCI). For additional information, 
-see http://www.meteo.unican.es/trac/wiki/DRM4G .
+DRM4G is an open platform, which is based on GridWay Metascheduler, to define, submit, and manage computational jobs. 
+For additional information, see http://www.meteo.unican.es/trac/wiki/DRM4G .
 
 Usage: 
-    drm4g resource [ list | edit | check | features | check-frontends ] [ --dbg ] 
-    drm4g resource <name> ssh-key [ list | add | delete | copy ] [ --dbg ]
+    drm4g resource [ list | edit | check | info | check-frontends ] [ --dbg ] 
+    drm4g resource <name> ssh-key [ list | add | delete | copy [ --public-key=<file> ] ] [ --dbg ]
     drm4g resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ]  [ --dbg ]
     drm4g daemon ( start | stop | status | clear ) [ --dbg ]
-    drm4g host [ --id=<HID> ] [ --dbg ]
+    drm4g host [ list ] [ --id=<HID> ] [ --dbg ]
     drm4g job submit [ --dep <job_id> ... ] <template> [ --dbg ]
     drm4g job status [ <job_id> ] [ --dbg ]
     drm4g job cancel <job_id> ... [ --dbg ]
-    drm4g job stop <job_id> ... [ --dbg ]
     drm4g job hold <job_id> ... [ --dbg ]
     drm4g job release <job_id> ... [ --dbg ]    
     drm4g job re-schedule <job_id> ... [ --dbg ] 
     drm4g job history <job_id> [ --dbg ]
+    drm4g help <command>
 
 Arguments:
     <job_id>                   Job identifier.
     <template>                 Job template.
+    <command>                  DRM4G command.
 
 Options:
     -h --help
     --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168]
-    --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 12]
+    --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 168]
+    --public-key=<file>        Public key file.
     --id=<HID>                 List all the information about the host.
     --dep=<job_id> ...         Define the job dependency list of the job.
     --dbg                      Debug mode.
@@ -423,16 +418,17 @@ class ManagementUtility( cmd.Cmd ):
     @docopt_cmd
     def do_resource(self, arg):
         """
-    Manage DCIs on DRM4G.
+    Manage resources on DRM4G.
     
     Usage: 
-        resource [ list | edit | check | features | check-frontends ] [--dbg]
-        resource <name> ssh-key [ list | add | delete | copy ] [--dbg]
+        resource [ list | edit | check | info | check-frontends ] [--dbg]
+        resource <name> ssh-key [ list | add | delete | copy [ --public-key=<file> ] ] [--dbg]
         resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ] [--dbg]  
 
     Options:
         --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168]
-        --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 12]
+        --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 168]
+        --public-key=<file>        Public key file.
         --dbg                      Debug mode.
         """
         if arg[ '--dbg' ] :
@@ -445,15 +441,19 @@ class ManagementUtility( cmd.Cmd ):
                 elif arg['check'] :
                     resource.check()
                     logger.info( "The check has passed with flying colors" )
-                elif arg['features'] :
+                elif arg['info'] :
                     resource.features() 
                 elif arg['check-frontends'] :
                     resource.check_frontends()
                 else :
                     resource.list()
-            else :        
+            else :  
+                self.config.load()
+                if not self.config.resources.has_key( arg['<name>'] ):
+                    raise Exception( "'%s' does not a resource." % ( arg['<name>'] ) )
                 if arg['ssh-key']:
-                    self.config.load()
+                    if not self.config.resources.get( arg['<name>'] ).has_key( 'private_key' ):
+                        raise Exception( "'%s' does not have a 'private_key' value." % ( arg['<name>'] ) )
                     identity_file = self.config.resources.get( arg['<name>'] )[ 'private_key' ]
                     if not exists( expanduser( identity_file ) ) :
                         raise Exception( "'%s' does not exist." % ( identity_file ) )
@@ -468,6 +468,7 @@ class ManagementUtility( cmd.Cmd ):
                     elif arg['delete']:
                         agent.delete_key(identity_file)
                     elif arg['copy']:
+                        identity_file = arg['--public-key'] if arg['--public-key'] else identity_file
                         agent.copy_key( identity_file , self.config.resources.get( arg['<name>'] )[ 'username' ] ,
                                         self.config.resources.get( arg['<name>'] )[ 'frontend' ] )
                     else:
@@ -491,11 +492,23 @@ class ManagementUtility( cmd.Cmd ):
     Print information about the hosts available on DRM4G.
      
     Usage: 
-        host [ --id=<HID> ] [--dbg]
+        host [ list ] [ --id=<HID> ] [--dbg]
     
     Options:
         --id=<HID>    List all the information about the host.
         --dbg         Debug mode.        
+ 
+    Host field information:
+        HID 	      Host identification.
+        ARCH 	      Architecture.
+        JOBS(R/T)     Number of jobs: R = running, T = total.
+        LRMS 	      Local Resource Management System.
+        HOSTNAME      Host name.
+        QUEUENAME     Queue name.
+        WALLT 	      Queue wall time.
+        CPUT 	      Queue cpu time.
+        MAXR          Max. running jobs.
+        MAXQ 	      Max. queued jobs. 
         """
         if arg[ '--dbg' ] :
             logger.setLevel(logging.DEBUG)
@@ -522,7 +535,6 @@ class ManagementUtility( cmd.Cmd ):
         job submit  [ --dep <job_id> ... ] <template> [--dbg] 
         job status [ <job_id> ] [--dbg] 
         job cancel  <job_id> ... [--dbg]
-        job stop <job_id> ... [ --dbg ]
         job hold <job_id> ... [ --dbg ]
         job release <job_id> ... [ --dbg ]    
         job re-schedule <job_id> ... [ --dbg ] 
@@ -535,6 +547,25 @@ class ManagementUtility( cmd.Cmd ):
     Options:
         --dep=<job_id> ...     Define the job dependency list of the job.
         --dbg                  Debug mode.
+    
+    Job field information:
+        JID 	               Job identification.
+        DM 	                   Dispatch Manager state, one of: pend, hold, prol, prew, wrap, epil, canl, stop, migr, done, fail.
+        EM 	                   Execution Manager state: pend, susp, actv, fail, done.
+        START 	               The time the job entered the system.
+        END 	               The time the job reached a final state (fail or done).
+        EXEC 	               Total execution time, includes suspension time in the remote queue system.
+        XFER 	               Total file transfer time, includes stage-in and stage-out phases.
+        EXIT 	               Job exit code.
+        TEMPLATE               Filename of the job template used for this job.
+        HOST 	               Hostname where the job is being executed.
+        HID 	               Host identification.
+        PROLOG 	               Total prolog (file stage-in phase) time.
+        WRAPPER                Total wrapper (execution phase) time.
+        EPILOG 	               Total epilog (file stage-out esphase) time.
+        MIGR 	               Total migration time.
+        REASON 	               The reason why the job left this host.
+        QUEUE 	               Queue name. 
         """
         if arg[ '--dbg' ] :
             logger.setLevel(logging.DEBUG)
@@ -550,13 +581,11 @@ class ManagementUtility( cmd.Cmd ):
             elif arg['status']:
                 cmd = '%s/gwps -o Jestxjh '  % ( DRM4G_BIN )
                 if arg['<job_id>'] :
-                    cmd = cmd + arg['<job_id>'] 
+                    cmd = cmd + arg['<job_id>'][0] 
             elif arg['history']:
                 cmd = '%s/gwhistory  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
             elif arg['cancel']:
-                cmd = '%s/gwkill -9  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
-            elif arg['stop']: 
-                cmd = '%s/gwkill -t  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )  
+                cmd = '%s/gwkill -9  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )  
             elif arg['hold']: 
                 cmd = '%s/gwkill -o  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
             elif arg['release']:
@@ -573,7 +602,7 @@ class ManagementUtility( cmd.Cmd ):
     @docopt_cmd
     def do_daemon(self, arg):
         """
-    Manage DRM4G daemon. The clear command delete all the jobs available in DRM4G. 
+    Manage DRM4G daemon. Keep in mind that the clear command deletes all the jobs available in DRM4G. 
     
     Usage: 
         daemon ( start | stop | status | clear ) [ --dbg ] 
@@ -599,20 +628,15 @@ class ManagementUtility( cmd.Cmd ):
                 daemon.clear()
         except Exception , err :
             logger.error( str( err ) )
-    
-    def do_help( self , arg ):
-        logger.info( help_info )
         
     def default( self , arg ):    
         self.do_help( arg )
 
-    def do_quit (self , arg ):
+    def do_exit (self , arg ):
         """
         Quit the console.
         """
         sys.exit()
-        
-    do_exit = do_quit
 
 def execute_from_command_line( argv ):
     """
