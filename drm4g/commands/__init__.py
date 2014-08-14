@@ -450,7 +450,7 @@ class ManagementUtility( cmd.Cmd ):
             else :  
                 self.config.load()
                 if not self.config.resources.has_key( arg['<name>'] ):
-                    raise Exception( "'%s' does not a resource." % ( arg['<name>'] ) )
+                    raise Exception( "'%s' is not a configured resource." % ( arg['<name>'] ) )
                 if arg['ssh-key']:
                     if not self.config.resources.get( arg['<name>'] ).has_key( 'private_key' ):
                         raise Exception( "'%s' does not have a 'private_key' value." % ( arg['<name>'] ) )
