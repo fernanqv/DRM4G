@@ -6,7 +6,7 @@ import os
 import subprocess
 import logging
 
-__version__  = '2.1.0'
+__version__  = '2.1.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

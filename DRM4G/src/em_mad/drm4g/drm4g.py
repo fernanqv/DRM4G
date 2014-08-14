@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-__version__  = '2.1.0'
+__version__  = '2.1.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

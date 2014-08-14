@@ -6,7 +6,7 @@ import ConfigParser
 from drm4g.utils.importlib import import_module
 from drm4g                 import DRM4G_CONFIG_FILE, COMMUNICATORS, RESOURCE_MANAGERS
 
-__version__  = '2.1.0'
+__version__  = '2.1.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
