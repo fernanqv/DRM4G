@@ -4,8 +4,8 @@ import xml.dom.minidom
 import re
 import time
 
-__version__ = '0.1'
-__author__  = 'Carlos Blanco'
+__version__  = '2.1.1'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 # The programs needed by these utilities. If they are not in a location
