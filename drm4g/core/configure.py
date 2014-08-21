@@ -27,7 +27,7 @@ class Configuration(object):
     def __init__(self):
         self.resources  = dict()
         if not os.path.exists( DRM4G_CONFIG_FILE ):
-            assert DRM4G_CONFIG_FILE, "drm4g.conf does not exist, please provide one"
+            assert DRM4G_CONFIG_FILE, "resources.conf does not exist, please provide one"
         self.init_time = os.stat( DRM4G_CONFIG_FILE ).st_mtime
         
     def check_update(self):
@@ -103,7 +103,11 @@ class Configuration(object):
             if  resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_running' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
                 output = "The number of elements in 'max_jobs_running' are different to the elements of 'queue'"
                 logger.error( output )
-                errors.append( output ) 
+                errors.append( output )
+            if  resdict[ 'lrms' ] != 'cream' and ( 'host_filter' in reslist ) :
+                output = "'host_filter' key is only available for 'cream' lrms"
+                logger.error( output )
+                errors.append( output )
             if not COMMUNICATORS.has_key( resdict[ 'communicator' ] ) :
                 output = "'%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
                 logger.error( output )
@@ -125,8 +129,6 @@ class Configuration(object):
                 output = "'%s' does not exist '%s' resource" % ( private_key , resname )
                 logger.error( output )
                 errors.append( output )
-            if not errors:
-                logger.debug( "'%s' passed the check with flying colors" % resname )
         return errors
                 
     def make_communicators(self):
