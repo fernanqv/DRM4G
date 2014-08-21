@@ -35,10 +35,10 @@ class Resource (object):
     """
    
     def __init__(self):
-        self.name          = None
-        self.features      = dict()
-        self.Communicator  = None
-        self.host_list     = []
+        self.name           = None
+        self.features       = dict()
+        self.Communicator   = None
+        self.host_list      = []
     
     def ldapsearch( self , filt = '' , attr = '*', bdii = 'lcg-bdii.cern.ch:2170', base = 'Mds-Vo-name=local,o=grid' ) :
         """ 
@@ -114,11 +114,18 @@ class Resource (object):
         """
         It will return a list with the sites available in the VO.
         """
-        filt   = '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM))' % ( self.features[ 'vo' ] )
-        attr   = 'GlueCEHostingCluster'
-        bdii   = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )
-        result = self.ldapsearch( filt , attr , bdii )
-        hosts  = []
+        if self.features.has_key( 'host_filter' ) :
+            ce_filter = ''.join( [ '(GlueCEHostingCluster=%s)' % host.strip() for host in self.features[ 'host_filter' ].split( ',' ) ] ) 
+        else :
+            ce_filter = ''
+        filt      = '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM)%s)' % ( 
+                                                                                                                      self.features[ 'vo' ] ,
+                                                                                                                      ce_filter 
+                                                                                                                      )
+        attr      = 'GlueCEHostingCluster'
+        bdii      = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )
+        result    = self.ldapsearch( filt , attr , bdii )
+        hosts     = []
         for value in result :
             host = "%s_%s" % ( self.name , value['attr'][attr] )
             hosts.append(host)
