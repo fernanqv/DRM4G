@@ -61,8 +61,8 @@ class Job (drm4g.managers.Job):
     default_output_files = [
                             'stdout.execution', 
                             'stderr.execution', 
-                            'stdout',
-                            'stderr'
+                            'stdout.wrapper',
+                            'stderr.wrapper'
                             ]
     #cream job status <--> GridWay job status
     cream_states = {
@@ -81,15 +81,19 @@ class Job (drm4g.managers.Job):
     def _renew_proxy(self):
         output = "The proxy 'x509up.%s' has probably expired" %  self.resfeatures[ 'vo' ]  
         logger.debug( output )
-        X509_USER_PROXY = "X509_USER_PROXY=%s/proxy" % REMOTE_VOS_DIR
+        if self.resfeatures.has_key( 'myproxy_server' ) :
+            LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s" % join ( REMOTE_VOS_DIR , self.resfeatures[ 'myproxy_server' ] ) 
+        else :
+            LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s/${MYPROXY_SERVER}" % ( REMOTE_VOS_DIR )
         cmd = "%s voms-proxy-init -ignorewarn -timeout 30 -valid 24:00 -q -voms %s -noregen -out %s" % (
-                                                                                                        X509_USER_PROXY ,
+                                                                                                        LOCAL_X509_USER_PROXY ,
                                                                                                         self.resfeatures[ 'vo' ] ,
                                                                                                         join( REMOTE_VOS_DIR , 'x509up.%s ' ) % self.resfeatures[ 'vo' ] 
                                                                                                         )
+        logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
         if err :
-            output = "Error renewing the proxy: %s" % err
+            output = "Error renewing the proxy(%s): %s" % (cmd , err )
             logger.error( output )
             raise JobException( output )
 
@@ -177,7 +181,8 @@ class Job (drm4g.managers.Job):
         executable = basename( parameters['executable'] ) 
         stdout     = basename( parameters['stdout'] ) 
         stderr     = basename( parameters['stderr'] ) 
-        
+        count      = parameters['count'] 
+  
         input_sandbox, output_sandbox = sandbox_files( self.resfeatures[ 'env_file' ] )
         
         if input_sandbox :
@@ -199,39 +204,39 @@ class Job (drm4g.managers.Job):
             if requirements: 
                 requirements += ' && '
             requirements += ' (other.GlueHostMainMemoryRAMSize <= %s)' % parameters['maxMemory'] 
-        Requirements = 'Requirements=%s;' % (requirements) 
+        Requirements = 'Requirements=%s;' % (requirements) if requirements else ''
         
         env = ','.join(['"%s=%s"' %(k, v) for k, v in parameters['environment'].items()])
         
         return """
-        [
-        JobType = "Normal";
-        Executable = "%(executable)s";
-        StdOutput = "%(stdout)s";
-        StdError = "%(stderr)s"; 
-        CpuNumber = %(count)s;
-        OutputSandboxBaseDestURI = "gsiftp://localhost";
-        InputSandbox = { "%(dir_temp)s/job.env", "%(dir_temp)s/%(executable)s"  %(input_files)s };
-        OutputSandbox = { %(output_files)s };
-        Environment = { %(env)s };
-        %(Requirements)s
-        ]
-        """ % {
-               'executable'   : executable,
-               'stdout'       : stdout,
-               'stderr'       : stderr,
-               'dir_temp'     : dir_temp,
-               'input_files'  : input_files,
-               'output_files' : output_files,
-               'Requirements' : Requirements,
-               'env'          : env,
-               }
+[
+JobType = "Normal";
+Executable = "%(executable)s";
+StdOutput = "%(stdout)s";
+StdError = "%(stderr)s"; 
+CpuNumber = %(count)s;
+OutputSandboxBaseDestURI = "gsiftp://localhost";
+InputSandbox = { "%(dir_temp)s/job.env", "%(dir_temp)s/%(executable)s"  %(input_files)s };
+OutputSandbox = { %(output_files)s };
+Environment = { %(env)s };
+%(Requirements)s
+]""" % {
+        'executable'   : executable,
+        'stdout'       : stdout,
+        'stderr'       : stderr,
+        'dir_temp'     : dir_temp,
+        'count'        : count,
+        'input_files'  : input_files,
+        'output_files' : output_files,
+        'Requirements' : Requirements,
+        'env'          : env,
+        }
     
     def _getOutputURL( self, status_output ):
         """ 
         Resolve the URL for the output files
         """
-        match = re_status.search( status_output )
+        match = re_obs_url.search( status_output )
         if match :
             url = match.group( 1 )
             return url
@@ -253,6 +258,8 @@ class Job (drm4g.managers.Job):
             logger.debug( "Coping file '%s' : %s" % ( file , cmd ) )
             out, err = self.Communicator.execCommand( cmd )
             if 'error' in err :
-                logger.error( "Error coping file '%s' : %s" % ( file , err )  )
+                output = "Error coping file '%s' : %s" % ( file , err )
+                logger.error( output )
+                raise JobException( output )
             
  
