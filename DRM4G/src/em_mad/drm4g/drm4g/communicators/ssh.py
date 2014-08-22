@@ -64,25 +64,21 @@ class Communicator (drm4g.communicators.Communicator):
                         status_ssh_agent = agent.conn
                     if not status_ssh_agent:
                         output = "'ssh-agent' is not running"
-                        logger.error( output )
-                        raise ComException( output )
+                        raise ComException( output ) 
                     else:
                         if agent.get_keys():
                             output = "ssh-agent is running but none of the keys have been accepted" 
                             "by remote frontend %s." % self.frontend
-                            logger.error( output )
                             raise ComException( output )
                         else:
                             output = "'ssh-agent' is running but without any keys"
-                            logger.error( output )
-                            raise ComException( output )
+                            raise ComException( output  )
                 """
                 logger.debug("Trying '%s' key ... " % self.private_key )
                 private_key_path = expanduser( self.private_key )
                 if ( not exists( private_key_path ) ) and ( not 'PRIVATE KEY' in  self.private_key ):
                     output = "'%s'key does not exist" % private_key_path
-                    logger.error( output )
-                    raise ComException( output )
+                    raise ComException( output ) 
                 for pkey_class in (RSAKey, DSSKey):
                     try :
                         if 'PRIVATE KEY' in self.private_key :
@@ -96,15 +92,16 @@ class Communicator (drm4g.communicators.Communicator):
                 if not keys :
                     output = "Impossible to load '%s' key "  % self.private_key
                     logger.error( output )
-                    raise ComException( output )
+                    raise ComException( ) 
                 """
                 for key in keys:
                     try:
                         sock = socket.socket()
                         try:
                             sock.settimeout( SSH_CONNECT_TIMEOUT )
-                        except:
-                            logger.error("")
+                        except :
+                            output = "Timeout trying to connect to '%s'" % self.frontend 
+                            raise ComException( output )
                         logger.debug( "Connecting to '%s' as user '%s' port  '%s' ..." 
                                            % ( self.frontend , self.username, self.port ) )
                         if ':' in self.frontend :
@@ -116,15 +113,13 @@ class Communicator (drm4g.communicators.Communicator):
                             break
                     except socket.gaierror:
                         output = "Could not resolve hostname '%s' " % self.frontend
-                        logger.error( output )
-                        raise ComException( output )                        
+                        raise ComException( output )
                     except Exception,  err :
                         logger.warning( "Error connecting '%s': %s" % ( self.frontend , str ( err ) ) ) 
             if not self._trans :
                 output = "Authentication failed to '%s'. Try to execute `ssh -vvv -p %d %s@%s` and see the response." % ( self.frontend , self.port, self.username, self.frontend )
-                logger.error( output )
-                raise ComException( output )
-        
+                raise ComException( output  )
+       
     def execCommand(self , command , input = None ):
         self.connect()
         with self._lock :
