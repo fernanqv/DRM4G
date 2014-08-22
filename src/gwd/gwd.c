@@ -219,11 +219,13 @@ void gw_kill(char *pid_file)
         else if (errno == ESRCH)
         {
             fprintf(stderr,"WARNING: GridWay daemon is already stopped\n");
+            unlink(lock);
             exit(-1);
         }
         else 
         {
             fprintf(stderr,"ERROR: killing GridWay daemon, pid (%d)\n",pid);
+            unlink(lock);
             exit(-1);    
         }                  
         
@@ -231,6 +233,7 @@ void gw_kill(char *pid_file)
     else
     {
         fprintf(stderr,"WARNING: GridWay daemon is already stopped\n");
+        unlink(lock);
         exit(-1);
     }
 }
@@ -597,10 +600,10 @@ int main(int argc, char **argv)
         switch(errno)
         {
         case EEXIST:
-            fprintf(stderr,"Error! Lock file %s exists.\n",lock);
+            fprintf(stderr, "Error! Lock file %s exists.\n",lock);
             break;
         case EACCES:
-	    fprintf(stderr, "Error! Can not access %s, check permissions.\n", lock);
+	        fprintf(stderr, "Error! Can not access %s, check permissions.\n", lock);
             break;
         default:
             fprintf(stderr, "Error! Can not access %s\n", lock);
