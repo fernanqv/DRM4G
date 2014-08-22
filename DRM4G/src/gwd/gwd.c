@@ -197,7 +197,6 @@ void gw_status(char *pid_file)
             printf("stopped\n");
         }
     }
-    free(pid_file);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -215,19 +214,16 @@ void gw_kill(char *pid_file)
         if (rc == 0)
         {
             unlink(lock);
-            free(pid_file);
             exit(0);
         }	
         else if (errno == ESRCH)
-	{
+        {
             fprintf(stderr,"WARNING: GridWay daemon is already stopped\n");
-            free(pid_file);
-	    exit(-1);
+            exit(-1);
         }
         else 
         {
             fprintf(stderr,"ERROR: killing GridWay daemon, pid (%d)\n",pid);
-            free(pid_file);
             exit(-1);    
         }                  
         
@@ -235,7 +231,6 @@ void gw_kill(char *pid_file)
     else
     {
         fprintf(stderr,"WARNING: GridWay daemon is already stopped\n");
-        free(pid_file);
         exit(-1);
     }
 }
