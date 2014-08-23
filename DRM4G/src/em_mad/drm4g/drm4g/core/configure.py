@@ -2,9 +2,13 @@ import os
 import os.path
 import sys
 import logging
-import ConfigParser 
 from drm4g.utils.importlib import import_module
 from drm4g                 import DRM4G_CONFIG_FILE, COMMUNICATORS, RESOURCE_MANAGERS
+
+try :
+    import configparser
+except ImportError :
+    import ConfigParser as configparser
 
 __version__  = '2.1.1'
 __author__   = 'Carlos Blanco'
@@ -48,7 +52,7 @@ class Configuration(object):
         try: 
             try:
                 file   = open(DRM4G_CONFIG_FILE, 'r')
-                parser = ConfigParser.RawConfigParser()
+                parser = configparser.RawConfigParser()
                 try:
                     parser.readfp( file , DRM4G_CONFIG_FILE )
                 except Exception, err:
