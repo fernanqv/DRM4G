@@ -411,8 +411,12 @@ Options:
 class ManagementUtility( cmd.Cmd ):
 
     prompt = "drm4g > "
-    intro  = "Welcome to DRM4G interactive shell\n(type help to list the commands)"
-    
+    intro  = """
+Welcome to DRM4G interactive shell.
+
+Type:  'help' for help with commands
+       'exit' to quit
+"""
     config = drm4g.core.configure.Configuration()
 
     @docopt_cmd
