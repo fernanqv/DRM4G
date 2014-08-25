@@ -382,7 +382,7 @@ Usage:
     drm4g resource [ list | edit | check | info | check-frontends ] [ --dbg ] 
     drm4g resource <name> ssh-key [ list | add | delete | copy [ --public-key=<file> ] ] [ --dbg ]
     drm4g resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ]  [ --dbg ]
-    drm4g daemon ( start | stop | status | clear ) [ --dbg ]
+    drm4g daemon ( start | stop | status | restart | clear ) [ --dbg ]
     drm4g host [ list ] [ --id=<HID> ] [ --dbg ]
     drm4g job submit [ --dep <job_id> ... ] <template> [ --dbg ]
     drm4g job status [ <job_id> ] [ --dbg ]
@@ -609,7 +609,7 @@ Type:  'help' for help with commands
     Manage DRM4G daemon. Keep in mind that the clear command deletes all the jobs available in DRM4G. 
     
     Usage: 
-        daemon ( start | stop | status | clear ) [ --dbg ] 
+        daemon ( start | stop | status | restart | clear ) [ --dbg ] 
    
     Options:
         --dbg    Debug mode.
@@ -627,6 +627,9 @@ Type:  'help' for help with commands
                 daemon.stop()
             elif arg[ 'status' ] :
                 daemon.status()
+            elif arg[ 'restart' ] :
+                daemon.stop()
+                daemon.start()
             else :
                 agent.start()
                 daemon.clear()
