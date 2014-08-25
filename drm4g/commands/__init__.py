@@ -390,7 +390,7 @@ Usage:
     drm4g job hold <job_id> ... [ --dbg ]
     drm4g job release <job_id> ... [ --dbg ]    
     drm4g job re-schedule <job_id> ... [ --dbg ] 
-    drm4g job history <job_id> [ --dbg ]
+    drm4g job get-history <job_id> [ --dbg ]
     drm4g help <command>
 
 Arguments:
@@ -542,7 +542,7 @@ Type:  'help' for help with commands
         job hold <job_id> ... [ --dbg ]
         job release <job_id> ... [ --dbg ]    
         job re-schedule <job_id> ... [ --dbg ] 
-        job history <job_id> [ --dbg ]
+        job get-history <job_id> [ --dbg ]
    
     Arguments:
         <job_id>               Job identifier.
@@ -586,7 +586,7 @@ Type:  'help' for help with commands
                 cmd = '%s/gwps -o Jestxjh '  % ( DRM4G_BIN )
                 if arg['<job_id>'] :
                     cmd = cmd + arg['<job_id>'][0] 
-            elif arg['history']:
+            elif arg['get-history']:
                 cmd = '%s/gwhistory  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
             elif arg['cancel']:
                 cmd = '%s/gwkill -9  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )  
