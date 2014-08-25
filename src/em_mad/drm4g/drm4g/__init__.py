@@ -23,7 +23,7 @@ DRM4G_BIN            = join( DRM4G_DEPLOYMENT_DIR , 'bin'  )
 DRM4G_CONFIG_FILE    = join( DRM4G_DIR , 'etc' , 'resources.conf' )
 DRM4G_LOGGER         = join( DRM4G_DIR , 'etc' , 'logger.conf')
 
-logging.basicConfig( format='%(message)s', level = logging.INFO )
+logging.basicConfig( format='%(message)s', level = logging.INFO , stream = sys.stdout )
 logger = logging.getLogger(__name__) 
 if exists( DRM4G_DIR ) is False  :
     logger.info( "Creating a DRM4G local configuration in '%s'" %  DRM4G_DIR )
