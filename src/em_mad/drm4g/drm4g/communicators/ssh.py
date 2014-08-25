@@ -10,8 +10,8 @@ try:
         crypto_package = 'Crypto_i686'
     else:
         crypto_package = 'Crypto_x86_64'
-    sys.path.append( join( cryptos_path , crypto_package ) )
-    sys.path.append( join( GW_LOCATION , 'utils' ) )         
+    sys.path.insert( 0, join( cryptos_path , crypto_package ) )
+    sys.path.insert( 0, join( GW_LOCATION , 'utils' ) )         
 
     from paramiko.transport     import Transport
     from paramiko.agent         import Agent
