@@ -215,11 +215,7 @@ class GwTmMad (object):
                     self.logger.error ( ' '.join( errors ) )
                     raise Exception ( ' '.join( errors ) )
             for resname, resdict in self._configure.resources.iteritems() :
-                if '_' in host :
-                    _resname , _ = host.split( '_' )
-                    if resname != _resname :
-                        continue
-                elif resname != host :
+                if resname != host :
                     continue
                 if not self._communicator.has_key( resname ): 
                     self._communicator[ resname ] = self._configure.make_communicators()[resname]
