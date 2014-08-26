@@ -200,8 +200,10 @@ class Daemon( object ):
             logger.debug( "Starting gwd .... " )
             out , err = exec_cmd( join( DRM4G_BIN , 'gwd' ) )
             if err :
-                logger.info( err ) 
-            else :
+                logger.info( err )
+            if out :
+                logger.info( out ) 
+            if not err and not out :
                 logger.info( "OK" )
         else :
             logger.info( "WARNING: DRM4G is already running." )
@@ -212,7 +214,9 @@ class Daemon( object ):
         out , err = exec_cmd( "%s -k" % join( DRM4G_BIN , "gwd" ) )
         if err :
             logger.info( err )
-        else :
+        if out :
+            logger.info( out )
+        if not err and not out :
             logger.info( "OK" )
             
     def clear( self ):
@@ -224,8 +228,10 @@ class Daemon( object ):
             out , err = exec_cmd( cmd )
             logger.debug( out ) 
             if err :
-                logger.info( err ) 
-            else :
+                logger.info( err )
+            if out :
+                logger.info( out )
+            if not err and not out :
                 logger.info( "OK" )
         else :
             self.start()
@@ -235,20 +241,18 @@ class Resource( object ):
     def __init__( self , config ):
         self.config = config
         
-    def check_frontends( self , info=True ) :
+    def check_frontends( self ) :
         """
         Check if the frontend of a given resource is reachable.
         """
         self.check( )
         communicators = self.config.make_communicators()
         for resname in sorted( self.config.resources.keys() ) :
-            if info :
-                logger.info( "Resource '%s' :" % ( resname ) )
+            logger.debug( "Resource '%s' :" % ( resname ) )
             communicator = communicators.get( resname )
             try :
                 communicator.connect()
-                if info :
-                    logger.info( "--> The front-end '%s' is accessible\n" % communicator.frontend )
+                logger.debug( "--> The front-end '%s' is accessible\n" % communicator.frontend )
             except Exception , err :
                 logger.error( "--> The front-end '%s' is not accessible\n" % communicator.frontend )
                             
@@ -256,7 +260,9 @@ class Resource( object ):
         """
         Edit resources file.
         """
+        logger.debug( "Editing '%s' file" % DRM4G_CONFIG_FILE )
         os.system( "%s %s" % ( os.environ.get('EDITOR', 'vi') , DRM4G_CONFIG_FILE ) )
+        self.check( )
 
     def list( self ) :
         """
@@ -266,7 +272,7 @@ class Resource( object ):
         logger.info( "\tName                          State" )
         logger.info( "---------------------------------------------" )
         for resname, resdict in sorted( self.config.resources.iteritems() ) :
-            if resdict[ 'enable' ] == 'True' :
+            if resdict[ 'enable' ] == 'true' :
                 state = 'enabled'
             else :
                 state = 'disabled'
@@ -378,14 +384,14 @@ help_info = """
 DRM4G is an open platform, which is based on GridWay Metascheduler, to define, submit, and manage computational jobs. 
 For additional information, see http://www.meteo.unican.es/trac/wiki/DRM4G .
 
-Usage: 
-    drm4g resource [ list | edit | check | info | check-frontends ] [ --dbg ] 
-    drm4g resource <name> ssh-key [ list | add | delete | copy [ --public-key=<file> ] ] [ --dbg ]
-    drm4g resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ]  [ --dbg ]
+Usage:
     drm4g daemon ( start | stop | status | restart | clear ) [ --dbg ]
-    drm4g host [ list ] [ --id=<HID> ] [ --dbg ]
+    drm4g resource [ list | edit | info ] [ --dbg ] 
+    drm4g resource <name> ssh-key [ info | add | delete | copy [ --public-key=<file> ] ] [ --dbg ]
+    drm4g resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ]  [ --dbg ]
+    drm4g host [ list ] [ <hid> ] [ --dbg ]
     drm4g job submit [ --dep <job_id> ... ] <template> [ --dbg ]
-    drm4g job status [ <job_id> ] [ --dbg ]
+    drm4g job info [ <job_id> ] [ --dbg ]
     drm4g job cancel <job_id> ... [ --dbg ]
     drm4g job hold <job_id> ... [ --dbg ]
     drm4g job release <job_id> ... [ --dbg ]    
@@ -394,16 +400,16 @@ Usage:
     drm4g help <command>
 
 Arguments:
+    <hid>                      Host identifier.
     <job_id>                   Job identifier.
     <template>                 Job template.
     <command>                  DRM4G command.
 
 Options:
     -h --help
-    --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168]
-    --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 168]
+    --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168].
+    --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 168].
     --public-key=<file>        Public key file.
-    --id=<HID>                 List all the information about the host.
     --dep=<job_id> ...         Define the job dependency list of the job.
     --dbg                      Debug mode.
 """
@@ -425,30 +431,26 @@ Type:  'help' for help with commands
     Manage resources on DRM4G.
     
     Usage: 
-        resource [ list | edit | check | info | check-frontends ] [--dbg]
-        resource <name> ssh-key [ list | add | delete | copy [ --public-key=<file> ] ] [--dbg]
+        resource [ list | edit | info ] [--dbg]
+        resource <name> ssh-key [ info | add | delete | copy [ --public-key=<file> ] ] [--dbg]
         resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ] [--dbg]  
 
     Options:
-        --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168]
-        --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 168]
+        --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168].
+        --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 168].
         --public-key=<file>        Public key file.
         --dbg                      Debug mode.
         """
         if arg[ '--dbg' ] :
             logger.setLevel(logging.DEBUG)
         try :
+            resource = Resource( self.config )
+            resource.check_frontends( )
             if not arg['<name>'] :
-                resource = Resource( self.config )
                 if arg['edit'] :
                     resource.edit()
-                elif arg['check'] :
-                    resource.check()
-                    logger.info( "The check has passed with flying colors" )
                 elif arg['info'] :
                     resource.features() 
-                elif arg['check-frontends'] :
-                    resource.check_frontends()
                 else :
                     resource.list()
             else :  
@@ -465,7 +467,7 @@ Type:  'help' for help with commands
                         raise Exception( "'ssh-key' command is only available for resources with ssh protocol" )
                     agent = Agent()
                     agent.start()
-                    if arg['list']:
+                    if arg['info']:
                         agent.list_key( identity_file )
                     elif arg['add']:
                         agent.add_key(identity_file)
@@ -496,14 +498,16 @@ Type:  'help' for help with commands
     Print information about the hosts available on DRM4G.
      
     Usage: 
-        host [ list ] [ --id=<HID> ] [--dbg]
+        host [ list ] [ <hid> ] [--dbg]
     
+    Arguments:
+        <hid>         Host identifier.
+
     Options:
-        --id=<HID>    List all the information about the host.
         --dbg         Debug mode.        
  
     Host field information:
-        HID 	      Host identification.
+        HID 	      Host identifier.
         ARCH 	      Architecture.
         JOBS(R/T)     Number of jobs: R = running, T = total.
         LRMS 	      Local Resource Management System.
@@ -521,8 +525,8 @@ Type:  'help' for help with commands
             if not daemon.is_alive() :
                raise Exception('DRM4G daemon is stopped.')
             cmd = '%s/gwhost '  % ( DRM4G_BIN )
-            if arg['--id'] :
-                cmd = cmd + arg['--id']
+            if arg[ '<hid>' ] :
+                cmd = cmd + arg[ '<hid>' ] 
             out , err = exec_cmd( cmd )
             logger.info( out )
             if err :
@@ -537,7 +541,7 @@ Type:  'help' for help with commands
     
     Usage: 
         job submit  [ --dep <job_id> ... ] <template> [--dbg] 
-        job status [ <job_id> ] [--dbg] 
+        job info [ <job_id> ] [--dbg] 
         job cancel  <job_id> ... [--dbg]
         job hold <job_id> ... [ --dbg ]
         job release <job_id> ... [ --dbg ]    
@@ -554,8 +558,8 @@ Type:  'help' for help with commands
     
     Job field information:
         JID 	               Job identification.
-        DM 	                   Dispatch Manager state, one of: pend, hold, prol, prew, wrap, epil, canl, stop, migr, done, fail.
-        EM 	                   Execution Manager state: pend, susp, actv, fail, done.
+        DM 	               Dispatch Manager state, one of: pend, hold, prol, prew, wrap, epil, canl, stop, migr, done, fail.
+        EM 	               Execution Manager state: pend, susp, actv, fail, done.
         START 	               The time the job entered the system.
         END 	               The time the job reached a final state (fail or done).
         EXEC 	               Total execution time, includes suspension time in the remote queue system.
@@ -577,23 +581,23 @@ Type:  'help' for help with commands
             daemon = Daemon( )
             if not daemon.is_alive() :
                raise Exception('DRM4G daemon is stopped.')
-            resource = Resource( self.config )
-            resource.check_frontends( info=False )
             if arg['submit']:
+                resource = Resource( self.config )
+                resource.check_frontends( )
                 dependencies = '-d "%s"' % ' '.join( arg['--dep'] ) if arg['--dep'] else ''
                 cmd = '%s/gwsubmit %s -v %s' % ( DRM4G_BIN , dependencies  , arg['<template>'] )
-            elif arg['status']:
+            elif arg['info']:
                 cmd = '%s/gwps -o Jestxjh '  % ( DRM4G_BIN )
                 if arg['<job_id>'] :
                     cmd = cmd + arg['<job_id>'][0] 
             elif arg['get-history']:
-                cmd = '%s/gwhistory  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
+                cmd = '%s/gwhistory %s' % ( DRM4G_BIN , arg['<job_id>'][ 0 ] )
             elif arg['cancel']:
-                cmd = '%s/gwkill -9  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )  
+                cmd = '%s/gwkill -9 %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )  
             elif arg['hold']: 
-                cmd = '%s/gwkill -o  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
+                cmd = '%s/gwkill -o %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
             elif arg['release']:
-                cmd = '%s/gwkill -l  %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
+                cmd = '%s/gwkill -l %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
             else :
                 cmd = '%s/gwkill -s %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )
             out , err = exec_cmd( cmd )
