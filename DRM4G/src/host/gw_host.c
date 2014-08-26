@@ -242,6 +242,10 @@ void gw_host_clear_dynamic_info(int host_id)
     host->free_disk_mb = 0;
     host->size_disk_mb = 0;
 
+    host->fork_name = NULL;
+    host->lrms_name = NULL;
+    host->lrms_type = NULL;
+
     for (i= 0; i<GW_HOST_MAX_QUEUES; i++)
     {
         if ( host->queue_status[i] != NULL )

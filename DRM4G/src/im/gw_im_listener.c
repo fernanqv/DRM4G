@@ -218,6 +218,7 @@ void gw_im_listener(void *arg)
                                 im_mad->name, info);
                                 
                         gw_host_clear_dynamic_info(host_id);
+                        gw_host_pool_host_free(host_id);
                     }
                 }
             }

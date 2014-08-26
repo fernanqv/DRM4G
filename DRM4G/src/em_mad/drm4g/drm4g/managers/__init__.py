@@ -125,17 +125,12 @@ class Resource (object):
         attr      = 'GlueCEHostingCluster'
         bdii      = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )
         result    = self.ldapsearch( filt , attr , bdii )
-        hosts     = []
-        for value in result :
-            host = "%s_%s" % ( self.name , value['attr'][attr] )
-            hosts.append(host)
-        return hosts
+        return [ value['attr'][attr] for value in result ]
         
     def _host_vo_properties(self , host ): 
         """
         It will return a string with the features of hosts on Grid environment
         """
-        _ , host       = host.split( '_' )
         host_info      = HostInformation()
         host_info.Name = host
         
