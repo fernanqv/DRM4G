@@ -305,15 +305,14 @@ class Proxy( object ):
         self.communicator = self.config.make_communicators()[ name ]
         self.communicator.connect()
         if self.resource.has_key( 'myproxy_server' ) :
-            self.prefix = "X509_USER_PROXY=%s/%s MYPROXY_SERVER=%s " % (
-                                                                 REMOTE_VOS_DIR ,
-                                                                 self.resource[ 'myproxy_server' ] ,
+            self.prefix = "X509_USER_PROXY=%s MYPROXY_SERVER=%s " % (
+                                                                 join( REMOTE_VOS_DIR , self.resource[ 'myproxy_server' ] ) ,
                                                                  self.resource[ 'myproxy_server' ]
                                                                  )
         else :
             self.prefix = "X509_USER_PROXY=%s/${MYPROXY_SERVER} " % REMOTE_VOS_DIR
         
-    def create( self , cred_lifetime , proxy_lifetime ):
+    def create( self , proxy_lifetime ):
         logger.debug("Creating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR )
         cmd = "mkdir -p %s" % REMOTE_VOS_DIR
         logger.debug( "Executing command ... " + cmd ) 
@@ -325,17 +324,10 @@ class Proxy( object ):
             message      = 'Insert MyProxy password: '
             proxy_passwd = getpass.getpass(message)
         
-            if self.resource.has_key( 'myproxy_server' ) :
-                cmd = "MYPROXY_SERVER=%s myproxy-init -S --cred_lifetime %s --proxy_lifetime %s" % (
-                                                                   self.resource[ 'myproxy_server' ] ,
-                                                                   cred_lifetime ,
-                                                                   proxy_lifetime
-                                                                   )
-            else :
-                cmd = "myproxy-init -S --cred_lifetime %s --proxy_lifetime %s" % (
-                                                                                  cred_lifetime ,
-                                                                                  proxy_lifetime
-                                                                                  )
+            cmd = self.prefix + "myproxy-init -S --cred_lifetime %s --proxy_lifetime %s --local_proxy" % ( 
+                                                                                                         proxy_lifetime ,
+                                                                                                         proxy_lifetime
+                                                                                                         )
             logger.debug( "Executing command ... ", cmd ) 
             out , err = self.communicator.execCommand( cmd , input = '\n'.join( [ grid_passwd, proxy_passwd ] ) )
             logger.info( out )
@@ -343,25 +335,11 @@ class Proxy( object ):
                 logger.info( err )
         else :
             raise Exception( err )
-        cmd = self.prefix + "myproxy-logon -S --proxy_lifetime %s" % ( proxy_lifetime )
-        logger.debug( "Executing command ... " + cmd ) 
-        out, err = self.communicator.execCommand( cmd , input = proxy_passwd )
-        logger.info( out )
-        if err :
-            logger.info( err ) 
             
     def check( self ):
-        cmd = self.prefix + "myproxy-info"
-        logger.debug( "Executing command ... " + cmd ) 
-        out, err = self.communicator.execCommand( cmd )
-        logger.info( "* Information about credentials stored on the myproxy-server:" )
-        logger.info( out )
-        if err :
-            logger.info( err )   
         cmd = self.prefix + "grid-proxy-info"
         logger.debug( "Executing command ... " + cmd )
         out, err = self.communicator.execCommand( cmd )
-        logger.info( "* Information about the proxy certificate:" )
         logger.info( out )
         if err :
             logger.info( err ) 
@@ -385,10 +363,10 @@ DRM4G is an open platform, which is based on GridWay Metascheduler, to define, s
 For additional information, see http://www.meteo.unican.es/trac/wiki/DRM4G .
 
 Usage:
-    drm4g daemon ( start | stop | status | restart | clear ) [ --dbg ]
+    drm4g daemon [ start | stop | status | restart | clear ] [ --dbg ]
     drm4g resource [ list | edit | info ] [ --dbg ] 
     drm4g resource <name> ssh-key [ info | add | delete | copy [ --public-key=<file> ] ] [ --dbg ]
-    drm4g resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ]  [ --dbg ]
+    drm4g resource <name> proxy [ info | destroy | init [ --proxy-lifetime=<hours> ] ]  [ --dbg ]
     drm4g host [ list ] [ <hid> ] [ --dbg ]
     drm4g job submit [ --dep <job_id> ... ] <template> [ --dbg ]
     drm4g job info [ <job_id> ] [ --dbg ]
@@ -407,8 +385,7 @@ Arguments:
 
 Options:
     -h --help
-    --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168].
-    --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 168].
+    --proxy-lifetime=<hours>   Duration of the proxy's lifetime [default: 168].
     --public-key=<file>        Public key file.
     --dep=<job_id> ...         Define the job dependency list of the job.
     --dbg                      Debug mode.
@@ -433,11 +410,10 @@ Type:  'help' for help with commands
     Usage: 
         resource [ list | edit | info ] [--dbg]
         resource <name> ssh-key [ info | add | delete | copy [ --public-key=<file> ] ] [--dbg]
-        resource <name> proxy [ info | destroy | create [ --cred-lifetime=<hours> --proxy-lifetime=<hours> ] ] [--dbg]  
+        resource <name> proxy [ info | destroy | init [ --proxy-lifetime=<hours> ] ] [--dbg]  
 
     Options:
-        --cred-lifetime=<hours>    Lifetime of delegated proxy on server [default: 168].
-        --proxy-lifetime=<hours>   Lifetime of proxies delegated by server [default: 168].
+        --proxy-lifetime=<hours>   Duration of the proxy's lifetime [default: 168].
         --public-key=<file>        Public key file.
         --dbg                      Debug mode.
         """
@@ -485,8 +461,8 @@ Type:  'help' for help with commands
                         proxy.check( )
                     elif arg['destroy'] :
                         proxy.destroy( )
-                    elif arg['create'] :
-                        proxy.create(  arg['--cred-lifetime'] ,  arg['--proxy-lifetime'] )
+                    elif arg['init'] :
+                        proxy.create( arg['--proxy-lifetime'] )
                     else :
                         proxy.check( )                   
         except Exception , err :
@@ -540,7 +516,7 @@ Type:  'help' for help with commands
     Submit, get status and history and cancel jobs.
     
     Usage: 
-        job submit  [ --dep <job_id> ... ] <template> [--dbg] 
+        job submit [ --dep <job_id> ... ] <template> [--dbg] 
         job info [ <job_id> ] [--dbg] 
         job cancel  <job_id> ... [--dbg]
         job hold <job_id> ... [ --dbg ]
@@ -613,7 +589,7 @@ Type:  'help' for help with commands
     Manage DRM4G daemon. Keep in mind that the clear command deletes all the jobs available in DRM4G. 
     
     Usage: 
-        daemon ( start | stop | status | restart | clear ) [ --dbg ] 
+        daemon [ start | stop | status | restart | clear ] [ --dbg ] 
    
     Options:
         --dbg    Debug mode.
@@ -634,9 +610,11 @@ Type:  'help' for help with commands
             elif arg[ 'restart' ] :
                 daemon.stop()
                 daemon.start()
-            else :
+            elif arg[ 'clear' ] :
                 agent.start()
                 daemon.clear()
+            else :
+                daemon.status()
         except Exception , err :
             logger.error( str( err ) )
         
