@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+__version__  = '2.2.0'
+__author__   = 'Carlos Blanco'
+__revision__ = "$Id$"
+
 from drm4g_env import *
 from drm4g.core.im_mad import GwImMad
 
