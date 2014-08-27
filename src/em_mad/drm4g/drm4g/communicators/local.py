@@ -6,7 +6,7 @@ import drm4g.communicators
 from drm4g.communicators import ComException
 from drm4g.utils.url     import urlparse
 
-__version__  = '2.1.1'
+__version__  = '2.2.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+__version__  = '2.2.0'
+__author__   = 'Carlos Blanco'
+__revision__ = "$Id$"
+
 import sys
 import os
 import traceback

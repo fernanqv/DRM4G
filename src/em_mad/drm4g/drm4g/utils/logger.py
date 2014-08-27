@@ -1,7 +1,7 @@
 import logging
 
-__version__ = '2.0.0'
-__author__  = 'Carlos Blanco'
+__version__  = '2.2.0'
+__author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 

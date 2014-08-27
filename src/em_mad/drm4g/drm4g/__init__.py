@@ -1,6 +1,6 @@
 __all__ = ["communicators", "core", "managers", "utils", "commands"]
 
-__version__  = '2.1.1'
+__version__  = '2.2.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
