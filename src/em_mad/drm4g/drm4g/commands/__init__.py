@@ -247,14 +247,15 @@ class Resource( object ):
         """
         self.check( )
         communicators = self.config.make_communicators()
-        for resname in sorted( self.config.resources.keys() ) :
-            logger.debug( "Resource '%s' :" % ( resname ) )
-            communicator = communicators.get( resname )
-            try :
-                communicator.connect()
-                logger.debug( "--> The front-end '%s' is accessible\n" % communicator.frontend )
-            except Exception , err :
-                logger.error( "--> The front-end '%s' is not accessible\n" % communicator.frontend )
+        for resname, resdict in sorted( self.config.resources.iteritems() ) :
+            if resdict[ 'enable' ] == 'true' :
+                logger.debug( "Resource '%s' :" % ( resname ) )
+                communicator = communicators.get( resname )
+                try :
+                    communicator.connect()
+                    logger.debug( "--> The front-end '%s' is accessible\n" % communicator.frontend )
+                except Exception , err :
+                    logger.error( "--> The front-end '%s' is not accessible\n" % communicator.frontend )
                             
     def edit( self ) :
         """
