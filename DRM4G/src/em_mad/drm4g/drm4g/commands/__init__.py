@@ -11,7 +11,7 @@ from drm4g                import REMOTE_VOS_DIR , DRM4G_CONFIG_FILE , DRM4G_BIN 
 from drm4g.utils.docopt   import docopt , DocoptExit
 from os.path              import expanduser , join , dirname , exists , basename
 
-__version__  = '2.2.0'
+__version__  = '2.1.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id: __init__.py 1931 2013-09-25 10:46:59Z carlos $"
 
@@ -454,7 +454,7 @@ Type:  'help' for help with commands
                         agent.copy_key( identity_file , self.config.resources.get( arg['<name>'] )[ 'username' ] ,
                                         self.config.resources.get( arg['<name>'] )[ 'frontend' ] )
                     else:
-                        agent.list_keys()
+                        agent.list_key( identity_file )
                 if arg['proxy']:
                     proxy = Proxy( self.config , arg['<name>'] )
                     if arg['info'] :
