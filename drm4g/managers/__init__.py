@@ -1,5 +1,3 @@
-from __future__          import with_statement
-import re
 import sys
 import xml.dom.minidom
 import os
@@ -115,27 +113,33 @@ class Resource (object):
         It will return a list with the sites available in the VO.
         """
         if self.features.has_key( 'host_filter' ) :
-            ce_filter = ''.join( [ '(GlueCEHostingCluster=%s)' % host.strip() for host in self.features[ 'host_filter' ].split( ',' ) ] ) 
+            ce_filter = ''.join( [ '(GlueCEHostingCluster=%s)' % host.strip() 
+                                  for host in self.features[ 'host_filter' ].split( ',' ) ] ) 
         else :
             ce_filter = ''
-        filt      = '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM)%s)' % ( 
-                                                                                                                      self.features[ 'vo' ] ,
-                                                                                                                      ce_filter 
-                                                                                                                      )
+        filt      =   '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM)%s)' % ( 
+                                                                                                       self.features[ 'vo' ] , 
+                                                                                                       ce_filter 
+                                                                                                       )
         attr      = 'GlueCEHostingCluster'
         bdii      = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )
         result    = self.ldapsearch( filt , attr , bdii )
-        return [ value['attr'][attr] for value in result ]
+        hosts = []
+        for value in result :
+            host = "%s::%s" % ( self.name , value['attr'][attr] )
+            hosts.append(host)
+        return hosts
         
     def _host_vo_properties(self , host ): 
         """
         It will return a string with the features of hosts on Grid environment
         """
+        _ , host       = host.split( '::' )
         host_info      = HostInformation()
         host_info.Name = host
         
         # First search
-        filt   = "(&(objectclass=GlueCE)(GlueCEInfoHostName=%s))" % ( host )
+        filt   =  '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM)(GlueCEInfoHostName=%s))' % ( self.features[ 'vo' ] , host )
         attr   = '*'
         bdii   = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )  
         result = self.ldapsearch( filt , attr , bdii )
