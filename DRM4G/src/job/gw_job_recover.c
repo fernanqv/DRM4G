@@ -266,6 +266,7 @@ int gw_job_recover(gw_job_t *job)
 
     gw_job_set_state(job, previous_job_state, GW_TRUE);
 
+
     rc = gw_job_recover_last_state_transition(job,
                                               previous_job_state,
                                               job_state, 
@@ -277,6 +278,7 @@ int gw_job_recover(gw_job_t *job)
                 gw_job_get_state_name(previous_job_state),
                 gw_job_get_state_name(job_state), job->id);
     }
+
 
     /* ----- Update user stats ------- */
     
@@ -450,24 +452,23 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
         break;
 
     case GW_JOB_STATE_PROLOG:
-   	
+
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
-    	
+
     	gw_host_inc_slots_nb(job->history->host, job->template.np, job->history->queue);
        
         gw_am_trigger(&(gw_dm.am), "GW_DM_STATE_PROLOG", (void *)id);
         break;
 
     case GW_JOB_STATE_WRAPPER:
-    	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
         
        	gw_host_inc_slots_nb(job->history->host, job->template.np,job->history->queue);
-        
+ 
         gw_job_set_state(job, GW_JOB_STATE_WRAPPER, GW_TRUE);
 
         gw_log_print("DM",'I',"Recovering GRAM contact for job %d.\n", job->id); 
-
+  
         rc = gw_job_recover_job_contact(job);
         
         if (rc == -1)
@@ -483,7 +484,6 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
         break;
 
     case GW_JOB_STATE_EPILOG:
-    	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
     	
         gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
@@ -492,7 +492,6 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
         break;
 
     case GW_JOB_STATE_EPILOG_FAIL:
-
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
                
         gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
@@ -501,7 +500,6 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
         break;
 
     case GW_JOB_STATE_EPILOG_RESTART:
-    	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
                
         gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
@@ -510,7 +508,6 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
         break;
 
     case GW_JOB_STATE_EPILOG_STD:
-       	
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
                
         gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
@@ -522,8 +519,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
         gw_job_set_state(job, job_state, GW_TRUE);
         /* continues to KILL_EPILOG */
 
-    case GW_JOB_STATE_KILL_EPILOG:                
-    	
+    case GW_JOB_STATE_KILL_EPILOG:
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
 
         gw_host_inc_rjobs_nb(job->history->host,job->history->queue);
@@ -535,8 +531,7 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
         gw_job_set_state(job, job_state, GW_TRUE);
         /* continues to MIGR_PROLOG */
             
-    case GW_JOB_STATE_MIGR_PROLOG:    
-    	
+    case GW_JOB_STATE_MIGR_PROLOG:
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
     	
     	gw_host_inc_slots_nb(job->history->host, job->template.np,job->history->queue);
@@ -547,7 +542,6 @@ int gw_job_recover_last_state_transition(gw_job_t *job,
         break;
 
     case GW_JOB_STATE_MIGR_EPILOG:
-
     	gw_user_pool_inc_running_jobs(job->user_id, 1);
 
     	gw_host_inc_slots_nb(job->history->host, job->template.np,job->history->queue);
