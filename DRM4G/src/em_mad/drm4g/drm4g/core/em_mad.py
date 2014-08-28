@@ -108,8 +108,9 @@ class GwEmMad (object):
             if job.resfeatures.has_key( 'local_scratch' ) :
                 rsl['environment']['WRF4G_LOCALSCP'] = job.resfeatures[ 'local_scratch' ]
              
-            if job.resfeatures.has_key.has_key( 'vo' ) :
-                job.resfeatures['host']     = HOST
+            if job.resfeatures.has_key( 'vo' ) :
+                _ , host                    = HOST.split('::')
+                job.resfeatures['host']     = host
                 job.resfeatures['jm']       = JM
                 job.resfeatures['env_file'] = join( dirname(RSL) , "job.env" )
                 job.resfeatures['queue']    = rsl[ 'queue' ]
@@ -267,7 +268,11 @@ class GwEmMad (object):
                     self.logger.error ( ' '.join( errors ) )
                     raise Exception ( ' '.join( errors ) )
             for resname, resdict in self._configure.resources.iteritems() :
-                if resname != host : 
+                if '::' in host :
+                    _resname , _ = host.split( '::' )
+                    if resname != _resname :
+                        continue
+                elif resname != host : 
                     continue
                 if not self._communicators.has_key( resname ) :
                     self._communicators[ resname ] = self._configure.make_communicators()[resname]
