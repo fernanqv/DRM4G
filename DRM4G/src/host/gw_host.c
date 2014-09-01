@@ -282,7 +282,7 @@ void gw_host_dec_rjobs(gw_host_t *host , char *queue)
 
 	for (i=0; i<GW_HOST_MAX_QUEUES; i++)
 	{
-		if ( queue != NULL && strcmp(host->queue_name[i],queue) == 0 )
+		if ( host->queue_name[i] != NULL && queue != NULL && strcmp(host->queue_name[i],queue) == 0 )
 		{
 	        	host->queue_running_jobs[i]--;
 	        	break;
@@ -331,7 +331,7 @@ void gw_host_dec_slots(gw_host_t *host, int slots , char *queue)
 
 	for (i=0; i<GW_HOST_MAX_QUEUES; i++)
 	{
-	   if ( queue != NULL && strcmp(host->queue_name[i],queue) == 0 )
+	   if ( host->queue_name[i] != NULL && queue != NULL && strcmp(host->queue_name[i],queue) == 0 )
 	   {
 	        	host->queue_running_jobs[i]--;
 	        	break;
