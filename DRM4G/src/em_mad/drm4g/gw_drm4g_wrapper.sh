@@ -342,8 +342,8 @@ transfer_output_files(){
 
         *)
             if [ "${WRF4G_SCRATCH}" ]; then
-                printf "`date`: Copy ${RMT_JOB_HOME}/${FILES} file to ${FIRST_RMT_JOB_HOME} ... "
-                cp ${RMT_JOB_HOME}/${FILES} ${FIRST_RMT_JOB_HOME}/
+                printf "`date`: Copy ${RMT_JOB_HOME}/${SRC_FILE} file to ${FIRST_RMT_JOB_HOME} ... "
+                cp ${RMT_JOB_HOME}/${SRC_FILE} ${FIRST_RMT_JOB_HOME}/
                 if [ $? -ne 0 ]; then
                     echo "failed."
                 else
