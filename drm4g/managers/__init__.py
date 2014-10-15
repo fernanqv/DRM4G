@@ -33,101 +33,102 @@ class Resource (object):
     """
    
     def __init__(self):
-        self.name           = None
-        self.features       = dict()
-        self.Communicator   = None
-        self.host_list      = []
+	self.name           = None
+	self.features       = dict()
+	self.Communicator   = None
+	self.host_list      = []
     
     def ldapsearch( self , filt = '' , attr = '*', bdii = 'lcg-bdii.cern.ch:2170', base = 'Mds-Vo-name=local,o=grid' ) :
-        """ 
-        Wrapper for ldapserch.
-        Input parameters:
-        filt:    Filter used to search ldap, default = '', means select all
-        attr:    Attributes returned by ldapsearch, default = '*', means return all
-        host:    Host used for ldapsearch, default = 'lcg-bdii.cern.ch:2170', can be changed by $LCG_GFAL_INFOSYS
-        
-        Return each element of list is dictionary with keys:
-        'dn':                 Distinguished name of ldapsearch response
-        'objectClass':        List of classes in response
-        'attr':               Dictionary of attributes
-        """
-        cmd = 'ldapsearch -x -LLL -l 5 -h %s -b %s "%s" "%s"' % ( bdii, base, filt, attr )
-        out, err = self.Communicator.execCommand( cmd )
-        assert not err, err
-        
-        response = []
-        lines = []
-        for line in out.split( "\n" ):
-            if line.find( " " ) == 0:
-                lines[-1] += line.strip()
-            else:
-                lines.append( line.strip() )
-        record = None
-        for line in lines:
-            if line.find( 'dn:' ) == 0:
-                record = {'dn':line.replace( 'dn:', '' ).strip(),
-                          'objectClass':[],
-                          'attr':{'dn':line.replace( 'dn:', '' ).strip()}}
-                response.append( record )
-                continue
-            if record:
-                if line.find( 'objectClass:' ) == 0:
-                    record['objectClass'].append( line.replace( 'objectClass:', '' ).strip() )
-                    continue
-                if line.find( 'Glue' ) == 0:
-                    index = line.find( ':' )
-                    if index > 0:
-                        attr = line[:index]
-                        value = line[index + 1:].strip()
-                        if record['attr'].has_key( attr ):
-                            if type( record['attr'][attr] ) == type( [] ):
-                                record['attr'][attr].append( value )
-                            else:
-                                record['attr'][attr] = [record['attr'][attr], value]
-                        else:
-                            record['attr'][attr] = value
-        return response
+	""" 
+	Wrapper for ldapserch.
+	Input parameters:
+	filt:    Filter used to search ldap, default = '', means select all
+	attr:    Attributes returned by ldapsearch, default = '*', means return all
+	host:    Host used for ldapsearch, default = 'lcg-bdii.cern.ch:2170', can be changed by $LCG_GFAL_INFOSYS
+	
+	Return each element of list is dictionary with keys:
+	'dn':                 Distinguished name of ldapsearch response
+	'objectClass':        List of classes in response
+	'attr':               Dictionary of attributes
+	"""
+	cmd = 'ldapsearch -x -LLL -l 5 -h %s -b %s "%s" "%s"' % ( bdii, base, filt, attr )
+	out, err = self.Communicator.execCommand( cmd )
+	assert not err, err
+	
+	response = []
+	lines = []
+	for line in out.split( "\n" ):
+	    if line.find( " " ) == 0:
+		lines[-1] += line.strip()
+	    else:
+		lines.append( line.strip() )
+	record = None
+	for line in lines:
+	    if line.find( 'dn:' ) == 0:
+		record = {'dn':line.replace( 'dn:', '' ).strip(),
+			  'objectClass':[],
+			  'attr':{'dn':line.replace( 'dn:', '' ).strip()}}
+		response.append( record )
+		continue
+	    if record:
+		if line.find( 'objectClass:' ) == 0:
+		    record['objectClass'].append( line.replace( 'objectClass:', '' ).strip() )
+		    continue
+		if line.find( 'Glue' ) == 0:
+		    index = line.find( ':' )
+		    if index > 0:
+			attr = line[:index]
+			value = line[index + 1:].strip()
+			if record['attr'].has_key( attr ):
+			    if type( record['attr'][attr] ) == type( [] ):
+				record['attr'][attr].append( value )
+			    else:
+				record['attr'][attr] = [record['attr'][attr], value]
+			else:
+			    record['attr'][attr] = value
+	return response
     
     def hosts(self):
-        """
-        It will return a string with the host available in the resource.
-        """
-        if self.features.has_key( 'vo' ) :
-            self.host_list = self._hosts_vo( )
-            return ' '.join( self.host_list )
-        else :
-            self.host_list = [ self.name ]
-            return self.name
-        
+	"""
+	It will return a string with the host available in the resource.
+	"""
+	if self.features.has_key( 'vo' ) :
+	    self.host_list = self._hosts_vo( )
+	    return ' '.join( self.host_list )
+	else :
+	    self.host_list = [ self.name ]
+	    return self.name
+		
     def host_properties(self , host ):
-        """
-        Obtain the features of each host
-        """
-        if self.features.has_key( 'vo' ) :
-            return self._host_vo_properties( host )
-        else :
-            return self._host_properties( host ) 
+	"""
+	Obtain the features of each host
+	"""
+	if self.features.has_key( 'vo' ) :
+	    return self._host_vo_properties( host )
+	else :
+	    return self._host_properties( host ) 
 
     def _hosts_vo(self):
-        """
-        It will return a list with the sites available in the VO.
-        """
-        if self.features.has_key( 'host_filter' ) :
-            ce_filter = ''.join( [ '(GlueCEHostingCluster=%s)' % host.strip() 
-                                  for host in self.features[ 'host_filter' ].split( ',' ) ] ) 
+	"""
+	It will return a list with the sites available in the VO.
+	"""
+	filt      =   '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM)' % ( 
+												       self.features[ 'vo' ] , 
+												       )
+	attr      = 'GlueCEHostingCluster'
+	bdii      = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )
+        result    = []
+	if self.features.has_key( 'host_filter' ) :
+	    for host in self.features[ 'host_filter' ].split( ',' ) :
+                ce_filter = '(GlueCEHostingCluster=%s))' % host.strip()
+                result.append( self.ldapsearch( filt + ce_filter , attr , bdii ) )               
         else :
-            ce_filter = ''
-        filt      =   '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM)%s)' % ( 
-                                                                                                       self.features[ 'vo' ] , 
-                                                                                                       ce_filter 
-                                                                                                       )
-        attr      = 'GlueCEHostingCluster'
-        bdii      = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )
-        result    = self.ldapsearch( filt , attr , bdii )
+             result.append( self.ldapsearch( filt + ')' , attr , bdii ) )
         hosts = []
         for value in result :
-            host = "%s::%s" % ( self.name , value['attr'][attr] )
-            hosts.append(host)
+            for each_host in value :
+                host = "%s::%s" % ( self.name , each_host['attr'][attr] )
+                hosts.append(host)
         return hosts
         
     def _host_vo_properties(self , host ): 
