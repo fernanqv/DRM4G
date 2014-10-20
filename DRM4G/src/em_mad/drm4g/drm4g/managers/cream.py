@@ -182,9 +182,9 @@ class Job (drm4g.managers.Job):
         stdout     = basename( parameters['stdout'] ) 
         stderr     = basename( parameters['stderr'] ) 
         count      = parameters['count'] 
-  
-        input_sandbox, output_sandbox = sandbox_files( self.resfeatures[ 'env_file' ] )
+        ppn        = parameters.get( 'ppn', '1' )
         
+        input_sandbox, output_sandbox = sandbox_files( self.resfeatures[ 'env_file' ] )
         if input_sandbox :
             input_files = ' '.join( [ ',"%(dir_temp)s/' + '%s"' % (f) for f in input_sandbox] ) % {'dir_temp':dir_temp } 
         else :
@@ -192,7 +192,7 @@ class Job (drm4g.managers.Job):
         
         self.default_output_files.extend( output_sandbox )
         output_files = ','.join( [ '"%s"' % (f) for f in self.default_output_files ] )
-            
+                    
         requirements = ''
         if parameters.has_key('maxWallTime'):  
             requirements += '(other.GlueCEPolicyMaxWallClockTime <= %s)' % parameters['maxWallTime']
@@ -208,6 +208,8 @@ class Job (drm4g.managers.Job):
         
         env = ','.join(['"%s=%s"' %(k, v) for k, v in parameters['environment'].items()])
         
+        SMPGranularity
+        
         return """
 [
 JobType = "Normal";
@@ -215,6 +217,7 @@ Executable = "%(executable)s";
 StdOutput = "%(stdout)s";
 StdError = "%(stderr)s"; 
 CpuNumber = %(count)s;
+SMPGranularity = %(ppn)s;
 OutputSandboxBaseDestURI = "gsiftp://localhost";
 InputSandbox = { "%(dir_temp)s/job.env", "%(dir_temp)s/%(executable)s"  %(input_files)s };
 OutputSandbox = { %(output_files)s };
@@ -226,6 +229,7 @@ Environment = { %(env)s };
         'stderr'       : stderr,
         'dir_temp'     : dir_temp,
         'count'        : count,
+        'ppn'          : ppn,
         'input_files'  : input_files,
         'output_files' : output_files,
         'Requirements' : Requirements,
