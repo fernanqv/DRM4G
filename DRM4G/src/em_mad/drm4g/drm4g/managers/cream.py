@@ -207,9 +207,7 @@ class Job (drm4g.managers.Job):
         Requirements = 'Requirements=%s;' % (requirements) if requirements else ''
         
         env = ','.join(['"%s=%s"' %(k, v) for k, v in parameters['environment'].items()])
-        
-        SMPGranularity
-        
+            
         return """
 [
 JobType = "Normal";
