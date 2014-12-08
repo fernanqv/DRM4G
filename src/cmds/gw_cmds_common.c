@@ -936,7 +936,7 @@ void gw_client_print_host_pool_status()
     int i;
     
     for (i=0;i<gw_client.number_of_hosts;i++)
-        if (gw_client.host_pool[i] != NULL)
+        if (gw_client.host_pool[i] != NULL && gw_client.host_pool[i]->fixed_priority != -1 )
                 gw_client_print_host_status(gw_client.host_pool[i]);
 }
 
