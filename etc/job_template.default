@@ -121,7 +121,7 @@ RANK         = QUEUE_MAXRUNNINGJOBS
 #-------------------------------------------------------------------------------
 
 RESCHEDULING_INTERVAL  = 0
-RESCHEDULING_THRESHOLD = 300
+RESCHEDULING_THRESHOLD = 7200
 
 #-------------------------------------------------------------------------------
 # Performance variables
