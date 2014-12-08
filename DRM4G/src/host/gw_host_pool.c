@@ -301,8 +301,8 @@ void gw_host_pool_monitor_hosts( int *active_queries)
     gw_host_t * host;
     
     pthread_mutex_lock(&(gw_host_pool.mutex));
-    
-    num_hosts = gw_conf.number_of_hosts;
+   
+    num_hosts = gw_host_pool.number_of_hosts;
     
     if ( num_hosts == 0 )
     {

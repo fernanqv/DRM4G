@@ -233,6 +233,7 @@ void gw_host_clear_dynamic_info(int host_id)
     	return;
     }
 
+    host->fixed_priority = -1;
     host->cpu_free     = 0;
     host->nodecount    = 0;
         
@@ -250,9 +251,11 @@ void gw_host_clear_dynamic_info(int host_id)
     {
         if ( host->queue_status[i] != NULL )
             free(host->queue_status[i]);
-            
+           
         host->queue_status[i]        = NULL;
         host->queue_freenodecount[i] = 0;
+        host->queue_maxrunningjobs[i] = 0;
+        host->queue_maxjobsinqueue[i] = 0;
     }
 
     host->state = GW_HOST_STATE_UNKNOWN;
