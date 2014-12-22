@@ -16,11 +16,13 @@ logger = logging.getLogger(__name__)
 X509_USER_PROXY = 'X509_USER_PROXY=' +  join( REMOTE_VOS_DIR , 'x509up.%s ' )
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.
-CREAM_SUBMIT = X509_USER_PROXY + 'glite-ce-job-submit'  
-CREAM_STATUS = X509_USER_PROXY + 'glite-ce-job-status'     
-CREAM_DEL    = X509_USER_PROXY + 'glite-ce-job-cancel' 
-CREAM_PURGE  = X509_USER_PROXY + 'glite-ce-job-purge'  
-GLOBUS_CP    = X509_USER_PROXY + 'globus-url-copy'     
+CREAM_DELEGATE = X509_USER_PROXY + 'glite-ce-delegate-proxy' 
+CREAM_PX_RENEW = X509_USER_PROXY + 'glite-ce-proxy-renew' 
+CREAM_SUBMIT   = X509_USER_PROXY + 'glite-ce-job-submit'  
+CREAM_STATUS   = X509_USER_PROXY + 'glite-ce-job-status'     
+CREAM_DEL      = X509_USER_PROXY + 'glite-ce-job-cancel' 
+CREAM_PURGE    = X509_USER_PROXY + 'glite-ce-job-purge'  
+GLOBUS_CP      = X509_USER_PROXY + 'globus-url-copy'     
 
 # Regular expressions for parsing.
 re_status          = re.compile( "Current Status\s*=\s*\[(.*)\]" )
@@ -37,7 +39,7 @@ def sandbox_files(env_file):
         match = re_exp.search(env)
         if match :
             for file in match.group( 1 ).split(','):
-                if file.startswith( "gsiftp://" ) : 
+                if file.startswith( "gsiftp://" ) or file.startswith( "lfn://" ) : 
                     continue
                 if " " in file:
                     if type == 'output' :
@@ -78,7 +80,7 @@ class Job (drm4g.managers.Job):
                     "ABORTED"       : "FAILED",
                     }
 
-    def _renew_proxy(self):
+    def _renew_voms_proxy(self):
         output = "The proxy 'x509up.%s' has probably expired" %  self.resfeatures[ 'vo' ]  
         logger.debug( output )
         if self.resfeatures.has_key( 'myproxy_server' ) :
@@ -92,30 +94,38 @@ class Job (drm4g.managers.Job):
                                                                                                         )
         logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
+        logger.debug( out + err )
         if err :
-            output = "Error renewing the proxy(%s): %s" % (cmd , err )
+            output = "Error renewing the proxy(%s): %s" % ( cmd , err )
             logger.error( output )
             raise JobException( output )
 
     def jobSubmit(self, wrapper_file):
-        cmd = '%s -a -r %s:8443/%s-%s %s' % ( 
+        cmd = '%s -e %s delegete-proxy' % ( 
+                                           CREAM_DELEGATE % self.resfeatures[ 'vo' ] , 
+                                           self.resfeatures[ 'host' ] 
+                                           )
+        logger.debug( "Executing command: %s" % cmd )
+        out, err = self.Communicator.execCommand( cmd )
+        logger.debug( out + err )
+        if ( not 'succesfully delegated' in out ) and ( not 'already exists' in out ) :
+            logger.error( out )
+            raise JobException( out )
+        cmd = '%s -D delegete-proxy -r %s:8443/%s-%s %s' % ( 
                                      CREAM_SUBMIT % self.resfeatures[ 'vo' ] ,
                                      self.resfeatures[ 'host' ] ,
                                      self.resfeatures[ 'jm' ] , 
                                      self.resfeatures[ 'queue' ] ,
                                      wrapper_file 
                                      )
+        logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
-        logger.info(cmd)
-        logger.info(out + err)
-        if ( 'The proxy has EXPIRED' in out ) or ( ' is not accessible' in err ) :
-            self._renew_proxy()
+        logger.debug( out + err )
+        if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+            self._renew_voms_proxy()
+            logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
-            logger.info(out + err)
-            if not 'https://' in out : 
-                output = "Error submitting job after renewing the proxy: %s %s" %  ( err , out ) 
-                logger.error( output )
-                raise JobException( output )
+            logger.debug( out + err )
         if not 'https://' in out :
             output = "Error submitting job: %s %s" % ( out, err )
             logger.error( output )
@@ -123,15 +133,25 @@ class Job (drm4g.managers.Job):
         return out[ out.find("https://"): ].strip() #cream_id
 
     def jobStatus(self):
-        cmd = '%s %s -L 2' % ( CREAM_STATUS % self.resfeatures[ 'vo' ] , self.JobId )
+        cmd = '%s -e %s delegete-proxy' % ( 
+                                           CREAM_PX_RENEW % self.resfeatures[ 'vo' ] ,
+                                           self.resfeatures[ 'host' ]
+                                           )
+        logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
+        logger.debug( out + err )
+        if not 'succesfully renewed' in out :
+            logger.error( out )
+            raise JobException( out )
+        cmd = '%s %s -L 2' % ( CREAM_STATUS % self.resfeatures[ 'vo' ] , self.JobId )
+        logger.debug( "Executing command: %s" % cmd )
+        out, err = self.Communicator.execCommand( cmd )
+        logger.debug( out + err )
         if 'The proxy has EXPIRED' in out :
-            self._renew_proxy()
+            self._renew_voms_proxy()
+            logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
-            if "ERROR" in err: 
-                 output = "Error checking '%s' job after renewing the proxy: %s" % ( self.JobId , err )
-                 logger.error( output )
-                 raise JobException( output )
+            logger.debug( out + err )
         if "ERROR" in err:
             output = "Error checking '%s' job: %s" % ( self.JobId , err )
             logger.error( output )
@@ -148,14 +168,14 @@ class Job (drm4g.managers.Job):
     
     def jobCancel(self):
         cmd = '%s -N %s' % (CREAM_DEL % self.resfeatures[ 'vo' ]  , self.JobId )
+        logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
+        logger.debug( out + err )
         if 'The proxy has EXPIRED' in out :
-            self._renew_proxy()
+            self._renew_voms_proxy()
+            logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
-            if "ERROR" in err:
-                 output = "Error canceling '%s' job after renewing the proxy: %s" % ( self.JobId , err )
-                 logger.error( output )
-                 raise JobException( output )
+            logger.debug( out + err )
         if "ERROR" in err: 
             output = "Error canceling '%s' job: %s" % ( self.JobId , err )
             logger.error( output )
@@ -163,14 +183,13 @@ class Job (drm4g.managers.Job):
 		
     def jobPurge(self):
         cmd = '%s -N %s' % (CREAM_PURGE % self.resfeatures[ 'vo' ] , self.JobId )
+        logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
+        logger.debug( out + err )
         if 'The proxy has EXPIRED' in out :
-            self._renew_proxy()
+            self._renew_voms_proxy()
+            logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
-            if "ERROR" in err:
-                 output = "Error purging '%s' job after renewing the proxy: %s" % ( self.JobId , err )
-                 logger.error( output )
-                 raise JobException( output )
         if "ERROR" in err: 
             output = "Error purging '%s' job: %s" % ( self.JobId , err )
             logger.error( output )
