@@ -37,9 +37,9 @@ setup(){
 
     FIRST_RMT_JOB_HOME=`pwd`
     
-    if [ "${WRF4G_SCRATCH}" ]; then
+    if [ "${DRM4G_SCRATCH}" ]; then
       
-        RMT_JOB_HOME="${WRF4G_SCRATCH}/${GW_USER}_${GW_JOB_ID}" 
+        RMT_JOB_HOME="${DRM4G_SCRATCH}/${GW_USER}_${GW_JOB_ID}" 
 
     	printf "`date`: Making ${RMT_JOB_HOME}  directory... "
     	
@@ -341,7 +341,7 @@ transfer_output_files(){
             ;;
 
         *)
-            if [ "${WRF4G_SCRATCH}" ]; then
+            if [ "${DRM4G_SCRATCH}" ]; then
                 printf "`date`: Copy ${RMT_JOB_HOME}/${SRC_FILE} file to ${FIRST_RMT_JOB_HOME} ... "
                 cp ${RMT_JOB_HOME}/${SRC_FILE} ${FIRST_RMT_JOB_HOME}/
                 if [ $? -ne 0 ]; then
@@ -359,7 +359,7 @@ transfer_output_files(){
 }
 
 clean(){
-    if [ "${WRF4G_SCRATCH}" ]; then
+    if [ "${DRM4G_SCRATCH}" ]; then
         if ! test -f ${RMT_JOB_HOME}/.lock; then
             printf "`date`: Deleting remote SCRATCH directory... "
             rm -rf  ${RMT_JOB_HOME}
