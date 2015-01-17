@@ -99,42 +99,6 @@ int gw_clear_state();
 void gw_recover_state();
 
 
-
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-
-int gw_check_port()
-{
-    struct sockaddr_in serv_addr;
-    int socket_;
-
-    socket_ = socket(AF_INET, SOCK_STREAM, 0);
-
-    if( socket_ == -1)
-    {
-        fprintf(stderr,"ERROR: socket error\n");
-        return -1;
-    }
-
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(gw_conf.gwd_port);
-
-    if (bind(socket_, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) == -1)
-    {
-    	fprintf(stderr,"WARNING: the port %d is not free.\n",gw_conf.gwd_port);
-    	return -1;
-    }
-
-    if (close (socket_) < 0 )
-    {
-    	fprintf(stderr,"ERROR: did not close socket.\n");
-        return -1;
-    }
-    return 0;
-}
-
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
@@ -645,21 +609,6 @@ int main(int argc, char **argv)
             unlink(lock);
             exit(-1);
         }
-    }
-
-    /* ---------------------------- */
-    /*   Check if gwd.port is free  */
-    /* ---------------------------- */
-
-    gw_log_print("GW",'I',"Checking if %d port is free.\n",gw_conf.gwd_port);
-
-    rc = gw_check_port();
-
-    if (rc  == -1)
-    {
-        fprintf(stderr,"WARNING: update the GWD_PORT variable in file: %s/" GW_ETC_DIR "/gwd.conf\n",GW_LOCATION);
-        unlink(lock);
-        exit(-1);
     }
 
     /* ---------------------------- */
