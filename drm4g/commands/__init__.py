@@ -370,7 +370,7 @@ Usage:
     drm4g resource <name> proxy [ info | destroy | init [ --proxy-lifetime=<hours> ] ]  [ --dbg ]
     drm4g host [ list ] [ <hid> ] [ --dbg ]
     drm4g job submit [ --dep <job_id> ... ] <template> [ --dbg ]
-    drm4g job info [ <job_id> ] [ --dbg ]
+    drm4g job list [ <job_id> ] [ --dbg ]
     drm4g job cancel <job_id> ... [ --dbg ]
     drm4g job hold <job_id> ... [ --dbg ]
     drm4g job release <job_id> ... [ --dbg ]    
