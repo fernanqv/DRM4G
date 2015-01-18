@@ -11,7 +11,7 @@ from drm4g                import REMOTE_VOS_DIR , DRM4G_CONFIG_FILE , DRM4G_BIN 
 from drm4g.utils.docopt   import docopt , DocoptExit
 from os.path              import expanduser , join , dirname , exists , basename
 
-__version__  = '2.1.1'
+__version__  = '2.2.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id: __init__.py 1931 2013-09-25 10:46:59Z carlos $"
 
@@ -518,7 +518,7 @@ Type:  'help' for help with commands
     
     Usage: 
         job submit [ --dep <job_id> ... ] <template> [--dbg] 
-        job info [ <job_id> ] [--dbg] 
+        job list [ <job_id> ] [--dbg] 
         job cancel  <job_id> ... [--dbg]
         job hold <job_id> ... [ --dbg ]
         job release <job_id> ... [ --dbg ]    
@@ -563,7 +563,7 @@ Type:  'help' for help with commands
                 resource.check_frontends( )
                 dependencies = '-d "%s"' % ' '.join( arg['--dep'] ) if arg['--dep'] else ''
                 cmd = '%s/gwsubmit %s -v %s' % ( DRM4G_BIN , dependencies  , arg['<template>'] )
-            elif arg['info']:
+            elif arg['list']:
                 cmd = '%s/gwps -o Jestxjh '  % ( DRM4G_BIN )
                 if arg['<job_id>'] :
                     cmd = cmd + arg['<job_id>'][0] 
