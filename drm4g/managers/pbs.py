@@ -82,7 +82,8 @@ class Job (drm4g.managers.Job):
         args += '#PBS -N JID_%s\n' % (parameters['environment']['GW_JOB_ID'])
         if parameters.has_key('project'):
             args += '#PBS -P $project\n'
-        args += '#PBS -q $queue\n'
+        if parameters['queue'] != 'default':
+            args += '#PBS -q $queue\n'
         args += '#PBS -o $stdout\n'
         args += '#PBS -e $stderr\n'
         if parameters.has_key('maxWallTime'): 

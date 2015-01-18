@@ -55,7 +55,8 @@ class Job (drm4g.managers.Job):
         args += '#BSUB -o $stdout\n'
         args += '#BSUB -e $stderr\n'
         args += '#BSUB -n $count\n'
-        args += '#BSUB -q $queue\n'
+        if parameters['queue'] != 'default':
+            args += '#BSUB -q $queue\n'
         args += '#BSUB -W $maxWallTime\n'
         if parameters.has_key('ppn'): 
             args += '#BSUB -R"span[ptile=$ppn]"'
