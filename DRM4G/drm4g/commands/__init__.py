@@ -421,6 +421,9 @@ Type:  'help' for help with commands
         if arg[ '--dbg' ] :
             logger.setLevel(logging.DEBUG)
         try :
+            daemon = Daemon()
+            if not daemon.is_alive() :
+               raise Exception('DRM4G is stopped.')
             resource = Resource( self.config )
             resource.check_frontends( )
             if not arg['<name>'] :
@@ -500,7 +503,7 @@ Type:  'help' for help with commands
         try :
             daemon = Daemon()
             if not daemon.is_alive() :
-               raise Exception('DRM4G daemon is stopped.')
+               raise Exception('DRM4G is stopped.')
             cmd = '%s/gwhost '  % ( DRM4G_BIN )
             if arg[ '<hid>' ] :
                 cmd = cmd + arg[ '<hid>' ] 
@@ -557,7 +560,7 @@ Type:  'help' for help with commands
         try :
             daemon = Daemon( )
             if not daemon.is_alive() :
-               raise Exception('DRM4G daemon is stopped.')
+               raise Exception('DRM4G is stopped.')
             if arg['submit']:
                 resource = Resource( self.config )
                 resource.check_frontends( )
