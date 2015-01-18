@@ -377,6 +377,7 @@ Usage:
     drm4g job re-schedule <job_id> ... [ --dbg ] 
     drm4g job get-history <job_id> [ --dbg ]
     drm4g help <command>
+    drm4g --version  
 
 Arguments:
     <hid>                      Host identifier.
@@ -386,6 +387,7 @@ Arguments:
 
 Options:
     -h --help
+    --version                  Show version.
     --proxy-lifetime=<hours>   Duration of the proxy's lifetime [default: 168].
     --public-key=<file>        Public key file.
     --dep=<job_id> ...         Define the job dependency list of the job.
@@ -636,7 +638,7 @@ def execute_from_command_line( argv ):
     A method that runs a ManagementUtility.
     """
     if len( argv ) > 1:
-        docopt(help_info)
+        docopt( help_info, version = __version__ )
         ManagementUtility().onecmd( ' '.join( argv[ 1: ] ) )
     else:
         ManagementUtility().cmdloop()
