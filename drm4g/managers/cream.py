@@ -98,7 +98,6 @@ class Job (drm4g.managers.Job):
         if err :
             output = "Error renewing the proxy(%s): %s" % ( cmd , err )
             logger.error( output )
-            raise JobException( output )
 
     def jobSubmit(self, wrapper_file):
         cmd = '%s -e %s delegete-proxy' % ( 
@@ -142,7 +141,7 @@ class Job (drm4g.managers.Job):
         logger.debug( out + err )
         if not 'succesfully renewed' in out :
             logger.error( out )
-            raise JobException( out )
+            return 'FAILED'
         cmd = '%s %s -L 2' % ( CREAM_STATUS % self.resfeatures[ 'vo' ] , self.JobId )
         logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
@@ -155,7 +154,7 @@ class Job (drm4g.managers.Job):
         if "ERROR" in err:
             output = "Error checking '%s' job: %s" % ( self.JobId , err )
             logger.error( output )
-            raise JobException( output )
+            return 'FAILED'
         mo = re_status.search(out)
         if mo:
             job_status = self.cream_states.setdefault(mo.groups()[0], 'UNKNOWN')
