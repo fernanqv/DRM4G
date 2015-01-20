@@ -22,6 +22,8 @@ DRM4G_DEPLOYMENT_DIR = dirname( dirname( dirname( abspath( __file__ ) ) ) )
 DRM4G_BIN            = join( DRM4G_DEPLOYMENT_DIR , 'bin'  ) 
 DRM4G_CONFIG_FILE    = join( DRM4G_DIR , 'etc' , 'resources.conf' )
 DRM4G_LOGGER         = join( DRM4G_DIR , 'etc' , 'logger.conf')
+DRM4G_DAEMON         = join( DRM4G_DIR , 'etc' , 'gwd.conf')
+DRM4G_SCHED          = join( DRM4G_DIR , 'etc' , 'sched.conf')
 
 logging.basicConfig( format='%(message)s', level = logging.INFO , stream = sys.stdout )
 logger = logging.getLogger(__name__) 
