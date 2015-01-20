@@ -7,9 +7,9 @@ import subprocess
 import logging
 import drm4g.core.configure
 
-from drm4g                import REMOTE_VOS_DIR , DRM4G_CONFIG_FILE , DRM4G_BIN , DRM4G_DIR
-from drm4g.utils.docopt   import docopt , DocoptExit
-from os.path              import expanduser , join , dirname , exists , basename
+from drm4g                import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_BIN, DRM4G_DIR, DRM4G_LOGGER, DRM4G_DAEMON, DRM4G_SCHED
+from drm4g.utils.docopt   import docopt, DocoptExit
+from os.path              import expanduser, join, dirname, exists, basename
 
 __version__  = '2.2.0'
 __author__   = 'Carlos Blanco'
@@ -364,7 +364,8 @@ DRM4G is an open platform, which is based on GridWay Metascheduler, to define, s
 For additional information, see http://www.meteo.unican.es/trac/wiki/DRM4G .
 
 Usage:
-    drm4g daemon [ start | stop | status | restart | clear ] [ --dbg ]
+    drm4g [ start | stop | status | restart | clear ] [ --dbg ]
+    drm4g conf ( daemon | sched | logger ) [ --dbg ] 
     drm4g resource [ list | edit | info ] [ --dbg ] 
     drm4g resource <name> ssh-key [ info | add | delete | copy [ --public-key=<file> ] ] [ --dbg ]
     drm4g resource <name> proxy [ info | destroy | init [ --proxy-lifetime=<hours> ] ]  [ --dbg ]
@@ -520,8 +521,7 @@ Type:  'help' for help with commands
     def do_job(self, arg):
         """
     Submit, get status and history and cancel jobs.
-    
-    Usage: 
+        Usage: 
         job submit [ --dep <job_id> ... ] <template> [--dbg] 
         job list [ <job_id> ] [--dbg] 
         job cancel  <job_id> ... [--dbg]
@@ -590,12 +590,12 @@ Type:  'help' for help with commands
             logger.error( str( err ) )
             
     @docopt_cmd
-    def do_daemon(self, arg):
+    def do_start(self, arg):
         """
-    Manage DRM4G daemon. Keep in mind that the clear command deletes all the jobs available in DRM4G. 
+    Start DRM4G daemon and ssh-agent. 
     
     Usage: 
-        daemon [ start | stop | status | restart | clear ] [ --dbg ] 
+        start [ --dbg ] 
    
     Options:
         --dbg    Debug mode.
@@ -603,27 +603,108 @@ Type:  'help' for help with commands
         try:
             if arg[ '--dbg' ] :
                 logger.setLevel(logging.DEBUG)
-            daemon = Daemon()
-            agent  = Agent()
-            if arg[ 'start' ] :
-                agent.start()
-                daemon.start()
-            elif arg[ 'stop' ] :
-                agent.stop()
-                daemon.stop()
-            elif arg[ 'status' ] :
-                daemon.status()
-            elif arg[ 'restart' ] :
-                daemon.stop()
-                daemon.start()
-            elif arg[ 'clear' ] :
-                agent.start()
-                daemon.clear()
-            else :
-                daemon.status()
+            Daemon().start()
+            Agent().start()
         except Exception , err :
             logger.error( str( err ) )
-        
+                
+    @docopt_cmd
+    def do_stop(self, arg):
+        """
+    Stop DRM4G daemon and ssh-agent.  
+    
+    Usage: 
+        stop [ --dbg ] 
+   
+    Options:
+        --dbg    Debug mode.
+        """
+        try:
+            if arg[ '--dbg' ] :
+                logger.setLevel(logging.DEBUG)
+            Daemon().stop()
+            Agent().stop()
+        except Exception , err :
+            logger.error( str( err ) )
+
+    @docopt_cmd
+    def do_status(self, arg):
+        """
+    Check DRM4G daemon.  
+                
+    Usage:  
+        status [ --dbg ] 
+            
+    Options:    
+        --dbg    Debug mode.
+        """ 
+        try:    
+            if arg[ '--dbg' ] :
+                logger.setLevel(logging.DEBUG)
+            Daemon().status()
+        except Exception , err :
+            logger.error( str( err ) )
+
+    @docopt_cmd
+    def do_restart(self, arg):
+        """
+    Restart DRM4G daemon.
+                
+    Usage:  
+        restart [ --dbg ] 
+            
+    Options:    
+        --dbg    Debug mode.
+        """
+        try:
+            if arg[ '--dbg' ] :
+                logger.setLevel(logging.DEBUG)
+            daemon = Daemon()
+            daemon.stop()
+            daemon.start()
+        except Exception , err :
+            logger.error( str( err ) )
+
+    @docopt_cmd
+    def do_clear(self, arg):
+        """
+    Delete all the jobs available in DRM4G. 
+                
+    Usage:  
+        clear [ --dbg ] 
+            
+    Options:    
+        --dbg    Debug mode.
+        """
+        try:
+            if arg[ '--dbg' ] :
+                logger.setLevel(logging.DEBUG)
+            Daemon().clear()
+        except Exception , err :
+            logger.error( str( err ) )
+     
+    @docopt_cmd
+    def do_conf(self, arg):
+        """
+    Configure daemon, scheduler and logger DRM4G parameters
+                
+    Usage:  
+        conf ( daemon | sched | logger ) [ --dbg ] 
+            
+    Options:    
+        --dbg    Debug mode.
+        """
+        if arg[ '--dbg' ] :
+            logger.setLevel(logging.DEBUG)
+        if arg[ 'daemon' ] :
+            conf_file = DRM4G_DAEMON
+        elif arg[ 'logger' ]:
+            conf_file = DRM4G_LOGGER
+        else :
+            conf_file = DRM4G_SCHED
+        logger.debug( "Editing '%s' file" % conf_file )
+        os.system( "%s %s" % ( os.environ.get('EDITOR', 'vi') , conf_file ) )
+
     def default( self , arg ):    
         self.do_help( arg )
 
