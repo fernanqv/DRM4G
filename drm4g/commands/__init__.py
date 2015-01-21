@@ -277,7 +277,7 @@ class Resource( object ):
                 state = 'enabled'
             else :
                 state = 'disabled'
-            logger.info( "\t%-30.30s%s" % ( resname , state ) )
+            logger.info( "\t%-30.30s%s" % ( resname, state ) )
                     
     def features( self ) :
         """
@@ -287,7 +287,7 @@ class Resource( object ):
         for resname , resdict in sorted( self.config.resources.iteritems() ) :
             logger.info( "Resource '%s' :" % ( resname ) )
             for key , val in sorted( resdict.iteritems() ) :
-                logger.info( "\t--> '%s' : '%s'" % ( key , val ) )         
+                logger.info( "\t--> '%s' : '%s'" % ( key, val ) )         
     
     def check( self ) :
         """
@@ -300,14 +300,14 @@ class Resource( object ):
     
 class Proxy( object ):
     
-    def __init__( self , config , name ):
+    def __init__( self, config, name ):
         self.config    = config
         self.resource  = self.config.resources[ name ]
         self.communicator = self.config.make_communicators()[ name ]
         self.communicator.connect()
         if self.resource.has_key( 'myproxy_server' ) :
             self.prefix = "X509_USER_PROXY=%s MYPROXY_SERVER=%s " % (
-                                                                 join( REMOTE_VOS_DIR , self.resource[ 'myproxy_server' ] ) ,
+                                                                 join( REMOTE_VOS_DIR , self.resource[ 'myproxy_server' ] ),
                                                                  self.resource[ 'myproxy_server' ]
                                                                  )
         else :
@@ -322,15 +322,12 @@ class Proxy( object ):
             message      = 'Insert your Grid password: '
             grid_passwd  = getpass.getpass(message)
         
-            message      = 'Insert MyProxy password: '
-            proxy_passwd = getpass.getpass(message)
-        
-            cmd = self.prefix + "myproxy-init -S --cred_lifetime %s --proxy_lifetime %s --local_proxy" % ( 
+            cmd = self.prefix + "myproxy-init -S --cred_lifetime %s --proxy_lifetime %s --local_proxy -n -d" % ( 
                                                                                                          proxy_lifetime ,
                                                                                                          proxy_lifetime
                                                                                                          )
             logger.debug( "Executing command ... ", cmd ) 
-            out , err = self.communicator.execCommand( cmd , input = '\n'.join( [ grid_passwd, proxy_passwd ] ) )
+            out , err = self.communicator.execCommand( cmd , input = grid_passwd )
             logger.info( out )
             if err :
                 logger.info( err )
@@ -367,7 +364,7 @@ Usage:
     drm4g [ start | stop | status | restart | clear ] [ --dbg ]
     drm4g conf ( daemon | sched | logger ) [ --dbg ] 
     drm4g resource [ list | edit | info ] [ --dbg ] 
-    drm4g resource <name> ssh-key [ info | add | delete | copy [ --public-key=<file> ] ] [ --dbg ]
+    drm4g resource <name> identity [ int [ --proxy-lifetime=<hours> ] info | add | delete | conf [ --public-key=<file> --grid-cred=<file> ] ] [ --dbg ]
     drm4g resource <name> proxy [ info | destroy | init [ --proxy-lifetime=<hours> ] ]  [ --dbg ]
     drm4g host [ list ] [ <hid> ] [ --dbg ]
     drm4g job submit [ --dep <job_id> ... ] <template> [ --dbg ]
