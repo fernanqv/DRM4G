@@ -56,6 +56,7 @@ class Communicator (drm4g.communicators.Communicator):
                 agent = Agent()
                 keys  = agent.get_keys()
                 if not keys :
+                    logger.error( "Error trying to connect to '%s'" % self.frontend )
                     logger.error( "Impossible to load '%s' key from the ssh-agent"  % self.private_key )
                     try:
                         status_ssh_agent = agent._conn
@@ -148,7 +149,7 @@ class Communicator (drm4g.communicators.Communicator):
         if stderr:
             raise ComException( "Could not remove %s directory on '%s': %s" % ( to_dir , self.frontend , stderr ) )
             
-    def copy( self , source_url , destination_url , execution_mode ) :
+    def copy( self , source_url , destination_url , execution_mode = '' ) :
         with self._sem :
             self.connect( )
             scp = SCPClient( self._trans )

@@ -346,7 +346,7 @@ class HostInformation( object ) :
             '" CPU_MHZ=' + self.CpuMhz + ' CPU_FREE=' + self.FreeCpu + ' CPU_SMP=' + self.CpuSmp + \
             ' NODECOUNT=' + self.Nodes + ' SIZE_MEM_MB=' + self.SizeMemMB + ' FREE_MEM_MB=' + \
             self.FreeMemMB + ' SIZE_DISK_MB=' + self.SizeDiskMB + ' FREE_DISK_MB=' + self.FreeDiskMB + \
-            ' FORK_NAME="' + self.ForkName + '" LRMS_NAME="' + self.LrmsName + '" LRMS_TYPE="' + self.LrmsType + '" '
+            ' FORK_NAME="' + self.ForkName + '" LRMS_NAME="' + self.LrmsName + '" LRMS_TYPE="' + self.LrmsType + '" FIXED_PRIORITY="0" '
         info_queue = ""
         for i, queue in enumerate(self._queues):
             info_queue += queue.info(i)
