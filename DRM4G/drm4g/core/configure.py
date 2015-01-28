@@ -79,7 +79,6 @@ class Configuration(object):
         
         Return a list with the errors.
         """
-        logger.debug( "Checking file '%s' ..." % DRM4G_CONFIG_FILE )
         errors = []
         for resname, resdict in self.resources.iteritems() :
             logger.debug("Checking resource '%s' ..." % resname)
@@ -93,22 +92,22 @@ class Configuration(object):
                 output = "'max_jobs_running' key is mandatory for '%s' resource" % resname
                 logger.error( output )
                 errors.append( output )
-            if ( not 'max_jobs_in_queue' in reslist and ( resdict[ 'lrms' ] != 'cream' ) ) :
+            if ( not ( 'max_jobs_in_queue' in reslist ) and ( 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) ) :
                 self.resources[resname]['max_jobs_in_queue'] = resdict['max_jobs_running']
                 logger.debug( "'max_jobs_in_queue' will be the same as the 'max_jobs_running'" )
             if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 self.resources[resname]['queue'] = "default"
                 output = "'queue' key will be called 'default' for '%s' resource" % resname
                 logger.debug( output )
-            if  resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_in_queue' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
+            if 'max_jobs_running' in reslist and resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_in_queue' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
                 output = "The number of elements in 'max_jobs_in_queue' are different to the elements of 'queue'"
                 logger.error( output )
                 errors.append( output )
-            if  resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_running' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
+            if  'max_jobs_running' in reslist and resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_running' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
                 output = "The number of elements in 'max_jobs_running' are different to the elements of 'queue'"
                 logger.error( output )
                 errors.append( output )
-            if  resdict[ 'lrms' ] != 'cream' and ( 'host_filter' in reslist ) :
+            if resdict[ 'lrms' ] != 'cream' and ( 'host_filter' in reslist ) :
                 output = "'host_filter' key is only available for 'cream' lrms"
                 logger.error( output )
                 errors.append( output )
@@ -116,7 +115,7 @@ class Configuration(object):
                 output = "'%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
                 logger.error( output )
                 errors.append( output )
-            if resdict.has_key( 'ssh' ) and not resdict.has_key( 'username' ) :
+            if resdict[ 'communicator' ] == 'ssh' and not resdict.has_key( 'username' ) :
                 output = "'username' key is mandatory for 'ssh' communicator, '%s' resource" % resname 
                 logger.error( output )
                 errors.append( output )
