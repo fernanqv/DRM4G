@@ -17,9 +17,9 @@ require_command () {
 }
 
 require_python () {
-    require_command "$PYTHON"
+    require_command "python"
     # Support 2.5 >= python < 3.0 
-    python_version=$($PYTHON <<EOF
+    python_version=$(python <<EOF
 import sys
 print(sys.version_info[0]==2 and sys.version_info[1] >= 5 )
 EOF
@@ -44,7 +44,7 @@ Options:
       -d, --dir DIRECTORY    Install DRM4G into a directory.
                              (Default: $DRM4G_DIR_INSTALATION)
 
-      -v, --version          Version to install.
+      -V, --version          Version to install.
                              (Default: $DRM4G_VERSION)
 
       -h, --help             Print this help text.
@@ -52,7 +52,7 @@ Options:
 EOF
 }
 
-while true
+while test -n "$1"
 do
     case "$1" in
         -d|--dir)
@@ -63,7 +63,7 @@ do
             usage
             exit 0
             ;;
-        -v|--version)
+        -V|--version)
             DRM4G_VERSION=$1       
             ;;
         *)
@@ -80,7 +80,7 @@ cat <<EOF
 DRM4G installation script
 ==========================
 
-This script installs DRM4G $DRM4G_VERSION in '$DRM4G_DIR_INSTALATION'.
+This script will install DRM4G $DRM4G_VERSION 
 
 EOF
 
@@ -89,10 +89,11 @@ require_command gcc
 
 require_python
 
-DRM4G_BUNDLE=drm4g_${DRM4G_HARDWARE}_${DRM4G_VERSION}_tar.gz
-
-# Download command
-wget --no-check-certificate -O $DRM4G_BUNDLE $BASE_URL/$DRM4G_BUNDLE 
+DRM4G_BUNDLE="drm4g-${DRM4G_VERSION}-${DRM4G_HARDWARE}.tar.gz"
+echo ""
+echo "--> Downloading $DRM4G_BUNDLE from $BASE_URL ..."
+echo ""
+wget -nv --no-check-certificate -O $DRM4G_BUNDLE $BASE_URL/$DRM4G_BUNDLE 
 rc=$?
 if [ $rc -ne 0 ]
 then
@@ -100,12 +101,14 @@ then
     exit 1
 fi
 
-echo "Installing DRM4G in directory '$DRM4G_DIR_INSTALATION' ..."
-tar xvzf $DRM4G_BUNDLE -C $DRM4G_DIR_INSTALATION
+echo ""
+echo "--> Unpacking $DRM4G_BUNDLE in directory $DRM4G_DIR_INSTALATION ..."
+echo ""
+tar xzf $DRM4G_BUNDLE -C $DRM4G_DIR_INSTALATION
 rc=$?
 if [ $rc -ne 0 ]
 then
-    "Unable to unpack the bunble $DRM4G_BUNDLE in '$VENVDIR'"
+    "Unable to unpack the bunble $DRM4G_BUNDLE in $DRM4G_DIR_INSTALATION"
     exit 1
 fi
 
@@ -117,7 +120,7 @@ Installation of DRM4G is done!
 In order to work with DRM4G you have to enable its 
 environment with the command:
 
-    . $DRM4G_DIR_INSTALATION/bin/drm4g_init.sh
+    . $DRM4G_DIR_INSTALATION/drm4g/bin/drm4g_init.sh
 
 You need to run the above command on every new shell you 
 open before using DRM4G, but just once per session.
