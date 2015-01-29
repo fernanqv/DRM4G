@@ -2,7 +2,7 @@
 
 BASE_URL="https://www.meteo.unican.es/work/DRM4G"
 DRM4G_VERSION=2.2.0
-DRM4G_DIR_INSTALATION=$PWD
+DRM4G_DIR_INSTALATION=$HOME
 DRM4G_HARDWARE=$(uname -m)
 
 have_command () {
