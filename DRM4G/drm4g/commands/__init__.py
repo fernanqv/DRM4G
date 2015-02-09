@@ -404,10 +404,10 @@ Usage:
     drm4g [ --dbg ] [ start | stop | status | restart | clear ] 
     drm4g conf [ --dbg ] ( daemon | sched | logger ) 
     drm4g resource [ --dbg ] [ list | edit | info ]
-    drm4g resource <name> id [ --dbg ] --conf [ --public-key=<file> --grid-cerd=<file> ] 
-    drm4g resource <name> id [ --dbg ] --init [ --lifetime=<hours> ]
-    drm4g resource <name> id [ --dbg ] --info 
-    drm4g resource <name> id [ --dbg ] --delete 
+    drm4g resource <name> id [ --dbg ] conf [ --public-key=<file> --grid-cerd=<file> ] 
+    drm4g resource <name> id [ --dbg ] init [ --lifetime=<hours> ]
+    drm4g resource <name> id [ --dbg ] info 
+    drm4g resource <name> id [ --dbg ] delete 
     drm4g host [ --dbg ] [ list ] [ <hid> ]
     drm4g job submit [ --dbg ] [ --dep <job_id> ... ] <template>
     drm4g job list [ --dbg ] [ <job_id> ] 
@@ -452,10 +452,10 @@ Type:  'help' for help with commands
     
     Usage: 
         resource [ --dbg ] [ list | edit ] 
-        resource <name> id [ --dbg ] --conf [ --public-key=<file> --grid-cerd=<file> ] 
-        resource <name> id [ --dbg ] --init [ --lifetime=<hours> ]
-        resource <name> id [ --dbg ] --info 
-        resource <name> id [ --dbg ] --delete 
+        resource <name> id [ --dbg ] conf [ --public-key=<file> --grid-cerd=<file> ] 
+        resource <name> id [ --dbg ] init [ --lifetime=<hours> ]
+        resource <name> id [ --dbg ] info 
+        resource <name> id [ --dbg ] delete 
 
     Options:
         -l --lifetime=<hours>   Duration of the identity's lifetime [default: 168].
@@ -470,21 +470,21 @@ Type:  'help' for help with commands
                                 private/public keys and grid credentials, depending 
                                 on the resource configuration.
                                 
-                                With --conf, configure public key authentication 
+                                With conf, configure public key authentication 
                                 for remote connections. It adds the key by appending 
                                 it to the remote user's ~/.ssh/authorized_keys file.
                                 And it configures the user's grid certificate in 
                                 ~/.globus directory, if --grid-cerd option is used.
                                 
-                                With --init, creates an identity for a while, by default
+                                With init, creates an identity for a while, by default
                                 168 hours (1 week). Use the option --lifetime to modify 
                                 this value. It adds the configured private key to a 
                                 ssh-agent and creates a grid proxy using a myproxy server.
                                 
-                                With --info, it gives some information about the 
+                                With info, it gives some information about the 
                                 identity status.
                                 
-                                With --delete, the identity is removed from the 
+                                With delete, the identity is removed from the 
                                 ssh-agent and the myproxy server.
         """
         if arg[ '--dbg' ] :
@@ -519,7 +519,7 @@ Type:  'help' for help with commands
                     if not exists( private_key ) :
                         raise Exception( "'%s' does not exist." % ( private_key ) )
                     agent = Agent()
-                if arg[ '--init' ] :
+                if arg[ 'init' ] :
                     if communicator == 'ssh' :
                         logger.info( "--> Starting ssh-agent ... " )
                         agent.start( )
@@ -527,7 +527,7 @@ Type:  'help' for help with commands
                     if lrms == 'cream' :
                         logger.info( "--> Creating a proxy ... " )
                         proxy.create( arg[ '--lifetime' ] )
-                elif arg[ '--conf' ] :
+                elif arg[ 'conf' ] :
                     if communicator == 'ssh' :
                         logger.info( "--> Configuring private and public keys ... " )
                         identity = arg[ '--public-key' ] if arg[ '--public-key' ] else private_key
@@ -543,7 +543,7 @@ Type:  'help' for help with commands
                         proxy.configure( grid_cerd )
                     else :
                         logger.info( "WARNING: It is assumed that the grid certificate has been already configured" )
-                elif arg[ '--delete' ] :
+                elif arg[ 'delete' ] :
                     if communicator == 'ssh' :
                         agent.delete_key( private_key )
                     if lrms == 'cream' :
