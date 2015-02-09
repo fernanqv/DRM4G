@@ -117,13 +117,9 @@ cat <<EOF
 Installation of DRM4G is done!
 ===============================
 
-In order to work with DRM4G you have to enable its 
-environment with the command:
+In order to use DRM4G run the comnand below:
 
-    . $DRM4G_DIR_INSTALATION/drm4g/bin/drm4g_init.sh
-
-You need to run the above command on every new shell you 
-open before using DRM4G, but just once per session.
+source $DRM4G_DIR_INSTALATION/drm4g/bin/drm4g_init.sh
 
 EOF
 
