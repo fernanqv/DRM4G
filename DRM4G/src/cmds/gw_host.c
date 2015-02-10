@@ -232,13 +232,22 @@ int main(int argc, char **argv)
 			}
 			else
 			  {
-				if (!n)
+				if (!n )
+                                  
 				  gw_client_print_host_status_header();
 				
 				if (host_id != -1)
 				  {
-					gw_client_print_host_status(&host_status);
-					gw_client_print_host_queues(&host_status,!n);
+                                   if ( (&host_status.lrms_name != NULL) && strcmp(&host_status.lrms_name,"") &&
+                                                 strcmp(&host_status.lrms_name,"NULL") )
+                                        {
+					    gw_client_print_host_status(&host_status);
+					    gw_client_print_host_queues(&host_status,!n);
+                                        }
+                                   else{
+                                            fprintf(stderr,"FAILED: failed bad host id\n");
+                                       }
+                                       
 				  }
 				else
 				  {
