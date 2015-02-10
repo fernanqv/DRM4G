@@ -10,6 +10,7 @@ import drm4g.core.configure
 from drm4g                import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_BIN, DRM4G_DIR, DRM4G_LOGGER, DRM4G_DAEMON, DRM4G_SCHED
 from drm4g.utils.docopt   import docopt, DocoptExit
 from os.path              import expanduser, join, dirname, exists, basename, expandvars
+from time                 import sleep
 
 __version__  = '2.2.0'
 __author__   = 'Carlos Blanco'
@@ -163,7 +164,7 @@ class Agent( object ):
             if err :
                 logger.info( err )
         else:
-            logger.debug( 'ssh-agent is already stopped' )
+            logger.debug( 'ssh-agent is already stopped.' )
         try:
             os.remove( self.agent_file )
         except :
@@ -177,9 +178,9 @@ class Daemon( object ):
                 
     def status( self ):
         if self.is_alive() :
-            logger.info( "DRM4G is running" )
+            logger.info( "DRM4G is running." )
         else :
-            logger.info( "DRM4G is stopped" )
+            logger.info( "DRM4G is stopped." )
   
     def is_alive( self ):
         if not exists( self.gwd_pid ) :
@@ -220,7 +221,6 @@ class Daemon( object ):
             logger.info( "OK" )
             
     def clear( self ):
-        self.stop()
         yes_choise = yes_no_choice( "Do you want to continue clearing DRM4G " )
         if yes_choise :
             logger.info( "Clearing DRM4G .... " )
@@ -493,13 +493,12 @@ Type:  'help' for help with commands
             daemon = Daemon()
             if not daemon.is_alive() :
                raise Exception( 'DRM4G is stopped.' )
+            resource = Resource( self.config )
             if not arg[ '<name>' ] :
-                resource = Resource( self.config )
                 if arg[ 'edit' ] :
                     resource.edit()
                 else :
                     resource.list()
-                resource.check_frontends( )
             else : 
                 self.config.load( )
                 if self.config.check( ) :
@@ -555,6 +554,7 @@ Type:  'help' for help with commands
                     if lrms == 'cream' :
                         logger.info( "--> Grid credentials" )
                         proxy.check( )
+                resource.check_frontends( )
         except Exception , err :
             logger.error( str( err ) )
 
@@ -741,6 +741,7 @@ Type:  'help' for help with commands
                 logger.setLevel(logging.DEBUG)
             daemon = Daemon()
             daemon.stop()
+            sleep( 2.0 )
             daemon.start()
         except Exception , err :
             logger.error( str( err ) )
@@ -759,7 +760,10 @@ Type:  'help' for help with commands
         try:
             if arg[ '--dbg' ] :
                 logger.setLevel(logging.DEBUG)
-            Daemon().clear()
+            daemon = Daemon()
+            daemon.stop()
+            sleep( 2.0 )
+            daemon.clear()
         except Exception , err :
             logger.error( str( err ) )
      
