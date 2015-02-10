@@ -107,6 +107,11 @@ class Job (drm4g.managers.Job):
         logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
         logger.debug( out + err )
+        if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+            self._renew_voms_proxy()
+            logger.debug( "Executing command: %s" % cmd )
+            out , err = self.Communicator.execCommand( cmd )
+            logger.debug( out + err )
         if ( not 'succesfully delegated' in out ) and ( not 'already exists' in out ) :
             logger.error( out )
             raise JobException( out )
