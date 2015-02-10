@@ -233,7 +233,7 @@ void gw_host_clear_dynamic_info(int host_id)
     	return;
     }
 
-    host->fixed_priority = -1;
+    host->fixed_priority = 0;
     host->cpu_free     = 0;
     host->nodecount    = 0;
         

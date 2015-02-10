@@ -936,7 +936,8 @@ void gw_client_print_host_pool_status()
     int i;
     
     for (i=0;i<gw_client.number_of_hosts;i++)
-        if (gw_client.host_pool[i] != NULL && gw_client.host_pool[i]->fixed_priority != -1 )
+        if (gw_client.host_pool[i] != NULL && (gw_client.host_pool[i]->lrms_name != NULL) && 
+                        strcmp(gw_client.host_pool[i]->lrms_name,"") &&  strcmp(gw_client.host_pool[i]->lrms_name,"NULL"))
                 gw_client_print_host_status(gw_client.host_pool[i]);
 }
 
@@ -996,7 +997,7 @@ void gw_client_print_host_match(gw_msg_match_t *match_list)
     for (j=0;j< match_list->number_of_queues;j++)
     	if (match_list->match[j] == GW_TRUE )
         {
-        	printf("%-3i " ,match_list->host_id);
+            printf("%-3i " ,match_list->host_id);
             printf("%-10s ",match_list->queue_name[j]);
             printf("%-5i " ,match_list->rank[j]);
             printf("%-5i " ,match_list->fixed_priority);
@@ -1013,10 +1014,10 @@ void gw_client_print_host_match_xml(gw_msg_match_t *match_list)
 {
     int j;
     int host_id=-1;
-	int is_first_queue_in_host=1, was_last_queue_in_host=0;
-	int did_it_print_at_least_one_queue = 0;
+    int is_first_queue_in_host=1, was_last_queue_in_host=0;
+    int did_it_print_at_least_one_queue = 0;
 
-	// We have to order the queues by host, so let's redo the loop
+    // We have to order the queues by host, so let's redo the loop
     for (j=0;j< match_list->number_of_queues;j++){
     	if (match_list->match[j] == GW_TRUE )
         {
@@ -1134,7 +1135,7 @@ void gw_client_print_host_status_full(gw_msg_host_t * msg)
 void gw_client_print_host_status_xml(gw_msg_host_t * msg)
 {
     int freenodecount;
-	int i,j;
+    int i,j;
 
     printf("  <HOST HOST_ID=\"%i\">\n",msg->host_id);
     printf("    <HOSTNAME>%s</HOSTNAME>\n",msg->hostname);
@@ -1196,17 +1197,17 @@ void gw_client_print_host_status_xml(gw_msg_host_t * msg)
     for (i=0;i<msg->number_of_queues;i++)
 	  {
 		printf("    <QUEUE QUEUE_ID=\"%i\">\n",i);
-        printf("      <QUEUE_NAME>%s</QUEUE_NAME>\n",msg->queue_name[i]);
+                printf("      <QUEUE_NAME>%s</QUEUE_NAME>\n",msg->queue_name[i]);
 		printf("      <QUEUE_FREENODECOUNT>%i</QUEUE_FREENODECOUNT>\n",msg->queue_freenodecount[i]);
-        printf("      <QUEUE_NODECOUNT>%i</QUEUE_NODECOUNT>\n",msg->queue_nodecount[i]);
-        printf("      <QUEUE_MAXTIME>%i</QUEUE_MAXTIME>\n",msg->queue_maxtime[i]);
-        printf("      <QUEUE_MAXCPUTIME>%i</QUEUE_MAXCPUTIME>\n",msg->queue_maxcputime[i]);
-        printf("      <QUEUE_MAXCOUNT>%i</QUEUE_MAXCOUNT>\n",msg->queue_maxcount[i]);
-        printf("      <QUEUE_MAXRUNNINGJOBS>%i</QUEUE_MAXRUNNINGJOBS>\n",msg->queue_maxrunningjobs[i]);
-        printf("      <QUEUE_MAXJOBSINQUEUE>%i</QUEUE_MAXJOBSINQUEUE>\n",msg->queue_maxjobsinqueue[i]);
-        printf("      <QUEUE_STATUS>%s</QUEUE_STATUS>\n",msg->queue_status[i]);
-        printf("      <QUEUE_DISPATCHTYPE>%s</QUEUE_DISPATCHTYPE>\n",msg->queue_dispatchtype[i]);
-        printf("      <QUEUE_PRIORITY>%s</QUEUE_PRIORITY>\n",msg->queue_priority[i]);
+                printf("      <QUEUE_NODECOUNT>%i</QUEUE_NODECOUNT>\n",msg->queue_nodecount[i]);
+                printf("      <QUEUE_MAXTIME>%i</QUEUE_MAXTIME>\n",msg->queue_maxtime[i]);
+                printf("      <QUEUE_MAXCPUTIME>%i</QUEUE_MAXCPUTIME>\n",msg->queue_maxcputime[i]);
+                printf("      <QUEUE_MAXCOUNT>%i</QUEUE_MAXCOUNT>\n",msg->queue_maxcount[i]);
+                printf("      <QUEUE_MAXRUNNINGJOBS>%i</QUEUE_MAXRUNNINGJOBS>\n",msg->queue_maxrunningjobs[i]);
+                printf("      <QUEUE_MAXJOBSINQUEUE>%i</QUEUE_MAXJOBSINQUEUE>\n",msg->queue_maxjobsinqueue[i]);
+                printf("      <QUEUE_STATUS>%s</QUEUE_STATUS>\n",msg->queue_status[i]);
+                printf("      <QUEUE_DISPATCHTYPE>%s</QUEUE_DISPATCHTYPE>\n",msg->queue_dispatchtype[i]);
+                printf("      <QUEUE_PRIORITY>%s</QUEUE_PRIORITY>\n",msg->queue_priority[i]);
 		// AL: Apparently we can bring the gen_var_str_name here, getting rid of [],
 		// since the information appearing here is, at the moment, QUEUE_ACCESS, QUEUE_JOBWAIT
 		// but sometimes the number_of_str_vars is not defined
