@@ -59,17 +59,17 @@ _drm4g_resource()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -eq 2 ]; then
-        COMPREPLY=( $( compgen -fW '--dbg edit info list id' -- $cur) )
+        COMPREPLY=( $( compgen -fW '--dbg edit list check id' -- $cur) )
     else
         case ${COMP_WORDS[2]} in
             edit)
             _drm4g_resource_edit
         ;;
-            info)
-            _drm4g_resource_info
-        ;;
             list)
             _drm4g_resource_list
+        ;;
+            check)
+            _drm4g_resource_check
         ;;
             id)
             _drm4g_resource_id
@@ -89,7 +89,7 @@ _drm4g_resource_edit()
     fi
 }
 
-_drm4g_resource_info()
+_drm4g_resource_list()
 {
     local cur
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -99,7 +99,7 @@ _drm4g_resource_info()
     fi
 }
 
-_drm4g_resource_list()
+_drm4g_resource_check()
 {
     local cur
     cur="${COMP_WORDS[COMP_CWORD]}"
