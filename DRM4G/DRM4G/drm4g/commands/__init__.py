@@ -155,6 +155,8 @@ class Agent( object ):
         match = re.search( '.*%s' % basename( identity_file ) , out)
         if match :
             logger.info( match.group() )
+        else :
+            logger.info( "The private key '%s' is not available anymore" )
         
     def stop( self ):
         logger.debug( 'Stopping ssh-agent ... ' )
@@ -164,7 +166,7 @@ class Agent( object ):
             if err :
                 logger.info( err )
         else:
-            logger.debug( 'ssh-agent is already stopped.' )
+            logger.debug( 'ssh-agent is already stopped' )
         try:
             os.remove( self.agent_file )
         except :
@@ -178,9 +180,9 @@ class Daemon( object ):
                 
     def status( self ):
         if self.is_alive() :
-            logger.info( "DRM4G is running." )
+            logger.info( "DRM4G is running" )
         else :
-            logger.info( "DRM4G is stopped." )
+            logger.info( "DRM4G is stopped" )
   
     def is_alive( self ):
         if not exists( self.gwd_pid ) :
@@ -245,14 +247,15 @@ class Resource( object ):
         """
         Check if the frontend of a given resource is reachable.
         """
+        self.check( )
         communicators = self.config.make_communicators()
         for resname, resdict in sorted( self.config.resources.iteritems() ) :
             if resdict[ 'enable' ] == 'true' :
                 communicator = communicators.get( resname )
                 try :
                     communicator.connect()
-                    logger.debug( "Resource '%s' :" % ( resname ) )
-                    logger.debug( "--> The front-end '%s' is accessible\n" % communicator.frontend )
+                    logger.info( "Resource '%s' :" % ( resname ) )
+                    logger.info( "--> The front-end '%s' is accessible\n" % communicator.frontend )
                 except Exception , err :
                     logger.error( "Resource '%s' :" % ( resname ) )
                     logger.error( "--> The front-end '%s' is not accessible\n" % communicator.frontend )
@@ -403,7 +406,7 @@ see http://www.meteo.unican.es/trac/wiki/DRM4G .
 Usage:
     drm4g [ --dbg ] [ start | stop | status | restart | clear ] 
     drm4g conf [ --dbg ] ( daemon | sched | logger ) 
-    drm4g resource [ --dbg ] [ list | edit | info ]
+    drm4g resource [ --dbg ] [ list | edit | check ]
     drm4g resource <name> id [ --dbg ] conf [ --public-key=<file> --grid-cerd=<file> ] 
     drm4g resource <name> id [ --dbg ] init [ --lifetime=<hours> ]
     drm4g resource <name> id [ --dbg ] info 
@@ -451,7 +454,7 @@ Type:  'help' for help with commands
     Manage computing resources on DRM4G.
     
     Usage: 
-        resource [ --dbg ] [ list | edit ] 
+        resource [ --dbg ] [ list | edit | check ] 
         resource <name> id [ --dbg ] conf [ --public-key=<file> --grid-cerd=<file> ] 
         resource <name> id [ --dbg ] init [ --lifetime=<hours> ]
         resource <name> id [ --dbg ] info 
@@ -466,6 +469,7 @@ Type:  'help' for help with commands
     Commands:
         list                    Show resources available.    
         edit                    Configure resouces.
+        check                   Check out if configured resources are accessible.
         id                      Manage identities for resources. That involves managing
                                 private/public keys and grid credentials, depending 
                                 on the resource configuration.
@@ -493,10 +497,12 @@ Type:  'help' for help with commands
             daemon = Daemon()
             if not daemon.is_alive() :
                raise Exception( 'DRM4G is stopped.' )
-            resource = Resource( self.config )
             if not arg[ '<name>' ] :
+                resource = Resource( self.config )
                 if arg[ 'edit' ] :
                     resource.edit()
+                elif arg[ 'check' ] :
+                    resource.check_frontends( )
                 else :
                     resource.list()
             else : 
@@ -554,7 +560,6 @@ Type:  'help' for help with commands
                     if lrms == 'cream' :
                         logger.info( "--> Grid credentials" )
                         proxy.check( )
-                resource.check_frontends( )
         except Exception , err :
             logger.error( str( err ) )
 
@@ -650,8 +655,6 @@ Type:  'help' for help with commands
             if not daemon.is_alive() :
                raise Exception( 'DRM4G is stopped. ')
             if arg['submit']:
-                resource = Resource( self.config )
-                resource.check_frontends( )
                 dependencies = '-d "%s"' % ' '.join( arg['--dep'] ) if arg['--dep'] else ''
                 cmd = '%s/gwsubmit %s -v %s' % ( DRM4G_BIN , dependencies  , arg['<template>'] )
             elif arg['list']:
