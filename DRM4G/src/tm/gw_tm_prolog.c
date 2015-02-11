@@ -53,7 +53,7 @@ int gw_tm_prolog_build_urls(gw_job_t *   job,
 		return 1;
 	}
 			
-	is_gsiftp = strstr(src,"gsiftp://") != NULL;
+	is_gsiftp = strstr(src,"remote://") != NULL;
 	
 	if ( is_gsiftp )
 	{

@@ -47,7 +47,7 @@ int gw_tm_epilog_build_urls(gw_job_t *   job,
     if ( dst == NULL )
         is_gsiftp = 0 ;
     else
-        is_gsiftp = strstr(dst,"gsiftp://") != NULL;
+        is_gsiftp = strstr(dst,"remote://") != NULL;
     
     /* src URL ALWAYS in remote job home */
     if (job->job_state == GW_JOB_STATE_MIGR_EPILOG)
