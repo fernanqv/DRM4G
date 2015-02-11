@@ -126,12 +126,12 @@ int gw_job_history_add(gw_history_t **job_history,
 
 	if ((se == NULL) || (se[0] == '\0'))
 	{
-	    sprintf(tmp,"gsiftp://%s/~/.gw_%s_%i/", host->hostname, owner, jid);
+	    sprintf(tmp,"remote://%s/~/.gw_%s_%i/", host->hostname, owner, jid);
 	    new_record->rdir = strdup(tmp);
 	}
 	else
 	{
-	    sprintf(tmp,"gsiftp://%s/~/.gw_%s_%i/", se, owner, jid);
+	    sprintf(tmp,"remote://%s/~/.gw_%s_%i/", se, owner, jid);
 	    new_record->rdir = strdup(tmp);
 	}
 
