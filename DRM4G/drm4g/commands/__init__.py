@@ -414,7 +414,8 @@ Usage:
     drm4g host [ --dbg ] [ list ] [ <hid> ]
     drm4g job submit [ --dbg ] [ --dep <job_id> ... ] <template>
     drm4g job list [ --dbg ] [ <job_id> ] 
-    drm4g job cancel [ --dbg ] <job_id> ... 
+    drm4g job cancel [ --dbg ] <job_id> ...
+    drm4g job get-log [ --dbg ] <job_id> 
     drm4g job get-history [ --dbg ] <job_id> 
     drm4g help <command>
     drm4g --version  
@@ -613,6 +614,7 @@ Type:  'help' for help with commands
         job submit [ --dbg ] [ --dep <job_id> ... ] <template> 
         job list [ --dbg ] [ <job_id> ] 
         job cancel [ --dbg ]  <job_id> ... 
+        job get-log [ --dbg ] <job_id>
         job get-history [ --dbg ] <job_id> 
    
     Arguments:
@@ -627,6 +629,7 @@ Type:  'help' for help with commands
         submit                 Command for submitting jobs.
         list                   Monitor jobs previously submitted.
         cancel                 Cancel jobs.
+        get-log                Keep track of a job.
         get-history            Get information about the execution history of a job.
 
     Job field information:
@@ -663,6 +666,17 @@ Type:  'help' for help with commands
                     cmd = cmd + arg['<job_id>'][0] 
             elif arg['get-history']:
                 cmd = '%s/gwhistory %s' % ( DRM4G_BIN , arg['<job_id>'][ 0 ] )
+            elif arg['get-log']:
+                directory = join(
+                                  DRM4G_DIR ,
+                                  'var' ,
+                                  '%d00-%d99' % ( int(int(arg['<job_id>'][0])/100) , int(int(arg['<job_id>'][0])/100) ) ,
+                                  arg['<job_id>'][0] ,
+                                  'job.log'
+                                )
+                if not exists( directory ) :
+                    raise Exception( 'There is not a log available for this job.')
+                cmd = 'cat %s' % ( directory )
             else :
                 cmd = '%s/gwkill -9 %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )  
             out , err = exec_cmd( cmd )
