@@ -670,7 +670,7 @@ Type:  'help' for help with commands
                 directory = join(
                                   DRM4G_DIR ,
                                   'var' ,
-                                  '%d00-%d99' % ( int(int(arg['<job_id>'][0])/100) , int(int(arg['<job_id>'][0])/100) ) ,
+                                  '%d00-%d99' % ( int(int(float(arg['<job_id>'][0]))/100) , int(int(float(arg['<job_id>'][0]))/100) ) ,
                                   arg['<job_id>'][0] ,
                                   'job.log'
                                 )
