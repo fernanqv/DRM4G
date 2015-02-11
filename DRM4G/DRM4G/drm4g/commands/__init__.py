@@ -12,7 +12,7 @@ from drm4g.utils.docopt   import docopt, DocoptExit
 from os.path              import expanduser, join, dirname, exists, basename, expandvars
 from time                 import sleep
 
-__version__  = '2.2.0'
+__version__  = '2.3.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id: __init__.py 1931 2013-09-25 10:46:59Z carlos $"
 
