@@ -1,19 +1,22 @@
 #!/bin/bash
 
 BASE_URL="https://www.meteo.unican.es/work/DRM4G"
-DRM4G_VERSION=2.2.0
-DRM4G_DIR_INSTALATION=$HOME
+DRM4G_VERSION=2.3.0
+DRM4G_DIR_INSTALATION=$PWD
 DRM4G_HARDWARE=$(uname -m)
 
 have_command () {
-  type "$1" >/dev/null 2>/dev/null
+    type "$1" >/dev/null 2>/dev/null
 }
 
 require_command () {
-  if ! have_command "$1"; then
-    echo "Could not find required command '$1' in system PATH. Aborting."
-    exit 1
-  fi
+    have_command "$1" 
+    rc=$?
+    if [ $rc -ne 0 ]
+    then
+        echo "Could not find required command '$1' in system PATH. Aborting."
+        exit 1
+    fi
 }
 
 require_python () {
@@ -25,12 +28,35 @@ print(sys.version_info[0]==2 and sys.version_info[1] >= 5 )
 EOF
 )
 
-    if [ "$python_version" != "True" ]; then
+    if [ "$python_version" != "True" ] 
+    then
         echo "Wrong version of python is installed" 
         echo "DRM4G requires Python version 2.5+"
-        echo "It does not support your version of python: $($PYTHON -V 2>&1|sed 's/python//gi')"
+        echo "It does not support your version of python: $(python -V 2>&1|sed 's/python//gi')"
+        exit 1
     fi
 }
+
+download_drm4g() {
+    wget -nv --no-check-certificate -O $DRM4G_BUNDLE $BASE_URL/$DRM4G_BUNDLE
+    rc=$?
+    if [ $rc -ne 0 ]
+    then
+        echo "Unable to download bunble $DRM4G_BUNDLE ..."
+        exit 1
+    fi
+}
+
+unpack_drm4g() {
+    tar xzf $DRM4G_BUNDLE -C $DRM4G_DIR_INSTALATION
+    rc=$?
+    if [ $rc -ne 0 ]
+    then
+        echo "Unable to unpack the bunble $DRM4G_BUNDLE in $DRM4G_DIR_INSTALATION"
+        exit 1
+    fi
+}
+
 
 usage () {
     cat <<EOF
@@ -93,23 +119,35 @@ DRM4G_BUNDLE="drm4g-${DRM4G_VERSION}-${DRM4G_HARDWARE}.tar.gz"
 echo ""
 echo "--> Downloading $DRM4G_BUNDLE from $BASE_URL ..."
 echo ""
-wget -nv --no-check-certificate -O $DRM4G_BUNDLE $BASE_URL/$DRM4G_BUNDLE 
-rc=$?
-if [ $rc -ne 0 ]
+
+if [ -f $DRM4G_BUNDLE ]
 then
-    echo "Unable to download bunble $DRM4G_BUNDLE ..."
-    exit 1
+    echo "WARNING: $DRM4G_BUNDLE already exists"
+    read -r -p "Are you sure you want to download it? [y/N] " response
+    echo $response
+    if [[ $prompt =~ [yY](es)* ]]
+    then
+        download_drm4g
+    fi
+else
+     download_drm4g
 fi
 
 echo ""
 echo "--> Unpacking $DRM4G_BUNDLE in directory $DRM4G_DIR_INSTALATION ..."
 echo ""
-tar xzf $DRM4G_BUNDLE -C $DRM4G_DIR_INSTALATION
-rc=$?
-if [ $rc -ne 0 ]
+
+if [ -d "$DRM4G_DIR_INSTALATION/drm4g" ]
 then
-    "Unable to unpack the bunble $DRM4G_BUNDLE in $DRM4G_DIR_INSTALATION"
-    exit 1
+    echo "WARNING: $DRM4G_DIR_INSTALATION/drm4g directory already exists"
+    read -r -p "Are you sure you want to install it there? [y/N] " response
+    echo $response
+    if [[ $prompt =~ [yY](es)* ]]
+    then
+        unpack_drm4g
+    fi
+else
+    unpack_drm4g
 fi
 
 cat <<EOF
@@ -117,10 +155,13 @@ cat <<EOF
 Installation of DRM4G is done!
 ===============================
 
-In order to use DRM4G run the comnand below:
+In order to work with DRM4G you have to enable its 
+environment with the command:
 
-source $DRM4G_DIR_INSTALATION/drm4g/bin/drm4g_init.sh
+    . $DRM4G_DIR_INSTALATION/drm4g/bin/drm4g_init.sh
+
+You need to run the above command on every new shell you 
+open before using DRM4G, but just once per session.
 
 EOF
 
-exit 0
