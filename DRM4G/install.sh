@@ -1,9 +1,10 @@
 #!/bin/bash
 
 BASE_URL="https://www.meteo.unican.es/work/DRM4G"
-DRM4G_VERSION=2.3.0
+DEFAULT_DRM4G_VERSION=2.3.0
 DRM4G_DIR_INSTALATION=$PWD
 DRM4G_HARDWARE=$(uname -m)
+FILE_VERSIONS="drm4g_${DRM4G_HARDWARE}_versions"
 
 have_command () {
     type "$1" >/dev/null 2>/dev/null
@@ -14,7 +15,7 @@ require_command () {
     rc=$?
     if [ $rc -ne 0 ]
     then
-        echo "Could not find required command '$1' in system PATH. Aborting."
+        echo "Could not find required command '$1' in system PATH."
         exit 1
     fi
 }
@@ -32,7 +33,8 @@ EOF
     then
         echo "Wrong version of python is installed" 
         echo "DRM4G requires Python version 2.5+"
-        echo "It does not support your version of python: $(python -V 2>&1|sed 's/python//gi')"
+        echo "It does not support your version of"
+        echo "python: $(python -V 2>&1|sed 's/python//gi')"
         exit 1
     fi
 }
@@ -42,10 +44,22 @@ download_drm4g() {
     rc=$?
     if [ $rc -ne 0 ]
     then
-        echo "Unable to download bunble $DRM4G_BUNDLE ..."
+        echo "ERROR: Unable to download bunble $DRM4G_BUNDLE from $BASE_URL ..."
         exit 1
     fi
 }
+
+download_drm4g_versions() {
+    wget -nv --no-check-certificate -O $FILE_VERSIONS $BASE_URL/$FILE_VERSIONS
+    rc=$?
+    if [ $rc -ne 0 ]
+    then
+        echo "ERROR: Unable to download $FILE_VERSIONS from $BASE_URL ..."
+        exit 1
+    fi
+}
+
+
 
 unpack_drm4g() {
     tar xzf $DRM4G_BUNDLE -C $DRM4G_DIR_INSTALATION
@@ -106,7 +120,7 @@ cat <<EOF
 DRM4G installation script
 ==========================
 
-This script will install DRM4G $DRM4G_VERSION 
+This script will install DRM4G
 
 EOF
 
@@ -114,6 +128,13 @@ EOF
 require_command gcc
 
 require_python
+
+if [ -n $DRM4G_VERSION  ]
+then
+    download_drm4g_versions
+    $DRM4G_VERSIOM=$(sort $FILE_VERSIONS | tail -1)
+fi
+echo "Version: $DRM4G_VERSION"
 
 DRM4G_BUNDLE="drm4g-${DRM4G_VERSION}-${DRM4G_HARDWARE}.tar.gz"
 echo ""
@@ -130,7 +151,7 @@ then
         download_drm4g
     fi
 else
-     download_drm4g
+    download_drm4g
 fi
 
 echo ""
@@ -144,6 +165,7 @@ then
     echo $response
     if [[ $prompt =~ [yY](es)* ]]
     then
+        $DRM4G_DIR_INSTALATION/bin/drm4g stop
         unpack_drm4g
     fi
 else
@@ -151,9 +173,9 @@ else
 fi
 
 cat <<EOF
-===============================
-Installation of DRM4G is done!
-===============================
+=============================================
+Installation of DRM4G $DRM4G_VERSION is done!
+=============================================
 
 In order to work with DRM4G you have to enable its 
 environment with the command:
