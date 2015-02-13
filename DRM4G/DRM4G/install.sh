@@ -1,8 +1,7 @@
 #!/bin/bash
 
-BASE_URL="https://www.meteo.unican.es/work/DRM4G"
-DEFAULT_DRM4G_VERSION=2.3.0
-DRM4G_DIR_INSTALATION=$PWD
+BASE_URL="https://meteo.unican.es/work/DRM4G"
+DRM4G_PREFIX=$PWD
 DRM4G_HARDWARE=$(uname -m)
 FILE_VERSIONS="drm4g_${DRM4G_HARDWARE}_versions"
 
@@ -62,11 +61,11 @@ download_drm4g_versions() {
 
 
 unpack_drm4g() {
-    tar xzf $DRM4G_BUNDLE -C $DRM4G_DIR_INSTALATION
+    tar xzf $DRM4G_BUNDLE -C $DRM4G_PREFIX
     rc=$?
     if [ $rc -ne 0 ]
     then
-        echo "ERROR: Unable to unpack the bunble $DRM4G_BUNDLE in $DRM4G_DIR_INSTALATION"
+        echo "ERROR: Unable to unpack the bunble $DRM4G_BUNDLE in $DRM4G_PREFIX"
         exit 1
     fi
 }
@@ -82,7 +81,7 @@ $0 [OPTIONS]
 Options:
 
       -d, --dir DIRECTORY    Install DRM4G into a directory.
-                             (Default: $DRM4G_DIR_INSTALATION)
+                             (Default: $DRM4G_PREFIX)
 
       -V, --version          Version to install.
                              (Default: $DRM4G_VERSION)
@@ -92,12 +91,13 @@ Options:
 EOF
 }
 
+######### 
 while test -n "$1"
 do
     case "$1" in
         -d|--dir)
             shift
-            DRM4G_DIR_INSTALATION=$1
+            DRM4G_PREFIX=$1
             ;;
         -h|--help)
             usage
@@ -115,14 +115,21 @@ do
     shift
 done
 
+if [ -f drm4g ]
+then
+    . $DRM4G_PREFIX/bin/drm4g_init.sh
+else
+    unpack_drm4g
+fi
+
 cat <<EOF
 ==========================
 DRM4G installation script
 ==========================
 EOF
 
-# Check gcc and python  
-require_command gcc
+# Check wget and python  
+require_command wget
 
 require_python
 
@@ -152,17 +159,8 @@ else
 fi
 
 echo ""
-echo "--> Unpacking $DRM4G_BUNDLE in directory $DRM4G_DIR_INSTALATION ..."
+echo "--> Unpacking $DRM4G_BUNDLE in directory $DRM4G_PREFIX ..."
 echo ""
-
-if [ -d "$DRM4G_DIR_INSTALATION/drm4g" ]
-then
-    echo "WARNING: $DRM4G_DIR_INSTALATION/drm4g directory already exists"
-    read -p "Are you sure you want to install it there? [y/N] " response
-    case $response in y|Y|yes|Yes) $DRM4G_DIR_INSTALATION/drm4g/bin/drm4g stop; unpack_drm4g;; *);; esac
-else
-    unpack_drm4g
-fi
 
 cat <<EOF
 ====================================
@@ -172,7 +170,7 @@ Installation of DRM4G $DRM4G_VERSION is done!
 In order to work with DRM4G you have to enable its 
 environment with the command:
 
-    . $DRM4G_DIR_INSTALATION/drm4g/bin/drm4g_init.sh
+    . $DRM4G_PREFIX/drm4g/bin/drm4g_init.sh
 
 You need to run the above command on every new shell you 
 open before using DRM4G, but just once per session.
