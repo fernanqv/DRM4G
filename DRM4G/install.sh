@@ -145,12 +145,8 @@ echo ""
 if [ -f $DRM4G_BUNDLE ]
 then
     echo "WARNING: $DRM4G_BUNDLE already exists"
-    read -r -p "Are you sure you want to download it? [y/N] " response
-    echo $response
-    if [[ ! $prompt =~ [yY](es)* ]]
-    then
-        download_drm4g
-    fi
+    read -p "Are you sure you want to download it? [y/N] " response
+    case $response in y|Y|yes|Yes) download_drm4g;; *);; esac
 else
     download_drm4g
 fi
@@ -162,13 +158,8 @@ echo ""
 if [ -d "$DRM4G_DIR_INSTALATION/drm4g" ]
 then
     echo "WARNING: $DRM4G_DIR_INSTALATION/drm4g directory already exists"
-    read -r -p "Are you sure you want to install it there? [y/N] " response
-    echo $response
-    if [[ ! $prompt =~ [yY](es)* ]]
-    then
-        $DRM4G_DIR_INSTALATION/drm4g/bin/drm4g stop
-        unpack_drm4g
-    fi
+    read -p "Are you sure you want to install it there? [y/N] " response
+    case $response in y|Y|yes|Yes) $DRM4G_DIR_INSTALATION/drm4g/bin/drm4g stop; unpack_drm4g;; *);; esac
 else
     unpack_drm4g
 fi
