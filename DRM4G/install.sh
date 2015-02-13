@@ -66,7 +66,7 @@ unpack_drm4g() {
     rc=$?
     if [ $rc -ne 0 ]
     then
-        echo "Unable to unpack the bunble $DRM4G_BUNDLE in $DRM4G_DIR_INSTALATION"
+        echo "ERROR: Unable to unpack the bunble $DRM4G_BUNDLE in $DRM4G_DIR_INSTALATION"
         exit 1
     fi
 }
@@ -119,9 +119,6 @@ cat <<EOF
 ==========================
 DRM4G installation script
 ==========================
-
-This script will install DRM4G
-
 EOF
 
 # Check gcc and python  
@@ -131,10 +128,14 @@ require_python
 
 if [ -n $DRM4G_VERSION  ]
 then
+    echo ""
+    echo "--> Downloading $FILE_VERSIONS from $BASE_URL ..."
+    echo ""
     download_drm4g_versions
-    $DRM4G_VERSIOM=$(sort $FILE_VERSIONS | tail -1)
+    DRM4G_VERSION=$(sort $FILE_VERSIONS | tail -1)
 fi
-echo "Version: $DRM4G_VERSION"
+echo ""
+echo "This script will install DRM4G version: $DRM4G_VERSION"
 
 DRM4G_BUNDLE="drm4g-${DRM4G_VERSION}-${DRM4G_HARDWARE}.tar.gz"
 echo ""
@@ -146,7 +147,7 @@ then
     echo "WARNING: $DRM4G_BUNDLE already exists"
     read -r -p "Are you sure you want to download it? [y/N] " response
     echo $response
-    if [[ $prompt =~ [yY](es)* ]]
+    if [[ ! $prompt =~ [yY](es)* ]]
     then
         download_drm4g
     fi
@@ -163,9 +164,9 @@ then
     echo "WARNING: $DRM4G_DIR_INSTALATION/drm4g directory already exists"
     read -r -p "Are you sure you want to install it there? [y/N] " response
     echo $response
-    if [[ $prompt =~ [yY](es)* ]]
+    if [[ ! $prompt =~ [yY](es)* ]]
     then
-        $DRM4G_DIR_INSTALATION/bin/drm4g stop
+        $DRM4G_DIR_INSTALATION/drm4g/bin/drm4g stop
         unpack_drm4g
     fi
 else
@@ -173,9 +174,9 @@ else
 fi
 
 cat <<EOF
-=============================================
+====================================
 Installation of DRM4G $DRM4G_VERSION is done!
-=============================================
+====================================
 
 In order to work with DRM4G you have to enable its 
 environment with the command:
