@@ -36,7 +36,7 @@ class Job (drm4g.managers.Job):
     
     def jobSubmit(self, pathScript):
         out, err = self.Communicator.execCommand('%s %s' % (MNSUBMIT, pathScript))
-        re_job_id = re.compile(r'Submitted batch job (\d*)').search(err)
+        re_job_id = re.compile(r'Submitted batch job (\d*)').search(out)
         if re_job_id:
             return re_job_id.group(1)
         else:
