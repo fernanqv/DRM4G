@@ -65,11 +65,11 @@ download_drm4g_versions() {
 
 
 unpack_drm4g() {
-    tar xzf --overwrite $DRM4G_BUNDLE -C $DRM4G_PREFIX
+    tar xzf --overwrite $DRM4G_BUNDLE -C $DRM4G_DEPLOYMENT_DIR
     rc=$?
     if [ $rc -ne 0 ]
     then
-        echo "ERROR: Unable to unpack the bunble $DRM4G_BUNDLE in $DRM4G_PREFIX"
+        echo "ERROR: Unable to unpack the bunble $DRM4G_BUNDLE in $DRM4G_DEPLOYMENT_DIR"
         exit 1
     fi
 }
@@ -85,7 +85,7 @@ $0 [OPTIONS]
 Options:
 
       -d, --dir DIRECTORY    Install DRM4G into a directory.
-                             (Default: $DRM4G_PREFIX)
+                             (Default: $DRM4G_DEPLOYMENT_DIR)
 
       -V, --version          Version to install.
                              (Default: $DRM4G_VERSION)
@@ -101,7 +101,7 @@ do
     case "$1" in
         -d|--dir)
             shift
-            DRM4G_PREFIX=$1
+            DRM4G_DEPLOYMENT_DIR=$1
             ;;
         -h|--help)
             usage
@@ -121,7 +121,7 @@ done
 
 if [ -f drm4g ]
 then
-    . $DRM4G_PREFIX/bin/drm4g_init.sh
+    . $DRM4G_DEPLOYMENT_DIR/drm4g/bin/drm4g_init.sh
 else
     unpack_drm4g
 fi
@@ -163,7 +163,7 @@ else
 fi
 
 echo ""
-echo "--> Unpacking $DRM4G_BUNDLE in directory $DRM4G_PREFIX ..."
+echo "--> Unpacking $DRM4G_BUNDLE in directory $DRM4G_DEPLOYMENT_DIR ..."
 echo ""
 
 cat <<EOF
@@ -174,7 +174,7 @@ Installation of DRM4G $DRM4G_VERSION is done!
 In order to work with DRM4G you have to enable its 
 environment with the command:
 
-    . $DRM4G_PREFIX/drm4g/bin/drm4g_init.sh
+    . $DRM4G_DEPLOYMENT_DIR/drm4g/bin/drm4g_init.sh
 
 You need to run the above command on every new shell you 
 open before using DRM4G, but just once per session.
