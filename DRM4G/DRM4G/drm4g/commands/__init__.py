@@ -156,7 +156,7 @@ class Agent( object ):
         if match :
             logger.info( match.group() )
         else :
-            logger.info( "The private key '%s' is not available on ssh-agent" % identity_file )
+            logger.info( "The private key '%s' is not available anymore" )
         
     def stop( self ):
         logger.debug( 'Stopping ssh-agent ... ' )
@@ -404,7 +404,7 @@ submit, and manage computational jobs. For additional information,
 see http://www.meteo.unican.es/trac/wiki/DRM4G .
 
 Usage:
-    drm4g [ --dbg ] [ start | stop | status | restart | clear ] 
+    drm4g [ --dbg ] ( start | stop | status | restart | clear )
     drm4g conf [ --dbg ] ( daemon | sched | logger ) 
     drm4g resource [ --dbg ] [ list | edit | check ]
     drm4g resource <name> id [ --dbg ] conf [ --public-key=<file> --grid-cerd=<file> ] 
@@ -418,7 +418,9 @@ Usage:
     drm4g job get-log [ --dbg ] <job_id> 
     drm4g job get-history [ --dbg ] <job_id> 
     drm4g help <command>
-    drm4g --version  
+    drm4g ( -s | --shell )
+    drm4g ( -h | --help | --version ) 
+    
 
 Arguments:
     <hid>                   Host identifier.
@@ -429,6 +431,7 @@ Arguments:
 Options:
     -h --help
     --version               Show version.
+    -s --shell              Interactive shell.
     -l --lifetime=<hours>   Duration of the identity's lifetime [default: 168].
     -p --public-key=<file>  Public key file.
     -g --grid-cerd=<file>   Grid certificate.
@@ -819,10 +822,10 @@ def execute_from_command_line( argv ):
     """
     A method that runs a ManagementUtility.
     """
-    if len( argv ) > 1:
-        docopt( help_info, version = __version__ )
-        ManagementUtility().onecmd( ' '.join( argv[ 1: ] ) )
-    else:
+    opt = docopt( help_info, version = __version__ )
+    if opt[ '--shell' ] :
         ManagementUtility().cmdloop()
+    else :
+        ManagementUtility().onecmd( ' '.join( argv[ 1: ] ) )
     
 
