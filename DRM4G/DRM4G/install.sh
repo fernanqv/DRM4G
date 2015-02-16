@@ -1,5 +1,9 @@
 #!/bin/bash
 
+__version__  = '2.3.0'
+__author__   = 'Carlos Blanco'
+__revision__ = "$Id$"
+
 BASE_URL="https://meteo.unican.es/work/DRM4G"
 DRM4G_PREFIX=$PWD
 DRM4G_HARDWARE=$(uname -m)
