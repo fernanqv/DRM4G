@@ -404,19 +404,19 @@ submit, and manage computational jobs. For additional information,
 see http://www.meteo.unican.es/trac/wiki/DRM4G .
 
 Usage:
-    drm4g [ --dbg ] ( start | stop | status | restart | clear )
-    drm4g conf [ --dbg ] ( daemon | sched | logger ) 
-    drm4g resource [ --dbg ] [ list | edit | check ]
-    drm4g resource <name> id [ --dbg ] conf [ --public-key=<file> --grid-cerd=<file> ] 
-    drm4g resource <name> id [ --dbg ] init [ --lifetime=<hours> ]
-    drm4g resource <name> id [ --dbg ] info 
-    drm4g resource <name> id [ --dbg ] delete 
-    drm4g host [ --dbg ] [ list ] [ <hid> ]
-    drm4g job submit [ --dbg ] [ --dep <job_id> ... ] <template>
-    drm4g job list [ --dbg ] [ <job_id> ] 
-    drm4g job cancel [ --dbg ] <job_id> ...
-    drm4g job get-log [ --dbg ] <job_id> 
-    drm4g job get-history [ --dbg ] <job_id> 
+    drm4g ( start | stop | status | restart | clear ) [ options ]
+    drm4g conf ( daemon | sched | logger ) [ options ]
+    drm4g resource [ list | edit | check ] [ options ]
+    drm4g resource <name> id conf [ --public-key=<file> --grid-cerd=<file> ] [ options ]
+    drm4g resource <name> id init [ --lifetime=<hours> ] [ options ]
+    drm4g resource <name> id info [ options ]
+    drm4g resource <name> id delete [ options ] 
+    drm4g host [ list ] [ options ] [ <hid> ]
+    drm4g job submit [ options ] [ --dep <job_id> ... ] <template>
+    drm4g job list [ options ] [ <job_id> ] 
+    drm4g job cancel [ options ] <job_id> ...
+    drm4g job get-log [ options ] <job_id> 
+    drm4g job get-history [ options ] <job_id> 
     drm4g help <command>
     drm4g ( -s | --shell )
     drm4g ( -h | --help | --version ) 
@@ -458,11 +458,11 @@ Type:  'help' for help with commands
     Manage computing resources on DRM4G.
     
     Usage: 
-        resource [ --dbg ] [ list | edit | check ] 
-        resource <name> id [ --dbg ] conf [ --public-key=<file> --grid-cerd=<file> ] 
-        resource <name> id [ --dbg ] init [ --lifetime=<hours> ]
-        resource <name> id [ --dbg ] info 
-        resource <name> id [ --dbg ] delete 
+        resource [ list | edit | check ] [ --dbg ] 
+        resource <name> id conf [ --public-key=<file> --grid-cerd=<file> ] [ --dbg ]
+        resource <name> id init [ --lifetime=<hours> ] [ --dbg ]
+        resource <name> id info [ --dbg ]
+        resource <name> id delete [ --dbg ]
 
     Options:
         -l --lifetime=<hours>   Duration of the identity's lifetime [default: 168].
@@ -573,7 +573,7 @@ Type:  'help' for help with commands
     Print information about the hosts available on DRM4G.
      
     Usage: 
-        host [ --dbg ] [ list ] [ <hid> ] 
+        host [ list ] [ --dbg ] [ <hid> ] 
     
     Arguments:
         <hid>         Host identifier.
@@ -793,7 +793,7 @@ Type:  'help' for help with commands
     Configure daemon, scheduler and logger DRM4G parameters
                 
     Usage:  
-        conf [--dbg] ( daemon | sched | logger ) 
+        conf ( daemon | sched | logger ) [ --dbg ]
             
     Options:    
         --dbg    Debug mode.
