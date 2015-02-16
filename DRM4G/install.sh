@@ -1,8 +1,8 @@
 #!/bin/bash
 
-__version__  = '2.3.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
+#__version__  = '2.3.0'
+#__author__   = 'Carlos Blanco'
+#__revision__ = "$Id$"
 
 BASE_URL="https://meteo.unican.es/work/DRM4G"
 DRM4G_DEPLOYMENT_DIR=$PWD
@@ -65,7 +65,7 @@ download_drm4g_versions() {
 
 
 unpack_drm4g() {
-    tar xzf --overwrite $DRM4G_BUNDLE -C $DRM4G_DEPLOYMENT_DIR
+    tar xzf $DRM4G_BUNDLE --overwrite -C $DRM4G_DEPLOYMENT_DIR
     rc=$?
     if [ $rc -ne 0 ]
     then
@@ -119,13 +119,6 @@ do
     shift
 done
 
-if [ -f drm4g ]
-then
-    . $DRM4G_DEPLOYMENT_DIR/drm4g/bin/drm4g_init.sh
-else
-    unpack_drm4g
-fi
-
 cat <<EOF
 ==========================
 DRM4G installation script
@@ -165,6 +158,15 @@ fi
 echo ""
 echo "--> Unpacking $DRM4G_BUNDLE in directory $DRM4G_DEPLOYMENT_DIR ..."
 echo ""
+
+if [ -d "$DRM4G_DEPLOYMENT_DIR/drm4g" ]
+then
+    echo "WARNING: $DRM4G_DEPLOYMENT_DIR/drm4g directory already exists"
+    read -p "Are you sure you want to install it there? [y/N] " response
+    case $response in y|Y|yes|Yes) $DRM4G_DEPLOYMENT_DIR/drm4g/bin/drm4g stop; unpack_drm4g;; *);; esac
+else
+    unpack_drm4g
+fi
 
 cat <<EOF
 ====================================
