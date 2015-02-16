@@ -63,7 +63,7 @@ RESOURCE_MANAGERS = {
                      "cream"        : "drm4g.managers.cream",
                      "slurm"        : "drm4g.managers.slurm",
                      "mnslurm"      : "drm4g.managers.marenostrum",
-                     "altamira"     : "drm4g.managers.altamira",
+                     "slurm_res"    : "drm4g.managers.slurm_res",
                      "neptuno"      : "drm4g.managers.neptuno",
                      }
 
