@@ -5,7 +5,7 @@ __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 BASE_URL="https://meteo.unican.es/work/DRM4G"
-DRM4G_PREFIX=$PWD
+DRM4G_DEPLOYMENT_DIR=$PWD
 DRM4G_HARDWARE=$(uname -m)
 FILE_VERSIONS="drm4g_${DRM4G_HARDWARE}_versions"
 
@@ -65,7 +65,7 @@ download_drm4g_versions() {
 
 
 unpack_drm4g() {
-    tar xzf $DRM4G_BUNDLE -C $DRM4G_PREFIX
+    tar xzf --overwrite $DRM4G_BUNDLE -C $DRM4G_PREFIX
     rc=$?
     if [ $rc -ne 0 ]
     then
