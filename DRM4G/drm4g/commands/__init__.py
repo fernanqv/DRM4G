@@ -129,7 +129,7 @@ class Agent( object ):
         return env
     
     def add_key( self, identity_file, lifetime ):
-        logger.debug('Adding keys into ssh-agent')
+        logger.debug("Adding '%s' into ssh-agent for %s hours" % ( identity_file , lifetime ) )
         out , err = exec_cmd( 'ssh-add -t %sh %s' % ( lifetime , identity_file ),
                   stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         if err :
@@ -143,11 +143,10 @@ class Agent( object ):
             logger.info( err )
     
     def copy_key( self, identity_file , user, frontend ):
-        logger.debug("Coping '%s' to '%s'" % ( identity_file, frontend ) )
+        logger.debug("Coping '%s' to ~/.ssh/authorized_keys file on '%s'" % ( identity_file, frontend ) )
         out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' %(  identity_file , user, frontend ),
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
-        if err :
-            logger.debug( err ) 
+        logger.debug( out ) 
     
     def list_key( self , identity_file ):
         logger.debug("Listing '%s' key" % identity_file)
@@ -401,18 +400,17 @@ class Proxy( object ):
 help_info = """
 DRM4G is an open platform, which is based on GridWay Metascheduler, to define, 
 submit, and manage computational jobs. For additional information, 
-see http://www.meteo.unican.es/trac/wiki/DRM4G .
+see http://meteo.unican.es/trac/wiki/DRM4G .
 
 Usage:
     drm4g ( start | stop | status | restart | clear ) [ options ]
     drm4g conf ( daemon | sched | logger ) [ options ]
     drm4g resource [ list | edit | check ] [ options ]
-    drm4g resource <name> id conf [ --public-key=<file> --grid-cerd=<file> ] [ options ]
-    drm4g resource <name> id init [ --lifetime=<hours> ] [ options ]
+    drm4g resource <name> id  init [ options ]
     drm4g resource <name> id info [ options ]
     drm4g resource <name> id delete [ options ] 
     drm4g host [ list ] [ options ] [ <hid> ]
-    drm4g job submit [ options ] [ --dep <job_id> ... ] <template>
+    drm4g job submit [ options ] <template>
     drm4g job list [ options ] [ <job_id> ] 
     drm4g job cancel [ options ] <job_id> ...
     drm4g job get-log [ options ] <job_id> 
@@ -459,8 +457,7 @@ Type:  'help' for help with commands
     
     Usage: 
         resource [ list | edit | check ] [ --dbg ] 
-        resource <name> id conf [ --public-key=<file> --grid-cerd=<file> ] [ --dbg ]
-        resource <name> id init [ --lifetime=<hours> ] [ --dbg ]
+        resource <name> id init [ --public-key=<file> --grid-cerd=<file> --lifetime=<hours> --dbg ]
         resource <name> id info [ --dbg ]
         resource <name> id delete [ --dbg ]
 
@@ -478,16 +475,15 @@ Type:  'help' for help with commands
                                 private/public keys and grid credentials, depending 
                                 on the resource configuration.
                                 
-                                With conf, configure public key authentication 
-                                for remote connections. It adds the key by appending 
-                                it to the remote user's ~/.ssh/authorized_keys file.
-                                And it configures the user's grid certificate in 
-                                ~/.globus directory, if --grid-cerd option is used.
-                                
                                 With init, creates an identity for a while, by default
                                 168 hours (1 week). Use the option --lifetime to modify 
                                 this value. It adds the configured private key to a 
                                 ssh-agent and creates a grid proxy using a myproxy server.
+                                It also configures public key authentication 
+                                for remote connections. It adds the key by appending 
+                                it to the remote user's ~/.ssh/authorized_keys file.
+                                And it configures the user's grid certificate in 
+                                ~/.globus directory, if --grid-cerd option is used.
                                 
                                 With info, it gives some information about the 
                                 identity status.
@@ -530,28 +526,27 @@ Type:  'help' for help with commands
                     agent = Agent()
                 if arg[ 'init' ] :
                     if communicator == 'ssh' :
+                        identity = arg[ '--public-key' ] if arg[ '--public-key' ] else private_key
+                        if not exists( identity ) :
+                            raise Exception( "'%s' does not exist." % ( identity ) )
                         logger.info( "--> Starting ssh-agent ... " )
                         agent.start( )
-                        agent.add_key( private_key, arg[ '--lifetime' ])
-                    if lrms == 'cream' :
-                        logger.info( "--> Creating a proxy ... " )
-                        proxy.create( arg[ '--lifetime' ] )
-                elif arg[ 'conf' ] :
-                    if communicator == 'ssh' :
-                        logger.info( "--> Configuring private and public keys ... " )
-                        identity = arg[ '--public-key' ] if arg[ '--public-key' ] else private_key
+                        logger.info( "--> Adding private key to ssh-agent ... " )
+                        agent.add_key( private_key, arg[ '--lifetime' ] )
+                        logger.info( "--> Copying public key on the remote frontend ... " )
                         agent.copy_key( identity , self.config.resources.get( arg[ '<name>' ] )[ 'username' ] ,
                                         self.config.resources.get( arg[ '<name>' ] )[ 'frontend' ] )
-                        agent.start( )
-                        agent.add_key( private_key, arg[ '--lifetime' ] )
-                    if lrms == 'cream' and arg[ '--grid-cerd' ] :
-                        logger.info( "--> Configuring grid certifitate ... " )
-                        grid_cerd = expandvars( expanduser( arg[ '--grid-cerd' ] ) )
-                        if not exists( grid_cerd ) :
-                            raise Exception( "'%s' does not exist." % ( arg[ '--grid-cerd' ] ) )
-                        proxy.configure( grid_cerd )
-                    if lrms == 'cream' and not arg[ '--grid-cerd' ] :
-                        logger.info( "WARNING: It is assumed that the grid certificate has been already configured" )
+                    if lrms == 'cream' :
+                        logger.info( "--> Configuring grid certifitate ... " ) 
+                        if arg[ '--grid-cerd' ] :
+                            grid_cerd = expandvars( expanduser( arg[ '--grid-cerd' ] ) )
+                            if not exists( grid_cerd ) :
+                                raise Exception( "'%s' does not exist." % ( arg[ '--grid-cerd' ] ) )
+                            proxy.configure( grid_cerd )
+                        if not arg[ '--grid-cerd' ] :
+                            logger.info( "\nWARNING: It is assumed that the grid certificate has been already configured\n" )
+                        logger.info( "--> Creating a proxy ... " )
+                        proxy.create( arg[ '--lifetime' ] )
                 elif arg[ 'delete' ] :
                     if communicator == 'ssh' :
                         agent.delete_key( private_key )

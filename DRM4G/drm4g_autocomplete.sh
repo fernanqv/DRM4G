@@ -115,7 +115,7 @@ _drm4g_resource_id()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -eq 3 ]; then
-        COMPREPLY=( $( compgen -W ' info init conf delete' -- $cur) )
+        COMPREPLY=( $( compgen -W ' info init delete' -- $cur) )
     else
         case ${COMP_WORDS[3]} in
             info)
@@ -123,9 +123,6 @@ _drm4g_resource_id()
         ;;
             init)
             _drm4g_resource_id_init
-        ;;
-            conf)
-            _drm4g_resource_id_conf
         ;;
             delete)
             _drm4g_resource_id_delete
@@ -151,17 +148,7 @@ _drm4g_resource_id_init()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 4 ]; then
-        COMPREPLY=( $( compgen -W '-l= --lifetime= ' -- $cur) )
-    fi
-}
-
-_drm4g_resource_id_conf()
-{
-    local cur
-    cur="${COMP_WORDS[COMP_CWORD]}"
-
-    if [ $COMP_CWORD -ge 4 ]; then
-        COMPREPLY=( $( compgen -W '-p= --public-key= -g= --grid-cerd= ' -- $cur) )
+        COMPREPLY=( $( compgen -W ' ' -- $cur) )
     fi
 }
 
@@ -280,7 +267,7 @@ _drm4g_job_submit()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -fW '--dep= ' -- $cur) )
+        COMPREPLY=( $( compgen -fW ' ' -- $cur) )
     fi
 }
 
