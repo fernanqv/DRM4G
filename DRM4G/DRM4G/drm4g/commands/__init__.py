@@ -550,7 +550,7 @@ Type:  'help' for help with commands
                         if not exists( grid_cerd ) :
                             raise Exception( "'%s' does not exist." % ( arg[ '--grid-cerd' ] ) )
                         proxy.configure( grid_cerd )
-                    else :
+                    if lrms == 'cream' and not arg[ '--grid-cerd' ] :
                         logger.info( "WARNING: It is assumed that the grid certificate has been already configured" )
                 elif arg[ 'delete' ] :
                     if communicator == 'ssh' :
