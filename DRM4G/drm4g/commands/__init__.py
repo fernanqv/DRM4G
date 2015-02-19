@@ -406,7 +406,8 @@ Usage:
     drm4g ( start | stop | status | restart | clear ) [ options ]
     drm4g conf ( daemon | sched | logger ) [ options ]
     drm4g resource [ list | edit | check ] [ options ]
-    drm4g resource <name> id  init [ options ]
+    drm4g resource <name> id conf [ options ]
+    drm4g resource <name> id init [ options ]
     drm4g resource <name> id info [ options ]
     drm4g resource <name> id delete [ options ] 
     drm4g host [ list ] [ options ] [ <hid> ]
@@ -457,7 +458,8 @@ Type:  'help' for help with commands
     
     Usage: 
         resource [ list | edit | check ] [ --dbg ] 
-        resource <name> id init [ --public-key=<file> --grid-cerd=<file> --lifetime=<hours> --dbg ]
+        resource <name> id conf [ --public-key=<file> --grid-cerd=<file> --lifetime=<hours> --dbg ]
+        resource <name> id init [ --lifetime=<hours> --dbg ]
         resource <name> id info [ --dbg ]
         resource <name> id delete [ --dbg ]
 
@@ -471,20 +473,28 @@ Type:  'help' for help with commands
         list                    Show resources available.    
         edit                    Configure resouces.
         check                   Check out if configured resources are accessible.
-        id                      Manage identities for resources. That involves managing
-                                private/public keys and grid credentials, depending 
-                                on the resource configuration.
-                                
-                                With init, creates an identity for a while, by default
-                                168 hours (1 week). Use the option --lifetime to modify 
-                                this value. It adds the configured private key to a 
-                                ssh-agent and creates a grid proxy using a myproxy server.
-                                It also configures public key authentication 
-                                for remote connections. It adds the key by appending 
-                                it to the remote user's ~/.ssh/authorized_keys file.
-                                And it configures the user's grid certificate in 
-                                ~/.globus directory, if --grid-cerd option is used.
-                                
+        id                      Manage identities for resources. That involves 
+                                managing private/public keys and grid credentials, 
+                                depending on the resource configuration.
+                                           
+                                With init, creates an identity for a while, by 
+                                default 168 hours (1 week). Use the option --lifetime 
+                                to modify this value. It adds the configured private
+                                key to a ssh-agent and creates a grid proxy using 
+                                myproxy server.
+       
+                                With conf, initializes an identity (init comnand) 
+                                and appends the public key to the remote user's 
+                                ~/.ssh/authorized_keys file (creating the file, and 
+                                directory, if necessary). It tries to load the public 
+                                key obtained by appending *.pub to the name of the 
+                                configured private key file. Alternative the public 
+                                key can be given by --public-key option.
+                            
+                                It also configures the user's grid certificate 
+                                under ~/.globus directory (creating directory, 
+                                if necessary) if --grid-cerd option is used.
+                                  
                                 With info, it gives some information about the 
                                 identity status.
                                 
@@ -524,27 +534,29 @@ Type:  'help' for help with commands
                     if not exists( private_key ) :
                         raise Exception( "'%s' does not exist." % ( private_key ) )
                     agent = Agent()
-                if arg[ 'init' ] :
+                if arg[ 'conf' ] or arg[ 'init' ] :
                     if communicator == 'ssh' :
-                        identity = arg[ '--public-key' ] if arg[ '--public-key' ] else private_key
-                        if not exists( identity ) :
-                            raise Exception( "'%s' does not exist." % ( identity ) )
                         logger.info( "--> Starting ssh-agent ... " )
                         agent.start( )
                         logger.info( "--> Adding private key to ssh-agent ... " )
                         agent.add_key( private_key, arg[ '--lifetime' ] )
-                        logger.info( "--> Copying public key on the remote frontend ... " )
-                        agent.copy_key( identity , self.config.resources.get( arg[ '<name>' ] )[ 'username' ] ,
-                                        self.config.resources.get( arg[ '<name>' ] )[ 'frontend' ] )
+                        if arg[ 'conf' ] : 
+                            identity = arg[ '--public-key' ] if arg[ '--public-key' ] else private_key
+                            if not exists( expandvars( expanduser( identity ) ) ) :
+                                raise Exception( "'%s' does not exist." % ( identity ) )
+                            logger.info( "--> Copying public key on the remote frontend ... " )
+                            agent.copy_key( identity , self.config.resources.get( arg[ '<name>' ] )[ 'username' ] ,
+                                            self.config.resources.get( arg[ '<name>' ] )[ 'frontend' ] )
                     if lrms == 'cream' :
-                        logger.info( "--> Configuring grid certifitate ... " ) 
-                        if arg[ '--grid-cerd' ] :
-                            grid_cerd = expandvars( expanduser( arg[ '--grid-cerd' ] ) )
-                            if not exists( grid_cerd ) :
-                                raise Exception( "'%s' does not exist." % ( arg[ '--grid-cerd' ] ) )
-                            proxy.configure( grid_cerd )
-                        if not arg[ '--grid-cerd' ] :
-                            logger.info( "\nWARNING: It is assumed that the grid certificate has been already configured\n" )
+                        if arg[ 'conf' ] :
+                            logger.info( "--> Configuring grid certifitate ... " ) 
+                            if arg[ '--grid-cerd' ] :
+                                grid_cerd = expandvars( expanduser( arg[ '--grid-cerd' ] ) )
+                                if not exists( grid_cerd ) :
+                                    raise Exception( "'%s' does not exist." % ( arg[ '--grid-cerd' ] ) )
+                                proxy.configure( grid_cerd )
+                            if not arg[ '--grid-cerd' ] :
+                                logger.info( "\nWARNING: It is assumed that the grid certificate has been already configured\n" )
                         logger.info( "--> Creating a proxy ... " )
                         proxy.create( arg[ '--lifetime' ] )
                 elif arg[ 'delete' ] :
@@ -725,7 +737,7 @@ Type:  'help' for help with commands
     @docopt_cmd
     def do_status(self, arg):
         """
-    Check DRM4G daemon.  
+    Check DRM4G daemon and ssh-agent. 
                 
     Usage:  
         status [ --dbg ] 
@@ -764,7 +776,7 @@ Type:  'help' for help with commands
     @docopt_cmd
     def do_clear(self, arg):
         """
-    Delete all the jobs available in DRM4G. 
+    Start DRM4G daemon deleting all the jobs available on DRM4G. 
                 
     Usage:  
         clear [ --dbg ] 
@@ -785,7 +797,7 @@ Type:  'help' for help with commands
     @docopt_cmd
     def do_conf(self, arg):
         """
-    Configure daemon, scheduler and logger DRM4G parameters
+    Configure DRM4G daemon, scheduler and logger parameters.
                 
     Usage:  
         conf ( daemon | sched | logger ) [ --dbg ]
