@@ -43,7 +43,7 @@ EOF
 }
 
 download_drm4g() {
-    wget -nv --no-check-certificate -O $DRM4G_BUNDLE $BASE_URL/$DRM4G_BUNDLE
+    wget -N -nv --no-check-certificate $BASE_URL/$DRM4G_BUNDLE
     rc=$?
     if [ $rc -ne 0 ]
     then
@@ -53,7 +53,7 @@ download_drm4g() {
 }
 
 download_drm4g_versions() {
-    wget -nv --no-check-certificate -O $FILE_VERSIONS $BASE_URL/$FILE_VERSIONS
+    wget -N -nv --no-check-certificate $BASE_URL/$FILE_VERSIONS
     rc=$?
     if [ $rc -ne 0 ]
     then
