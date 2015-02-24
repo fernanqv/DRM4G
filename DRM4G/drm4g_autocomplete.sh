@@ -5,7 +5,7 @@ _drm4g()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -eq 1 ]; then
-        COMPREPLY=( $( compgen -W '-s --shell -s --shell -h --help -h --help --version status resource help clear stop job start host conf restart' -- $cur) )
+        COMPREPLY=( $( compgen -W '-h --help --version status resource clear stop job start host conf restart' -- $cur) )
     else
         case ${COMP_WORDS[1]} in
             status)
@@ -13,9 +13,6 @@ _drm4g()
         ;;
             resource)
             _drm4g_resource
-        ;;
-            help)
-            _drm4g_help
         ;;
             clear)
             _drm4g_clear
