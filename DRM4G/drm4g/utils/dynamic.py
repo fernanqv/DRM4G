@@ -5,7 +5,7 @@ import traceback
 from threading        import Thread
 from threading        import Lock
 
-__version__  = '2.3.0'
+__version__  = '2.3.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
