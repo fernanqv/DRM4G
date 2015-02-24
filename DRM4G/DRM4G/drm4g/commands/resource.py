@@ -46,7 +46,7 @@ Commands:
                             With delete, the identity is removed from the 
                             ssh-agent and the myproxy server.
 """
-__version__  = '2.3.0'
+__version__  = '2.3.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
