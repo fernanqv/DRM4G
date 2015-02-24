@@ -23,7 +23,7 @@ drm4g commands are:
    host        Print information about the hosts
    job         Submit, get status and history and cancel jobs
  
-See 'drm4g --help <command>' for more information on a specific command.
+See 'drm4g <command> --help' for more information on a specific command.
 """
 __version__  = '2.3.0'
 __author__   = 'Carlos Blanco'
