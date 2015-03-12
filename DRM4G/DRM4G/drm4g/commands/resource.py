@@ -51,6 +51,7 @@ __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 import logging
+from os.path              import expanduser, exists, expandvars
 from drm4g.core.configure import Configuration
 from drm4g.commands       import exec_cmd, Daemon, Resource, Proxy, logger 
 
