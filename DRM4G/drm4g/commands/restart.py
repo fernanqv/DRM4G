@@ -2,7 +2,7 @@
 Restart DRM4G daemon. 
     
 Usage: 
-    drm4g restart [ --dbg ] 
+    drm4g [ options ] restart
    
 Options:
    --dbg    Debug mode.

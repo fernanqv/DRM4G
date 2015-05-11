@@ -2,7 +2,7 @@
 Configure DRM4G daemon, scheduler and logger parameters.
                 
 Usage:  
-   drm4g conf ( daemon | sched | logger ) [ --dbg ]
+   drm4g [ options ] conf ( daemon | sched | logger ) 
 
 Options:
    --dbg    Debug mode

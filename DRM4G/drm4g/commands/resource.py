@@ -2,7 +2,7 @@
 Manage computing resources on DRM4G.
     
 Usage: 
-    drm4g resource [ list | edit | check ] [ --dbg ]   
+    drm4g [ options ] resource [ list | edit | check ] 
     
  Options:
     --dbg                   Debug mode.

@@ -2,7 +2,7 @@
 Stop DRM4G daemon and ssh-agent. 
     
 Usage: 
-    drm4g stop [ --dbg ] 
+    drm4g [ options ] stop 
    
 Options:
    --dbg    Debug mode.

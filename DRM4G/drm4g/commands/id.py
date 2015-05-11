@@ -3,9 +3,9 @@ Manage identities for resources. That involves managing private/public keys
 and grid credentials, depending on the resource configuration.
 
 Usage:  
-    drm4g id <resource_name> init   [ --dbg ] [ --lifetime=<hours> ]
-    drm4g id <resource_name> info   [ --dbg ]
-    drm4g id <resource_name> delete [ --dbg ]
+    drm4g [ options ] id <resource_name> init [ --lifetime=<hours> ]
+    drm4g [ options ] id <resource_name> info   
+    drm4g [ options ] id <resource_name> delete 
 
  Options:
     -l --lifetime=<hours>   Duration of the identity's lifetime [default: 168].

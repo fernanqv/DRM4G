@@ -2,7 +2,7 @@
 Start DRM4G daemon and ssh-agent. 
     
 Usage: 
-    drm4g start [ --dbg ] 
+    drm4g [ options ] start 
    
 Options:
    --dbg    Debug mode.

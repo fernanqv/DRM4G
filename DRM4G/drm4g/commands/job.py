@@ -2,11 +2,11 @@
 Submit, get status and history and cancel jobs.
 
 Usage: 
-    drm4g job submit [ --dbg ] [ --dep <job_id> ... ] <template> 
-    drm4g job list [ --dbg ] [ <job_id> ] 
-    drm4g job cancel [ --dbg ]  <job_id> ... 
-    drm4g job get-log [ --dbg ] <job_id>
-    drm4g job get-history [ --dbg ] <job_id> 
+    drm4g [ options ] job submit [ --dep <job_id> ... ] <template> 
+    drm4g [ options ] job list [ <job_id> ] 
+    drm4g [ options ] job cancel <job_id> ... 
+    drm4g [ options ] job get-log <job_id>
+    drm4g [ options ] job get-history <job_id> 
    
 Arguments:
    <job_id>               Job identifier.

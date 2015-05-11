@@ -2,7 +2,7 @@
 Print information about the hosts available on DRM4G.
      
 Usage: 
-    drm4g host [ list ] [ --dbg ] [ <hid> ] 
+    drm4g [ options ] host [ list ] [ <hid> ] 
     
 Arguments:
     <hid>         Host identifier.
