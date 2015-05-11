@@ -18,7 +18,7 @@ __revision__ = "$Id$"
 
 import logging
 from drm4g.core.configure import Configuration
-from drm4g.commands       import exec_cmd, Daemon, Resource logger 
+from drm4g.commands       import exec_cmd, Daemon, Resource, logger 
 
 def run( arg ) :
     if arg[ '--dbg' ] :
