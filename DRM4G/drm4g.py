@@ -35,7 +35,7 @@ from drm4g.utils.docopt import docopt
 if __name__ == "__main__":
     args = docopt( __doc__, version = __version__ , options_first = True )
     argv = [ args[ '<command>' ] ] + args[ '<args>' ]
-    if args['<command>'] in "start stop status restart clear conf resource host job ".split() :
+    if args['<command>'] in "start stop status restart clear conf id resource host job ".split() :
         command = getattr( __import__( "drm4g.commands.%s" %  args['<command>'] ).commands, args['<command>'] )
         arg = docopt( command.__doc__ , argv = argv )
         command.run( arg )
