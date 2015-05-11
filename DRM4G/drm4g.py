@@ -20,6 +20,7 @@ drm4g commands are:
    clear       Start DRM4G daemon deleting all the jobs available on DRM4G
    conf        Configure DRM4G daemon, scheduler and logger parameters
    resource    Manage computing resources
+   id          Manage reosurce identities
    host        Print information about the hosts
    job         Submit, get status and history and cancel jobs
  
