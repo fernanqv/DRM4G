@@ -135,18 +135,13 @@ class Configuration(object):
             public_key = resdict.get( 'public_key' )
             if not public_key and resdict[ 'communicator' ] == 'ssh' :
                 public_key = private_key + '.pub' 
-                if not os.path.isfile( os.path.expandvars( os.path.expanduser( public_key ) ) ) :
-                    output = "'public_key' is not availble for '%s' resource" % resname
-                    logger.error( output )
-                    errors.append( output )
-                else :
-                    self.resources[resname]['public_key'] = public_key 
+                self.resources[resname]['public_key'] = public_key 
             if public_key and not os.path.isfile( os.path.expandvars( os.path.expanduser( public_key ) ) ):
                 output = "'%s' does not exist for '%s' resource" % ( public_key , resname )
                 logger.error( output )
                 errors.append( output )
             grid_cert = resdict.get( 'grid_cert' )
-            if resdict[ 'lrms' ] == 'cream' and not os.path.isfile( os.path.expandvars( os.path.expanduser( grid_cert ) ) ) :
+            if resdict[ 'lrms' ] == 'cream' and grid_cert and not os.path.isfile( os.path.expandvars( os.path.expanduser( grid_cert ) ) ) :
                 output = "'%s' does not exist for '%s' resource" % ( grid_cert , resname )
                 logger.error( output )
                 errors.append( output )
