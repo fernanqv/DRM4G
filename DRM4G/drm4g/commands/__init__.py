@@ -327,7 +327,7 @@ class Proxy( object ):
         certificate = self.config.resources[ 'grid_cert' ]
         if not certificate :
             logger.warning( "WARNING: It is assumed that the grid certificate has been already configured" )
-        else 
+        else : 
             dir_certificate   = dirname( certificate ) 
             base_certificate  = basename( certificate )
             logger.info( "Converting '%s' key to pem format ... " % base_certificate )      
