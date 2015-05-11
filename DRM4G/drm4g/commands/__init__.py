@@ -58,9 +58,13 @@ class Agent( object ):
     Class to manage ssh-agent command. 
     """
     
-    def __init__( self ):
-        self.agent_env  = dict() 
-        self.agent_file = join( DRM4G_DIR  , 'var' , 'agent.conf' )
+    def __init__( self, resource ):
+        self.private_key  = resource.private_key
+        self.public_key   = resource.public_key
+        self.user         = resource.user
+        self.frontend     = resource.frontend
+        self.agent_env    = dict() 
+        self.agent_file   = join( DRM4G_DIR  , 'var' , 'agent.conf' )
 
     def start( self ):
         def _start():
@@ -114,30 +118,30 @@ class Agent( object ):
         env.update( self.agent_env )
         return env
     
-    def add_key( self, identity_file, lifetime ):
-        logger.debug("Adding '%s' into ssh-agent for %s hours" % ( identity_file , lifetime ) )
-        out , err = exec_cmd( 'ssh-add -t %sh %s' % ( lifetime , identity_file ),
+    def add_key( self, lifetime ):
+        logger.debug("Adding '%s' into ssh-agent for %s hours" % ( self.private_key , lifetime ) )
+        out , err = exec_cmd( 'ssh-add -t %sh %s' % ( lifetime , self.private_key ),
                   stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         if err :
             logger.info( err )
     
-    def delete_key( self, identity_file ):
-        logger.debug('Deleting key %s' % identity_file )
-        out , err = exec_cmd( 'ssh-add -d %s' % identity_file,
+    def delete_key( self ):
+        logger.debug('Deleting key %s' % self.private_key )
+        out , err = exec_cmd( 'ssh-add -d %s' % self.private_key,
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         if err :
             logger.info( err )
     
-    def copy_key( self, identity_file , user, frontend ):
-        logger.debug("Coping '%s' to ~/.ssh/authorized_keys file on '%s'" % ( identity_file, frontend ) )
-        out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' %(  identity_file , user, frontend ),
+    def copy_key( self, user, frontend ):
+        logger.debug("Coping '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
+        out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' %(  self.private_key, self.user, self.frontend ),
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         logger.debug( out ) 
     
-    def list_key( self , identity_file ):
-        logger.debug("Listing '%s' key" % identity_file)
+    def list_key( self ):
+        logger.debug("Listing '%s' key" % self.private_key )
         out , err = exec_cmd( 'ssh-add -L' , env=self.update_agent_env() )
-        match = re.search( '.*%s' % basename( identity_file ) , out)
+        match = re.search( '.*%s' % basename( self.private_key ) , out )
         if match :
             logger.info( match.group() )
         else :
@@ -288,10 +292,9 @@ class Resource( object ):
     
 class Proxy( object ):
     
-    def __init__( self, config, name ):
-        self.config    = config
-        self.resource  = self.config.resources[ name ]
-        self.communicator = self.config.make_communicators()[ name ]
+    def __init__( self, resource, communicator ):
+        self.resource     = resource
+        self.communicator = communicator
         if self.resource.has_key( 'myproxy_server' ) :
             self.prefix = "X509_USER_PROXY=%s MYPROXY_SERVER=%s " % (
                                                                  join( REMOTE_VOS_DIR , self.resource[ 'myproxy_server' ] ),
@@ -320,46 +323,50 @@ class Proxy( object ):
         else :
             raise Exception( err )
     
-    def configure( self, certificate ) :
-        dir_certificate   = dirname( certificate ) 
-        base_certificate  = basename( certificate )
-        logger.info( "Converting '%s' key to pem format ... " % base_certificate )      
-        cmd = "openssl pkcs12 -nocerts -in %s -out %s" % ( certificate, join( dir_certificate, 'userkey.pem' ) ) 
-        out , err = exec_cmd( cmd, stdin=sys.stdin, stdout=sys.stdout ) 
-        if "invalid password" in err :
-            raise Exception( err )
-        logger.info( "Converting '%s' certificate to pem format ... " % base_certificate )
-        cmd = "openssl pkcs12 -clcerts -nokeys -in %s -out %s" % ( certificate, join( dir_certificate, 'usercert.pem' ) )
-        out , err = exec_cmd( cmd , stdin=sys.stdin, stdout=sys.stdout )
-        if "invalid password" in err :
-            raise Exception( err )
-        logger.debug( "Creating '~/.globus' directory ... " )
-        cmd = "mkdir -p ~/.globus"
-        logger.debug( "Executing command ... " + cmd )
-        out, err = self.communicator.execCommand( cmd )
-        if err :
-            raise Exception( err )
-        for file in [ 'userkey.pem' , 'usercert.pem' ] :
-            cmd = "rm -rf $HOME/.globus/%s" % file 
+    def configure( self ) :
+        certificate = self.config.resources[ 'grid_cert' ]
+        if not certificate :
+            logger.warning( "WARNING: It is assumed that the grid certificate has been already configured" )
+        else 
+            dir_certificate   = dirname( certificate ) 
+            base_certificate  = basename( certificate )
+            logger.info( "Converting '%s' key to pem format ... " % base_certificate )      
+            cmd = "openssl pkcs12 -nocerts -in %s -out %s" % ( certificate, join( dir_certificate, 'userkey.pem' ) ) 
+            out , err = exec_cmd( cmd, stdin=sys.stdin, stdout=sys.stdout ) 
+            if "invalid password" in err :  
+                raise Exception( err )
+            logger.info( "Converting '%s' certificate to pem format ... " % base_certificate )
+            cmd = "openssl pkcs12 -clcerts -nokeys -in %s -out %s" % ( certificate, join( dir_certificate, 'usercert.pem' ) )
+            out , err = exec_cmd( cmd , stdin=sys.stdin, stdout=sys.stdout )
+            if "invalid password" in err :
+                raise Exception( err )
+            logger.debug( "Creating '~/.globus' directory ... " )
+            cmd = "mkdir -p ~/.globus"
             logger.debug( "Executing command ... " + cmd )
             out, err = self.communicator.execCommand( cmd )
             if err :
                 raise Exception( err )
-            logger.info( "Copying '%s' to '%s' ..." % ( file , self.resource.get( 'frontend' ) ) )
-            self.communicator.copy( 'file://%s'  % join( dir_certificate, file ) , 
-                                    'ssh://_/%s' % join( '.globus' , file ) )
-        logger.info( "Modifying userkey.pem permissions ... " )
-        cmd = "chmod 400 $HOME/.globus/userkey.pem"
-        logger.debug( "Executing command ... " + cmd )
-        out, err = self.communicator.execCommand( cmd )
-        if err :
-            raise Exception( err )
-        logger.info( "Modifying usercert.pem permissions ... " )
-        cmd = "chmod 600 $HOME/.globus/usercert.pem"
-        logger.debug( "Executing command ... " + cmd )
-        out, err = self.communicator.execCommand( cmd )
-        if err :
-            raise Exception( err )
+            for file in [ 'userkey.pem' , 'usercert.pem' ] :
+                cmd = "rm -rf $HOME/.globus/%s" % file 
+                logger.debug( "Executing command ... " + cmd )
+                out, err = self.communicator.execCommand( cmd )
+                if err :
+                    raise Exception( err )
+                logger.info( "Copying '%s' to '%s' ..." % ( file , self.resource.get( 'frontend' ) ) )
+                self.communicator.copy( 'file://%s'  % join( dir_certificate, file ) , 
+                                        'ssh://_/%s' % join( '.globus' , file ) )
+            logger.info( "Modifying userkey.pem permissions ... " )
+            cmd = "chmod 400 $HOME/.globus/userkey.pem"
+            logger.debug( "Executing command ... " + cmd )
+            out, err = self.communicator.execCommand( cmd )
+            if err :
+                raise Exception( err )
+            logger.info( "Modifying usercert.pem permissions ... " )
+            cmd = "chmod 600 $HOME/.globus/usercert.pem"
+            logger.debug( "Executing command ... " + cmd )
+            out, err = self.communicator.execCommand( cmd )
+            if err :
+                raise Exception( err )
  
     def check( self ):
         cmd = self.prefix + "grid-proxy-info"

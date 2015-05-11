@@ -25,6 +25,7 @@ class Communicator(object):
         self.username       = None
         self.frontend       = None
         self.private_key    = None 
+        self.public_key     = None
 
     def connect(self):
         """

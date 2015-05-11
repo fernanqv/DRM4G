@@ -103,7 +103,7 @@ class Configuration(object):
                 output = "The number of elements in 'max_jobs_in_queue' are different to the elements of 'queue'"
                 logger.error( output )
                 errors.append( output )
-            if  'max_jobs_running' in reslist and resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_running' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
+            if 'max_jobs_running' in reslist and resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_running' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
                 output = "The number of elements in 'max_jobs_running' are different to the elements of 'queue'"
                 logger.error( output )
                 errors.append( output )
@@ -128,8 +128,26 @@ class Configuration(object):
                 output = "'private_key' key is mandatory for '%s' resource" % resname
                 logger.error( output )
                 errors.append( output )
-            if private_key and not os.path.isfile( os.path.expanduser( private_key ) ) :
-                output = "'%s' does not exist '%s' resource" % ( private_key , resname )
+            if private_key and not os.path.isfile( os.path.expandvars( os.path.expanduser( private_key ) ) ) :
+                output = "'%s' does not exist for '%s' resource" % ( private_key , resname )
+                logger.error( output )
+                errors.append( output )
+            public_key = resdict.get( 'public_key' )
+            if not public_key and resdict[ 'communicator' ] == 'ssh' :
+                public_key = private_key + '.pub' 
+                if not os.path.isfile( os.path.expandvars( os.path.expanduser( public_key ) ) ) :
+                    output = "'public_key' is not availble for '%s' resource" % resname
+                    logger.error( output )
+                    errors.append( output )
+                else :
+                    self.resources[resname]['public_key'] = public_key 
+            if public_key and not os.path.isfile( os.path.expandvars( os.path.expanduser( public_key ) ) ):
+                output = "'%s' does not exist for '%s' resource" % ( public_key , resname )
+                logger.error( output )
+                errors.append( output )
+            grid_cert = resdict.get( 'grid_cert' )
+            if resdict[ 'lrms' ] == 'cream' and not os.path.isfile( os.path.expandvars( os.path.expanduser( grid_cert ) ) ) :
+                output = "'%s' does not exist for '%s' resource" % ( grid_cert , resname )
                 logger.error( output )
                 errors.append( output )
         return errors
@@ -148,6 +166,7 @@ class Configuration(object):
                 com_object.username     = resdict.get( 'username' )
                 com_object.frontend     = resdict.get( 'frontend' )
                 com_object.private_key  = resdict.get( 'private_key' )
+                com_object.public_key   = resdict.get( 'public_key' )
                 communicators[name]     = com_object
             except Exception, err:
                 output = "Failed creating communicator for resource '%s' : %s" % ( name, str( err ) )
