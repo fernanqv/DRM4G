@@ -58,11 +58,12 @@ class Agent( object ):
     Class to manage ssh-agent command. 
     """
     
-    def __init__( self, resource ):
-        self.private_key  = resource.private_key
-        self.public_key   = resource.public_key
-        self.user         = resource.user
-        self.frontend     = resource.frontend
+    def __init__( self, resource = None ):
+        if resource :
+            self.private_key  = resource.private_key
+            self.public_key   = resource.public_key
+            self.user         = resource.user
+            self.frontend     = resource.frontend
         self.agent_env    = dict() 
         self.agent_file   = join( DRM4G_DIR  , 'var' , 'agent.conf' )
 
