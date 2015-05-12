@@ -2,7 +2,7 @@
 Configure DRM4G daemon, scheduler and logger parameters.
                 
 Usage:  
-   drm4g [ options ] conf ( daemon | sched | logger ) 
+   drm4g conf ( daemon | sched | logger ) [ options ] 
 
 Options:
    --dbg    Debug mode
@@ -13,8 +13,7 @@ __revision__ = "$Id$"
 
 import logging
 import os
-from drm4g                import DRM4G_DAEMON, DRM4G_LOGGER, DRM4G_SCHED
-from drm4g.commands       import logger
+from drm4g  import DRM4G_DAEMON, DRM4G_LOGGER, DRM4G_SCHED, logger
 
 def run( arg ) :
     if arg[ '--dbg' ] :

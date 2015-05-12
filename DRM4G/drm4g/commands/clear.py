@@ -2,7 +2,7 @@
 Start DRM4G daemon deleting all the jobs available on DRM4G.
     
 Usage: 
-    drm4g [ options ] clear 
+    drm4g clear [ options ] 
    
 Options:
    --dbg    Debug mode.
@@ -13,7 +13,8 @@ __revision__ = "$Id$"
 
 import logging
 from time                 import sleep
-from drm4g.commands       import Daemon, logger
+from drm4g                import logger
+from drm4g.commands       import Daemon
 
 def run( arg ) :
     try:

@@ -3,8 +3,9 @@ import os
 import sys
 import re
 import getpass
-import subprocess
 import logging
+import subprocess
+import datetime
 
 from drm4g     import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_BIN, DRM4G_DIR
 from os.path   import expanduser, join, dirname, exists, basename, expandvars
@@ -13,7 +14,7 @@ __version__  = '2.3.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-logger = logging.getLogger( __file__ )
+logger = logging.getLogger(__name__)
 
 def process_is_runnig( pid ):
     """
@@ -60,16 +61,16 @@ class Agent( object ):
     
     def __init__( self, resource = None ):
         if resource :
-            self.private_key  = resource.private_key
-            self.public_key   = resource.public_key
-            self.user         = resource.user
-            self.frontend     = resource.frontend
+            self.private_key  = resource[ 'private_key' ]
+            self.public_key   = resource[ 'public_key' ]
+            self.user         = resource[ 'username' ]
+            self.frontend     = resource[ 'frontend' ]
         self.agent_env    = dict() 
         self.agent_file   = join( DRM4G_DIR  , 'var' , 'agent.conf' )
 
     def start( self ):
         def _start():
-            logger.debug('Starting ssh-agent ...')
+            logger.debug('--> Starting ssh-agent ...')
             # 's' option generates Bourne shell commands on stdout
             out , err = exec_cmd( 'ssh-agent -s ' ) 
             logger.debug( out )
@@ -120,27 +121,30 @@ class Agent( object ):
         return env
     
     def add_key( self, lifetime ):
-        logger.debug("Adding '%s' into ssh-agent for %s hours" % ( self.private_key , lifetime ) )
+        logger.info("--> Adding '%s' into ssh-agent for %s hours" % ( self.private_key , lifetime ) )
         out , err = exec_cmd( 'ssh-add -t %sh %s' % ( lifetime , self.private_key ),
-                  stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
-        if err :
+                  stdin=sys.stdin, env=self.update_agent_env() )
+        mo = re.compile(r'.* (\d*) .*').search( err )
+        if mo :
+            logger.info( "Lifetime set to " + str( datetime.timedelta( seconds=int( mo.group(1) ) ) ) )
+        else :
             logger.info( err )
     
     def delete_key( self ):
-        logger.debug('Deleting key %s' % self.private_key )
+        logger.info('--> Deleting key %s' % self.private_key )
         out , err = exec_cmd( 'ssh-add -d %s' % self.private_key,
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         if err :
             logger.info( err )
     
-    def copy_key( self, user, frontend ):
-        logger.debug("Coping '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
+    def copy_key( self ):
+        logger.info("--> Coping '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
         out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' %(  self.private_key, self.user, self.frontend ),
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         logger.debug( out ) 
     
     def list_key( self ):
-        logger.debug("Listing '%s' key" % self.private_key )
+        logger.info("--> Listing '%s' key" % self.private_key )
         out , err = exec_cmd( 'ssh-add -L' , env=self.update_agent_env() )
         match = re.search( '.*%s' % basename( self.private_key ) , out )
         if match :
@@ -149,14 +153,14 @@ class Agent( object ):
             logger.info( "The private key '%s' is not available anymore" % identity_file)
         
     def stop( self ):
-        logger.debug( 'Stopping ssh-agent ... ' )
+        logger.info( 'Stopping ssh-agent ... ' )
         if self.is_alive():
             out , err = exec_cmd( 'ssh-agent -k' , env=self.update_agent_env() )
             logger.debug( out )
             if err :
                 logger.info( err )
         else:
-            logger.debug( 'ssh-agent is already stopped' )
+            logger.info( 'ssh-agent is already stopped' )
         try:
             os.remove( self.agent_file )
         except :
@@ -305,11 +309,12 @@ class Proxy( object ):
             self.prefix = "X509_USER_PROXY=%s/${MYPROXY_SERVER} " % REMOTE_VOS_DIR
         
     def create( self , proxy_lifetime ):
-        logger.debug("Creating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR )
+        logger.info("--> Creating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR )
         cmd = "mkdir -p %s" % REMOTE_VOS_DIR
         logger.debug( "Executing command ... " + cmd )
         out, err = self.communicator.execCommand( cmd )
         if not err :
+            logger.info("--> Create a local proxy credential ... ")
             message      = 'Insert your Grid password: '
             grid_passwd  = getpass.getpass(message)
             cmd = self.prefix + "myproxy-init -S --cred_lifetime %s --proxy_lifetime %s --local_proxy -n -d" % ( 
@@ -325,23 +330,23 @@ class Proxy( object ):
             raise Exception( err )
     
     def configure( self ) :
-        certificate = self.config.resources[ 'grid_cert' ]
+        certificate = self.resource.get( 'grid_cert' ) 
         if not certificate :
             logger.warning( "WARNING: It is assumed that the grid certificate has been already configured" )
         else : 
             dir_certificate   = dirname( certificate ) 
             base_certificate  = basename( certificate )
-            logger.info( "Converting '%s' key to pem format ... " % base_certificate )      
+            logger.info( "--> Converting '%s' key to pem format ... " % base_certificate )      
             cmd = "openssl pkcs12 -nocerts -in %s -out %s" % ( certificate, join( dir_certificate, 'userkey.pem' ) ) 
             out , err = exec_cmd( cmd, stdin=sys.stdin, stdout=sys.stdout ) 
             if "invalid password" in err :  
                 raise Exception( err )
-            logger.info( "Converting '%s' certificate to pem format ... " % base_certificate )
+            logger.info( "--> Converting '%s' certificate to pem format ... " % base_certificate )
             cmd = "openssl pkcs12 -clcerts -nokeys -in %s -out %s" % ( certificate, join( dir_certificate, 'usercert.pem' ) )
             out , err = exec_cmd( cmd , stdin=sys.stdin, stdout=sys.stdout )
             if "invalid password" in err :
                 raise Exception( err )
-            logger.debug( "Creating '~/.globus' directory ... " )
+            logger.debug( "--> Creating '~/.globus' directory ... " )
             cmd = "mkdir -p ~/.globus"
             logger.debug( "Executing command ... " + cmd )
             out, err = self.communicator.execCommand( cmd )
@@ -353,16 +358,16 @@ class Proxy( object ):
                 out, err = self.communicator.execCommand( cmd )
                 if err :
                     raise Exception( err )
-                logger.info( "Copying '%s' to '%s' ..." % ( file , self.resource.get( 'frontend' ) ) )
+                logger.info( "--> Copying '%s' to '%s' ..." % ( file , self.resource.get( 'frontend' ) ) )
                 self.communicator.copy( 'file://%s'  % join( dir_certificate, file ) , 
                                         'ssh://_/%s' % join( '.globus' , file ) )
-            logger.info( "Modifying userkey.pem permissions ... " )
+            logger.info( "--> Modifying userkey.pem permissions ... " )
             cmd = "chmod 400 $HOME/.globus/userkey.pem"
             logger.debug( "Executing command ... " + cmd )
             out, err = self.communicator.execCommand( cmd )
             if err :
                 raise Exception( err )
-            logger.info( "Modifying usercert.pem permissions ... " )
+            logger.info( "--> Modifying usercert.pem permissions ... " )
             cmd = "chmod 600 $HOME/.globus/usercert.pem"
             logger.debug( "Executing command ... " + cmd )
             out, err = self.communicator.execCommand( cmd )

@@ -2,7 +2,7 @@
 Start DRM4G daemon and ssh-agent. 
     
 Usage: 
-    drm4g [ options ] start 
+    drm4g start [ options ]
    
 Options:
    --dbg    Debug mode.
@@ -12,7 +12,8 @@ __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 import logging
-from drm4g.commands       import Daemon, Agent, logger
+from drm4g                import logger
+from drm4g.commands       import Daemon, Agent
 
 def run( arg ) :
     try:

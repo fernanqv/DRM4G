@@ -25,8 +25,12 @@ DRM4G_LOGGER         = join( DRM4G_DIR , 'etc' , 'logger.conf')
 DRM4G_DAEMON         = join( DRM4G_DIR , 'etc' , 'gwd.conf')
 DRM4G_SCHED          = join( DRM4G_DIR , 'etc' , 'sched.conf')
 
+##
+# Configure logger
+##
 logging.basicConfig( format='%(message)s', level = logging.INFO , stream = sys.stdout )
 logger = logging.getLogger(__name__) 
+
 if exists( DRM4G_DIR ) is False  :
     logger.info( "Creating a DRM4G local configuration in '%s'" %  DRM4G_DIR )
     abs_dir = join ( DRM4G_DIR , 'var' , 'acct' )

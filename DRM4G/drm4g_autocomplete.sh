@@ -169,20 +169,20 @@ _drm4g_job()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -eq 2 ]; then
-        COMPREPLY=( $( compgen -W ' cancel get-history list get-log submit' -- $cur) )
+        COMPREPLY=( $( compgen -W ' cancel history list log submit' -- $cur) )
     else
         case ${COMP_WORDS[2]} in
             cancel)
             _drm4g_job_cancel
         ;;
-            get-history)
-            _drm4g_job_get-history
+            history)
+            _drm4g_job_history
         ;;
             list)
             _drm4g_job_list
         ;;
-            get-log)
-            _drm4g_job_get-log
+            log)
+            _drm4g_job_log
         ;;
             submit)
             _drm4g_job_submit
@@ -202,7 +202,7 @@ _drm4g_job_cancel()
     fi
 }
 
-_drm4g_job_get-history()
+_drm4g_job_history()
 {
     local cur
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -222,7 +222,7 @@ _drm4g_job_list()
     fi
 }
 
-_drm4g_job_get-log()
+_drm4g_job_log()
 {
     local cur
     cur="${COMP_WORDS[COMP_CWORD]}"

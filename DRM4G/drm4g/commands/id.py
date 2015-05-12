@@ -3,9 +3,9 @@ Manage identities for resources. That involves managing private/public keys
 and grid credentials, depending on the resource configuration.
 
 Usage:  
-    drm4g [ options ] id <resource_name> init [ --lifetime=<hours> ]
-    drm4g [ options ] id <resource_name> info   
-    drm4g [ options ] id <resource_name> delete 
+    drm4g id <resource_name> init   [ options ] [ --lifetime=<hours> ]
+    drm4g id <resource_name> info   [ options ] 
+    drm4g id <resource_name> delete [ options ] 
 
  Options:
     -l --lifetime=<hours>   Duration of the identity's lifetime [default: 168].
@@ -38,7 +38,8 @@ __revision__ = "$Id$"
 import logging
 from os.path              import expanduser, exists, expandvars
 from drm4g.core.configure import Configuration
-from drm4g.commands       import exec_cmd, Daemon, Agent, Proxy, logger 
+from drm4g.commands       import exec_cmd, Daemon, Agent, Proxy
+from drm4g                import logger 
 
 def run( arg ) :
     if arg[ '--dbg' ] :
@@ -65,16 +66,11 @@ def run( arg ) :
             agent = Agent( config.resources[ arg['<resource_name>'] ] )
         if arg[ 'init' ] :
             if communicator == 'ssh' :
-                logger.info( "--> Starting ssh-agent ... " )
                 agent.start( )
-                logger.info( "--> Adding private key to ssh-agent ... " )
                 agent.add_key( arg[ '--lifetime' ] )
-                logger.info( "--> Copying public key on the remote frontend ... " )
                 agent.copy_key( )
             if lrms == 'cream' :
-                logger.info( "--> Configuring grid certifitate ... " )
                 proxy.configure( )
-                logger.info( "--> Creating a proxy ... " )
                 proxy.create( arg[ '--lifetime' ] )
         elif arg[ 'delete' ] :
             if communicator == 'ssh' :
@@ -83,10 +79,8 @@ def run( arg ) :
                 proxy.destroy( )
         else :
             if communicator == 'ssh' :
-                logger.info( "--> Private key available on the ssh-agent" )
                 agent.list_key( )
             if lrms == 'cream' :
-                logger.info( "--> Grid credentials" )
                 proxy.check( )
     except Exception , err :
         logger.error( str( err ) )

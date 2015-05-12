@@ -123,28 +123,40 @@ class Configuration(object):
                 output = "'%s' has a wrong lrms: '%s'" % ( resname , resdict[ 'lrms' ] )
                 logger.error( output )
                 errors.append( output )
-            private_key = resdict.get( 'private_key' )
-            if not private_key and resdict[ 'communicator' ] == 'ssh' :
-                output = "'private_key' key is mandatory for '%s' resource" % resname
-                logger.error( output )
-                errors.append( output )
-            if private_key and not os.path.isfile( os.path.expandvars( os.path.expanduser( private_key ) ) ) :
-                output = "'%s' does not exist for '%s' resource" % ( private_key , resname )
-                logger.error( output )
-                errors.append( output )
-            public_key = resdict.get( 'public_key' )
-            if not public_key and resdict[ 'communicator' ] == 'ssh' :
-                public_key = private_key + '.pub' 
-                self.resources[resname]['public_key'] = public_key 
-            if public_key and not os.path.isfile( os.path.expandvars( os.path.expanduser( public_key ) ) ):
-                output = "'%s' does not exist for '%s' resource" % ( public_key , resname )
-                logger.error( output )
-                errors.append( output )
+            if resdict[ 'communicator' ] == 'ssh' :
+                private_key = resdict.get( 'private_key' )
+                if not private_key :
+                    output = "'private_key' key is mandatory for '%s' resource" % resname
+                    logger.error( output )
+                    errors.append( output )
+                else :
+                    abs_private_key = os.path.expandvars( os.path.expanduser( private_key ) ) 
+                    if not os.path.isfile( abs_private_key ) :
+                        output = "'%s' does not exist for '%s' resource" % ( private_key , resname )
+                        logger.error( output )
+                        errors.append( output )
+                    else :
+                        self.resources[resname]['private_key'] = abs_private_key
+                public_key = resdict.get( 'public_key' )
+                if not public_key :
+                    abs_public_key = abs_private_key + '.pub'
+                else :
+                    abs_public_key = os.path.expandvars( os.path.expanduser( public_key ) ) 
+                if not os.path.isfile( abs_private_key ) :     
+                    output = "'%s' does not exist for '%s' resource" % ( abs_public_key , resname )
+                    logger.error( output )
+                    errors.append( output )
+                else :
+                    self.resources[resname]['public_key'] = abs_public_key 
             grid_cert = resdict.get( 'grid_cert' )
-            if resdict[ 'lrms' ] == 'cream' and grid_cert and not os.path.isfile( os.path.expandvars( os.path.expanduser( grid_cert ) ) ) :
-                output = "'%s' does not exist for '%s' resource" % ( grid_cert , resname )
-                logger.error( output )
-                errors.append( output )
+            if grid_cert : 
+                abs_grid_cert = os.path.expandvars( os.path.expanduser( grid_cert ) ) 
+                if not os.path.isfile( abs_grid_cert ) :
+                    output = "'%s' does not exist for '%s' resource" % ( abs_grid_cert , resname )
+                    logger.error( output )
+                    errors.append( output )
+                else :
+                    self.resources[resname]['grid_cert'] = abs_grid_cert
         return errors
                 
     def make_communicators(self):

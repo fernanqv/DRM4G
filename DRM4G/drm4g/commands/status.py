@@ -2,7 +2,7 @@
 Check DRM4G daemon and ssh-agent. 
     
 Usage: 
-    drm4g [ options ] status 
+    drm4g status [ options ] 
    
 Options:
    --dbg    Debug mode.

@@ -2,11 +2,11 @@
 Submit, get status and history and cancel jobs.
 
 Usage: 
-    drm4g [ options ] job submit [ --dep <job_id> ... ] <template> 
-    drm4g [ options ] job list [ <job_id> ] 
-    drm4g [ options ] job cancel <job_id> ... 
-    drm4g [ options ] job get-log <job_id>
-    drm4g [ options ] job get-history <job_id> 
+    drm4g job submit  [ options ] [ --dep <job_id> ... ] <template> 
+    drm4g job list    [ options ] [ <job_id> ] 
+    drm4g job cancel  [ options ] <job_id> ... 
+    drm4g job log     [ options ] <job_id>
+    drm4g job history [ options ] <job_id> 
    
 Arguments:
    <job_id>               Job identifier.
@@ -20,8 +20,8 @@ Commands:
    submit                 Command for submitting jobs.
    list                   Monitor jobs previously submitted.
    cancel                 Cancel jobs.
-   get-log                Keep track of a job.
-   get-history            Get information about the execution history of a job.
+   log                    Keep track of a job.
+   history                Get information about the execution history of a job.
 
 Job field information:
    JID                    Job identification.
@@ -48,8 +48,8 @@ __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 import logging
-from drm4g                import DRM4G_BIN
-from drm4g.commands       import exec_cmd, Daemon, logger 
+from drm4g                import DRM4G_BIN, logger
+from drm4g.commands       import exec_cmd, Daemon
 
 def run( arg ) :
     if arg[ '--dbg' ] :
@@ -65,9 +65,9 @@ def run( arg ) :
             cmd = '%s/gwps -o Jsetxjh '  % ( DRM4G_BIN )
             if arg['<job_id>'] :
                 cmd = cmd + arg['<job_id>'][0] 
-        elif arg['get-history']:
+        elif arg['history']:
             cmd = '%s/gwhistory %s' % ( DRM4G_BIN , arg['<job_id>'][ 0 ] )
-        elif arg['get-log']:
+        elif arg['log']:
             directory = join(
                               DRM4G_DIR ,
                               'var' ,
