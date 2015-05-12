@@ -121,7 +121,7 @@ class Agent( object ):
         return env
     
     def add_key( self, lifetime ):
-        logger.info("--> Adding '%s' into ssh-agent for %s hours" % ( self.private_key , lifetime ) )
+        logger.info("--> Add '%s' into ssh-agent for %s hours" % ( self.private_key , lifetime ) )
         out , err = exec_cmd( 'ssh-add -t %sh %s' % ( lifetime , self.private_key ),
                   stdin=sys.stdin, env=self.update_agent_env() )
         mo = re.compile(r'.* (\d*) .*').search( err )
@@ -131,20 +131,20 @@ class Agent( object ):
             logger.info( err )
     
     def delete_key( self ):
-        logger.info('--> Deleting key %s' % self.private_key )
+        logger.info('--> Remove key %s' % self.private_key )
         out , err = exec_cmd( 'ssh-add -d %s' % self.private_key,
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         if err :
             logger.info( err )
     
     def copy_key( self ):
-        logger.info("--> Coping '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
+        logger.info("--> Copy '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
         out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' %(  self.private_key, self.user, self.frontend ),
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         logger.debug( out ) 
     
     def list_key( self ):
-        logger.info("--> Listing '%s' key" % self.private_key )
+        logger.info("--> Display '%s' key" % self.private_key )
         out , err = exec_cmd( 'ssh-add -L' , env=self.update_agent_env() )
         match = re.search( '.*%s' % basename( self.private_key ) , out )
         if match :
@@ -375,6 +375,7 @@ class Proxy( object ):
                 raise Exception( err )
  
     def check( self ):
+        logger.info( "--> Display information about the proxy certificate" )
         cmd = self.prefix + "grid-proxy-info"
         logger.debug( "Executing command ... " + cmd )
         out, err = self.communicator.execCommand( cmd )
@@ -383,6 +384,7 @@ class Proxy( object ):
             logger.info( err ) 
     
     def destroy( self ):
+        logger.info( "--> Remove grid credentials" )
         cmd = self.prefix + "myproxy-destroy"
         logger.debug( "Executing command ... " + cmd ) 
         out , err = self.communicator.execCommand( cmd )

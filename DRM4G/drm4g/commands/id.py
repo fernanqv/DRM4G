@@ -73,10 +73,10 @@ def run( arg ) :
                 proxy.configure( )
                 proxy.create( arg[ '--lifetime' ] )
         elif arg[ 'delete' ] :
-            if communicator == 'ssh' :
-                agent.delete_key( )
             if lrms == 'cream' :
                 proxy.destroy( )
+            if communicator == 'ssh' :
+                agent.delete_key( )
         else :
             if communicator == 'ssh' :
                 agent.list_key( )
