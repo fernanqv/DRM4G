@@ -150,7 +150,7 @@ class Agent( object ):
         if match :
             logger.info( match.group() )
         else :
-            logger.info( "The private key '%s' is not available anymore" % identity_file)
+            logger.info( "The private key '%s' is not available anymore" % self.private_key )
         
     def stop( self ):
         logger.info( 'Stopping ssh-agent ... ' )
