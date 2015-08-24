@@ -70,23 +70,25 @@ class Agent( object ):
 
     def start( self ):
         def _start():
-            logger.info('--> Starting ssh-agent ...')
             # 's' option generates Bourne shell commands on stdout
             out , err = exec_cmd( 'ssh-agent -s ' ) 
             logger.debug( out )
             match = re.search( 'SSH_AUTH_SOCK=(?P<SSH_AUTH_SOCK>[^;]+);.*' \
                            + 'SSH_AGENT_PID=(?P<SSH_AGENT_PID>\d+);', out, re.DOTALL)
             if match :
+                logger.info( " OK" )
                 self.agent_env = match.groupdict()
-                logger.debug('Agent pid: %s'  % self.agent_env['SSH_AGENT_PID'])
+                logger.debug( ' Agent pid: %s'  % self.agent_env['SSH_AGENT_PID'])
             else:
                 logger.error( err )
-                raise Exception('Cannot determine agent data from output: %s' % out )
+                raise Exception( ' Cannot determine agent data from output: %s' % out )
             with open( self.agent_file , 'w') as f:
                 f.write( self.agent_env['SSH_AGENT_PID'] + '\n' + self.agent_env['SSH_AUTH_SOCK'] )
-        
+        logger.info('Starting ssh-agent ...') 
         if not self.is_alive() :
             _start()
+        elif self.is_alive() :
+            logger.info( " WARNING: ssh-agent is already running" )
         elif not self.agent_env:
             self.get_agent_env()
  
