@@ -336,7 +336,7 @@ class Proxy( object ):
     def configure( self ) :
         certificate = self.resource.get( 'grid_cert' ) 
         if not certificate :
-            logger.warning( "WARNING: It is assumed that the grid certificate has been already configured" )
+            logger.warning( " WARNING: It is assumed that the grid certificate has been already configured" )
         else : 
             dir_certificate   = dirname( certificate ) 
             base_certificate  = basename( certificate )
