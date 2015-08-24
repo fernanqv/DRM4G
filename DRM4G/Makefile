@@ -3,6 +3,7 @@ ifdef GW_LOCATION
 	@cp gw_im_mad_drm4g.py $(GW_LOCATION)/bin/
 	@cp gw_em_mad_drm4g.py $(GW_LOCATION)/bin/
 	@cp gw_tm_mad_drm4g.py $(GW_LOCATION)/bin/
+	@cp ssh-copy-id $(GW_LOCATION)/bin/
 	@cp drm4g_env.py $(GW_LOCATION)/bin/
 	@cp drm4g.py $(GW_LOCATION)/bin/drm4g
 	@cp drm4g_init.sh $(GW_LOCATION)/bin/
@@ -15,6 +16,7 @@ ifdef GW_LOCATION
 	@chmod a+x $(GW_LOCATION)/bin/gw_im_mad_drm4g.py
 	@chmod a+x $(GW_LOCATION)/bin/gw_tm_mad_drm4g.py
 	@chmod a+x $(GW_LOCATION)/bin/gw_em_mad_drm4g.py
+	@chmod a+x $(GW_LOCATION)/bin/ssh-copy-id
 	@chmod a+x $(GW_LOCATION)/bin/drm4g
 	@find $(GW_LOCATION) -depth -name .svn -exec rm -rf '{}' \;
 	@echo "DRM4G MAD successfully installed"
