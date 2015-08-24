@@ -49,7 +49,7 @@ _drm4g_status()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 2 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -59,7 +59,7 @@ _drm4g_resource()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -eq 2 ]; then
-        COMPREPLY=( $( compgen -W ' edit list check' -- $cur) )
+        COMPREPLY=( $( compgen -W 'edit list check' -- $cur) )
     else
         case ${COMP_WORDS[2]} in
             edit)
@@ -82,7 +82,7 @@ _drm4g_resource_edit()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -92,7 +92,7 @@ _drm4g_resource_list()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -102,7 +102,7 @@ _drm4g_resource_check()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -112,7 +112,7 @@ _drm4g_clear()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 2 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -122,7 +122,7 @@ _drm4g_stop()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 2 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -132,24 +132,7 @@ _drm4g_host()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -eq 2 ]; then
-        COMPREPLY=( $( compgen -fW ' list' -- $cur) )
-    else
-        case ${COMP_WORDS[2]} in
-            list)
-            _drm4g_host_list
-        ;;
-        esac
-
-    fi
-}
-
-_drm4g_host_list()
-{
-    local cur
-    cur="${COMP_WORDS[COMP_CWORD]}"
-
-    if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg list') )
     fi
 }
 
@@ -159,7 +142,7 @@ _drm4g_start()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 2 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -169,7 +152,7 @@ _drm4g_job()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -eq 2 ]; then
-        COMPREPLY=( $( compgen -W ' cancel history list log submit' -- $cur) )
+        COMPREPLY=( $( compgen -W 'cancel history list log submit' -- $cur) )
     else
         case ${COMP_WORDS[2]} in
             cancel)
@@ -198,7 +181,7 @@ _drm4g_job_cancel()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -fW ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -208,7 +191,7 @@ _drm4g_job_history()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -fW ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -218,7 +201,7 @@ _drm4g_job_list()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -fW ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -228,7 +211,7 @@ _drm4g_job_log()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -fW ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -238,7 +221,7 @@ _drm4g_job_submit()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -fW '--dep= ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dep=' -- $cur) )
     fi
 }
 
@@ -248,7 +231,7 @@ _drm4g_conf()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -eq 2 ]; then
-        COMPREPLY=( $( compgen -W ' daemon sched logger' -- $cur) )
+        COMPREPLY=( $( compgen -W 'daemon sched logger' -- $cur) )
     else
         case ${COMP_WORDS[2]} in
             daemon)
@@ -271,7 +254,7 @@ _drm4g_conf_daemon()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -281,7 +264,7 @@ _drm4g_conf_sched()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -291,7 +274,7 @@ _drm4g_conf_logger()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -300,10 +283,10 @@ _drm4g_id()
     local cur
     cur="${COMP_WORDS[COMP_CWORD]}"
 
-    if [ $COMP_CWORD -eq 2 ]; then
-        COMPREPLY=( $( compgen -fW ' info init delete' -- $cur) )
+    if [ $COMP_CWORD -eq 3 ]; then
+        COMPREPLY=( $( compgen -W 'info init delete' -- $cur) )
     else
-        case ${COMP_WORDS[2]} in
+        case ${COMP_WORDS[3]} in
             info)
             _drm4g_id_info
         ;;
@@ -323,8 +306,8 @@ _drm4g_id_info()
     local cur
     cur="${COMP_WORDS[COMP_CWORD]}"
 
-    if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+    if [ $COMP_CWORD -ge 4 ]; then
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -333,8 +316,8 @@ _drm4g_id_init()
     local cur
     cur="${COMP_WORDS[COMP_CWORD]}"
 
-    if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W '-l= --lifetime= ' -- $cur) )
+    if [ $COMP_CWORD -ge 4 ]; then
+        COMPREPLY=( $( compgen -W '--dbg -l= --lifetime=' -- $cur) )
     fi
 }
 
@@ -343,8 +326,8 @@ _drm4g_id_delete()
     local cur
     cur="${COMP_WORDS[COMP_CWORD]}"
 
-    if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+    if [ $COMP_CWORD -ge 4 ]; then
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
@@ -354,7 +337,7 @@ _drm4g_restart()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 2 ]; then
-        COMPREPLY=( $( compgen -W ' ' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
     fi
 }
 
