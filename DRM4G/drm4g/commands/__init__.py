@@ -70,7 +70,7 @@ class Agent( object ):
 
     def start( self ):
         def _start():
-            logger.debug('--> Starting ssh-agent ...')
+            logger.info('--> Starting ssh-agent ...')
             # 's' option generates Bourne shell commands on stdout
             out , err = exec_cmd( 'ssh-agent -s ' ) 
             logger.debug( out )
@@ -126,7 +126,7 @@ class Agent( object ):
                   stdin=sys.stdin, env=self.update_agent_env() )
         mo = re.compile(r'.* (\d*) .*').search( err )
         if mo :
-            logger.info( "Lifetime set to " + str( datetime.timedelta( seconds=int( mo.group(1) ) ) ) )
+            logger.info( " Lifetime set to " + str( datetime.timedelta( seconds=int( mo.group(1) ) ) ) )
         else :
             logger.info( err )
     
@@ -139,7 +139,7 @@ class Agent( object ):
     
     def copy_key( self ):
         logger.info("--> Copy '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
-        out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' %(  self.private_key, self.user, self.frontend ),
+        out , err = exec_cmd( '%s/ssh-copy-id -i %s %s@%s' % ( DRM4G_BIN, self.private_key, self.user, self.frontend ),
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         logger.debug( out ) 
     
@@ -150,7 +150,7 @@ class Agent( object ):
         if match :
             logger.info( match.group() )
         else :
-            logger.info( "The private key '%s' is not available anymore" % self.private_key )
+            logger.info( " The private key '%s' is not available anymore" % self.private_key )
         
     def stop( self ):
         logger.info( 'Stopping ssh-agent ... ' )
@@ -160,7 +160,7 @@ class Agent( object ):
             if err :
                 logger.info( err )
         else:
-            logger.info( 'ssh-agent is already stopped' )
+            logger.info( ' ssh-agent is already stopped' )
         try:
             os.remove( self.agent_file )
         except :
@@ -190,7 +190,7 @@ class Daemon( object ):
     def start( self ):
         logger.info( "Starting DRM4G .... " )
         if not exists( self.gwd_pid ) or ( exists( self.gwd_pid ) and not process_is_runnig( self.gwd_pid ) ) :
-            lock = join( DRM4G_DIR , 'var' '/.lock' )
+            lock = join( DRM4G_DIR , 'var', '/.lock' )
             if exists( lock ) : 
                 os.remove( lock )
             os.environ[ 'PATH' ] = '%s:%s' % ( DRM4G_BIN , os.getenv( 'PATH' ) )
@@ -201,9 +201,9 @@ class Daemon( object ):
             if out :
                 logger.info( out ) 
             if not err and not out :
-                logger.info( "OK" )
+                logger.info( " OK" )
         else :
-            logger.info( "WARNING: DRM4G is already running." )
+            logger.info( " WARNING: DRM4G is already running." )
                 
     def stop( self ):
         logger.info( "Stopping DRM4G .... " )
@@ -214,7 +214,7 @@ class Daemon( object ):
         if out :
             logger.info( out )
         if not err and not out :
-            logger.info( "OK" )
+            logger.info( " OK" )
             
     def clear( self ):
         yes_choise = yes_no_choice( "Do you want to continue clearing DRM4G " )
@@ -228,7 +228,7 @@ class Daemon( object ):
             if out :
                 logger.info( out )
             if not err and not out :
-                logger.info( "OK" )
+                logger.info( " OK" )
         else :
             self.start()
             
@@ -267,14 +267,13 @@ class Resource( object ):
         Check if the resource.conf file has been configured well and list the resources available.
         """
         self.check( )
-        logger.info( "\tName                          State" )
-        logger.info( "---------------------------------------------" )
+        logger.info( "\033[1;4m%-20.20s%-20.20s\033[0m" % ('RESOURCE', 'STATE' ) )
         for resname, resdict in sorted( self.config.resources.iteritems() ) :
             if resdict[ 'enable' ] == 'true' :
                 state = 'enabled'
             else :
                 state = 'disabled'
-            logger.info( "\t%-30.30s%s" % ( resname, state ) )
+            logger.info( "%-20.20s%s" % ( resname, state ) )
                     
     def features( self ) :
         """
@@ -284,7 +283,7 @@ class Resource( object ):
         for resname , resdict in sorted( self.config.resources.iteritems() ) :
             logger.info( "Resource '%s' :" % ( resname ) )
             for key , val in sorted( resdict.iteritems() ) :
-                logger.info( "\t--> '%s' : '%s'" % ( key, val ) )         
+                logger.info( " --> '%s' : '%s'" % ( key, val ) )         
     
     def check( self ) :
         """
