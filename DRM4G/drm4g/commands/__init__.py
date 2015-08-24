@@ -88,7 +88,7 @@ class Agent( object ):
         if not self.is_alive() :
             _start()
         elif self.is_alive() :
-            logger.info( " WARNING: ssh-agent is already running" )
+            logger.warn( " WARNING: ssh-agent is already running" )
         elif not self.agent_env:
             self.get_agent_env()
  
@@ -158,11 +158,14 @@ class Agent( object ):
         logger.info( 'Stopping ssh-agent ... ' )
         if self.is_alive():
             out , err = exec_cmd( 'ssh-agent -k' , env=self.update_agent_env() )
-            logger.debug( out )
+            if out :
+                logger.debug( out )
             if err :
                 logger.info( err )
+            else :
+                logger.info( " OK" )
         else:
-            logger.info( ' ssh-agent is already stopped' )
+            logger.warn( ' WARNING: ssh-agent is already stopped' )
         try:
             os.remove( self.agent_file )
         except :
