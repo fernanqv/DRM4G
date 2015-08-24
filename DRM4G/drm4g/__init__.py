@@ -71,18 +71,4 @@ RESOURCE_MANAGERS = {
                      "neptuno"      : "drm4g.managers.neptuno",
                      }
 
-# Create a history file for drm4g commands
-try:
-    import readline
-    import atexit
-    # history file
-    histfile = join(  DRM4G_DIR , 'var' , '.drm4g_history' )
-    try:
-        readline.read_history_file( histfile )
-    except IOError:
-        pass
-    atexit.register(readline.write_history_file, histfile)
-    del histfile, readline, atexit
-except Exception:
-    pass
 
