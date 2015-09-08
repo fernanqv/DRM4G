@@ -1,20 +1,20 @@
 import os
 import sys
+import logging
 from os.path             import join, exists
-from drm4g               import DRM4G_BIN
+from drm4g               import DRM4G_BIN, DRM4G_DIR
 from drm4g.utils.command import exec_cmd
 
 __version__  = '2.3.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
     
-class Job(object):
+class Job( object ):
     """
     DRM4G job
     """
-    def __init(self):
-        self.args = dict()
-        self.template_file = 'job_template'
+    args          = dict()
+    template_file = None
 
     def set_name(self, job_name ):
         """
@@ -26,7 +26,7 @@ class Job(object):
         if not type( job_name ) == str :
             raise Exception( 'Expected a string for job name' )
         else:
-            self.args = { 'NAME' : job_name }
+            self.args[ 'NAME' ] = job_name 
 
     def get_name(self):
         """
@@ -44,7 +44,7 @@ class Job(object):
         if not type( executable ) == str :
             raise Exception( 'Expected a string for executable' )
         else :
-            self.args = { 'EXECUTABLE' : executable }
+            self.args[ 'EXECUTABLE' ] =  executable 
 
     def get_executable(self):
         """
@@ -62,7 +62,7 @@ class Job(object):
         if not type( arguments ) == str :
             raise Exception( 'Expected a string for arguments' )
         else:
-            self.args = { 'ARGUMENTS' : arguments }
+            self.args[ 'ARGUMENTS' ] = arguments 
 
     def get_arguments(self):
         """
@@ -80,7 +80,7 @@ class Job(object):
         if not type( environment ) == dict :
             raise Exception( 'Expected a dictionary for environment' )
         else:
-            self.args = { 'ENVIRONMENT' : environment }
+            self.args[ 'ENVIRONMENT' ] = environment 
 
     def get_environment(self):
         """
@@ -97,9 +97,9 @@ class Job(object):
         @type  files: String or list of strings 
         """
         if type( files ) == list :
-            self.args = { 'INPUT_FILES' : files }
+            self.args[ 'INPUT_FILES' ] = files 
         elif type( files ) == str :
-            self.args = { 'INPUT_FILES' : [files] }
+            self.args[ 'INPUT_FILES' ] = [files] 
         else:
             raise Exception( 'Expected a string or a list for input files' )
 
@@ -118,9 +118,9 @@ class Job(object):
         @type  files: String or list of strings 
         """
         if type( files ) == list :
-            self.args = { 'OUTPUT_FILES' : files }
+            self.args[ 'OUTPUT_FILES' ] = files 
         elif type( files ) == str :
-            self.args = { 'OUTPUT_FILES' : [files] }
+            self.args[ 'OUTPUT_FILES' ] = [files] 
         else:
             raise Exception( 'Expected a string or a list for input files' )
 
@@ -140,7 +140,7 @@ class Job(object):
         if not type( stdin_file ) == str :
             raise Exception( 'Expected a string for stdin file' )
         else:
-            self.args = { 'STDIN_FILE' : stdin_file }
+            self.args[ 'STDIN_FILE' ] = stdin_file 
 
     def get_stdin_file(self):
         """
@@ -158,7 +158,7 @@ class Job(object):
         if not type( stdout_file ) == str :
             raise Exception( 'Expected a string for stdout file' )
         else:
-            self.args = { 'STDOUT_FILE' : stdout_file }
+            self.args[ 'STDOUT_FILE' ] = stdout_file 
 
     def get_stdout_file(self):
         """
@@ -176,7 +176,7 @@ class Job(object):
         if not type( stderr_file ) == str :
             raise Exception( 'Expected a string for error file' )
         else:
-            self.args = { 'STDERR_FILE' : stderr_file }
+            self.args[ 'STDERR_FILE' ] = stderr_file 
 
     def get_stderr_file(self):
         """
@@ -196,7 +196,7 @@ class Job(object):
         if not type( requirements ) == str :
             raise Exception( 'Expected a string for requirements' )
         else:
-            self.args = { 'REQUIREMENTS' : requirements }
+            self.args[ 'REQUIREMENTS' ] = requirements 
 
     def get_requirements(self):
         """
@@ -212,9 +212,9 @@ class Job(object):
         @type  np: string or integer
         """
         if type( np ) == int :
-            self.args = { 'NP' : str(np) }
+            self.args[ 'NP' ] = str(np) 
         elif type( np ) == str :
-            self.args = { 'NP' : np }
+            self.args[ 'NP' ] = np 
         else:
             raise Exception( 'Expected a string or a ingeter for np' )
 
@@ -290,12 +290,12 @@ class DRM4G( object ):
         @type  type_dep: string
         """
         str_template  = job.create_template()
-        file_template = job.create_file( str_template, file_name )
+        job.create_file( str_template )
         depend = "-d %s -r %s" % ( ' '.join( dep ), type_dep ) if dep else ''
         cmd = "%s/gwsubmit -p %d -v %s -t %s" % ( DRM4G_BIN, 
                                                   priority, 
                                                   depend, 
-                                                  file_template )
+                                                  job.get_template_file() )
         code, out = exec_cmd( cmd )
         logging.debug( out )
         if code : raise Exception( out )
@@ -309,14 +309,12 @@ class DRM4G( object ):
         @param job_id: job identifier
         @type  job_id: integer
         """
-        job_ind = int(int(float(job_id))/100)
-        job_log = join( DRM4G_DIR, 'var', '%d00-%d99' % ( job_ind, job_ind, job_id, 'job.log' )
+        job_log = join( DRM4G_DIR, 'var', '%d00-%d99' % ( job_id/100, job_id/100 ), str( job_id ) , 'job.log' )
         if not exists( job_log ) :
             raise Exception( 'There is not a log available for this job.' )
         try :
             f = open( job_log, 'r' )
-        else :
-            return ''.join( f.readlines() )
+            return f.readlines()
         finally :
             f.close()
  

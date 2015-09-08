@@ -1,4 +1,7 @@
 import re
+import os
+import logging
+import subprocess
 
 __version__  = '2.3.1'
 __author__   = 'Carlos Blanco'
@@ -14,3 +17,11 @@ def parse(output):
             line.remove('')
     # turn into dict and return
     return dict([(line[0],line[1:]) for line in output])	
+
+def exec_cmd( cmd, stdout = subprocess.PIPE, stderr = subprocess.PIPE, env = os.environ ):
+    logging.debug( "Executing command ... " + cmd )
+    p      = subprocess.Popen( cmd, shell = True, stdout = stdout,
+                               stderr = stderr, env = env )
+    output = p.stdout.read().strip() + p.stderr.read().strip()
+    code   = p.wait()
+    return code, output
