@@ -366,7 +366,7 @@ static int gw_scheduler_filter_select_queues(gw_scheduler_t * sched,
         /* ----------------------------------- */
         /*   Remove banned hosts               */
         /* ----------------------------------- */
-            hosts[i] = -1;
+            //hosts[i] = -1;
 
 #ifdef GWSCHEDDEBUG
             gw_scheduler_print('D',"Host %i will not be used for job %i (ADMIN BANNED)\n",
