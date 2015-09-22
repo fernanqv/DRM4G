@@ -1,12 +1,14 @@
-#!/bin/bash
+#!/bin/bash 
 
-#__version__  = '2.3.1'
+#__version__  = '2.4.0'
 #__author__   = 'Carlos Blanco'
 #__revision__ = "$Id$"
 
 BASE_URL="https://meteo.unican.es/work/DRM4G"
+PIP_URL="https://bootstrap.pypa.io/get-pip.py"
 DRM4G_DEPLOYMENT_DIR=$PWD
 FILE_VERSIONS="drm4g_versions"
+DRM4G_REQUIREMENTS="paramiko docopt"
 
 have_command () {
     type "$1" >/dev/null 2>/dev/null
@@ -24,17 +26,17 @@ require_command () {
 
 require_python () {
     require_command "python"
-    # Support 2.5 >= python < 3.0 
+    # Support 2.5 >= python >= 3.3 
     python_version=$(python <<EOF
 import sys
-print(sys.version_info[0]==2 and sys.version_info[1] >= 5 )
+print(sys.version_info[0]==2 and sys.version_info[1] >= 5 or sys.version_info[0]==3 and sys.version_info[1] >= 3 )
 EOF
 )
 
     if [ "$python_version" != "True" ] 
     then
         echo "Wrong version of python is installed" 
-        echo "DRM4G requires Python version 2.5+"
+        echo "DRM4G requires Python version Python (2.6+, 3.3+)"
         echo "It does not support your version of"
         echo "python: $(python -V 2>&1|sed 's/python//gi')"
         exit 1
@@ -61,7 +63,27 @@ download_drm4g_versions() {
     fi
 }
 
+download_pip() {
+    wget -N -nv --no-check-certificate $PIP_URL
+    rc=$?
+    if [ $rc -ne 0 ]
+    then
+        echo "ERROR: Unable to download pip from $PIP_URL ..."
+        exit 1
+    fi
+}
 
+
+install_drm4g_depencies(){
+    python get-pip.py -t $DRM4G_DEPLOYMENT_DIR/drm4g/libexec $DRM4G_REQUIREMENTS
+    rc=$?
+    if [ $rc -ne 0 ]
+    then
+        echo "ERROR: Unable to install DRM4G depencies"
+        exit 1
+    fi
+    rm get-pip.py
+}
 
 unpack_drm4g() {
     tar xzf $DRM4G_BUNDLE --overwrite -C $DRM4G_DEPLOYMENT_DIR
@@ -71,6 +93,7 @@ unpack_drm4g() {
         echo "ERROR: Unable to unpack the bunble $DRM4G_BUNDLE in $DRM4G_DEPLOYMENT_DIR"
         exit 1
     fi
+    rm -rf $DRM4G_BUNDLE
 }
 
 
@@ -166,6 +189,16 @@ then
 else
     unpack_drm4g
 fi
+
+echo ""
+echo "--> Downloading pip from $BASE_PIP ..."
+echo ""
+download_pip
+
+echo ""
+echo "--> Installing DRM4G requirements $DRM4G_REQUIREMENTS ..."
+echo ""
+install_drm4g_depencies
 
 cat <<EOF
 ====================================

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-__version__  = '2.3.1'
+__version__  = '2.4.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -14,9 +14,9 @@ def main():
     options, args = parser.parse_args()
     try:
         GwImMad().processLine()
-    except exceptions.KeyboardInterrupt, e:
+    except exceptions.KeyboardInterrupt as e:
         sys.exit(-1)
-    except exceptions.SystemExit, e:
+    except exceptions.SystemExit as e:
         traceback.print_exc(file=sys.stdout)
         exit( 'Caught exception: %s: %s' % (e.__class__, str(e)) )
 
