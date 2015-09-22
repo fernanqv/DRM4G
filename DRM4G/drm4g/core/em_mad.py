@@ -1,4 +1,3 @@
-from __future__              import with_statement
 import sys
 import re
 import time
@@ -6,7 +5,10 @@ import threading
 import logging
 from os.path                 import join, dirname
 from string                  import Template
-from Queue                   import Queue
+try :
+    from Queue               import Queue
+except :
+    from queue               import Queue
 from drm4g                   import REMOTE_JOBS_DIR
 from drm4g.utils.rsl2        import Rsl2Parser
 from drm4g.utils.list        import List 
@@ -95,14 +97,11 @@ class GwEmMad (object):
             job.Communicator   = communicator
             # Parse rsl
             rsl                = Rsl2Parser(RSL).parser()
-            
-            if job.resfeatures.has_key( 'project' ) :
+            if 'project' in job.resfeatures : 
                 rsl['project']      = job.resfeatures[ 'project' ]
-            
-            if job.resfeatures.has_key( 'parallel_env' ) :
+            if 'parallel_env' in job.resfeatures : 
                 rsl['parallel_env'] = job.resfeatures[ 'parallel_env' ]
-                
-            if job.resfeatures.has_key( 'vo' ) :
+            if 'vo' in job.resfeatures : 
                 _ , host                    = HOST.split('::')
                 job.resfeatures['host']     = host
                 job.resfeatures['jm']       = JM
@@ -121,7 +120,7 @@ class GwEmMad (object):
             job.JobId = job.jobSubmit( remote_file )
             self._job_list.put( JID , job )
             out = 'SUBMIT %s SUCCESS %s:%s' % ( JID , HOST , job.JobId )
-        except Exception, err:
+        except Exception as err:
             out = 'SUBMIT %s FAILURE %s' % ( JID , str( err ) )
         self.message.stdout(out)
         self.logger.debug(out , exc_info=1 )
@@ -145,13 +144,13 @@ class GwEmMad (object):
         """
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
-            if self._job_list.has_key( JID ) :
+            if self._job_list.has_key( JID ) : 
                 job    = self._job_list.get( JID )
                 status = job.getStatus( )
                 out = 'POLL %s SUCCESS %s' % ( JID , status )
             else:
                 out = 'POLL %s FAILURE Job not submitted' % (JID) 
-        except Exception, err:
+        except Exception as err:
             out = 'POLL %s FAILURE %s' % ( JID , str( err ) )
         self.message.stdout( out )
         self.logger.debug( out )
@@ -171,7 +170,7 @@ class GwEmMad (object):
             job.refreshJobStatus( )
             self._job_list.put( JID , job )
             out = 'RECOVER %s SUCCESS %s' % ( JID , job.getStatus( ) )
-        except Exception, err:
+        except Exception as err:
             out = 'RECOVER %s FAILURE %s' % ( JID , str( err ) )    
         self.message.stdout(out)
         self.logger.debug(out , exc_info=1 )
@@ -183,7 +182,7 @@ class GwEmMad (object):
         while True:
             time.sleep( self._callback_interval )
             self.logger.debug( "CALLBACK new iteration ..." )
-            for JID , job  in self._job_list.items( ):
+            for JID , job in self._job_list.items( ):
                 try:
                     self.logger.debug( "CALLBACK checking job '%s'" % JID  )
                     oldStatus = job.getStatus( )
@@ -196,7 +195,7 @@ class GwEmMad (object):
                         out = 'CALLBACK %s SUCCESS %s' % ( JID , newStatus )
                         self.message.stdout( out )
                         self.logger.debug( out )
-                except Exception, err:
+                except Exception as err:
                     out = 'CALLBACK %s FAILURE %s' % ( JID , str( err ) )
                     self.message.stdout( out )
                     self.logger.debug( out, exc_info=1 )
@@ -209,12 +208,12 @@ class GwEmMad (object):
         """
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
-            if self._job_list.has_key(JID):
+            if self._job_list.has_key( JID ) :
                 self._job_list.get(JID).jobCancel()
                 out = 'CANCEL %s SUCCESS -' % (JID)
             else:
                 out = 'CANCEL %s FAILURE Job not submitted' % (JID)
-        except Exception, e:
+        except Exception as e:
             out = 'CANCEL %s FAILURE %s' % (JID, str(e))    
         self.message.stdout(out)
         self.logger.debug(out)
@@ -240,9 +239,8 @@ class GwEmMad (object):
                 input = sys.stdin.readline().split()
                 self.logger.debug(' '.join(input))
                 OPERATION = input[0].upper()
-                if len(input) == 4 and self.methods.has_key(OPERATION):
-                    if OPERATION == 'FINALIZE' or OPERATION == 'INIT' or OPERATION == 'SUBMIT' \
-                        or OPERATION == 'RECOVER':
+                if len(input) == 4 and OPERATION in self.methods:
+                    if OPERATION in ( 'FINALIZE', 'INIT', 'SUBMIT', 'RECOVER' ):
                         self.methods[OPERATION](self, ' '.join(input))
                     else:
                         pool.add_task(self.methods[OPERATION], self, ' '.join(input))    
@@ -250,7 +248,7 @@ class GwEmMad (object):
                     out = 'WRONG COMMAND'
                     self.message.stdout(out)
                     self.logger.debug(out)
-        except Exception, err:
+        except Exception as err:
             self.logger.warning( str( err ) )
     
     def _update_resource(self, host):
@@ -261,14 +259,14 @@ class GwEmMad (object):
                 if errors :
                     self.logger.error ( ' '.join( errors ) )
                     raise Exception ( ' '.join( errors ) )
-            for resname, resdict in self._configure.resources.iteritems() :
+            for resname, resdict in list(self._configure.resources.items()) :
                 if '::' in host :
                     _resname , _ = host.split( '::' )
                     if resname != _resname :
                         continue
                 elif resname != host : 
                     continue
-                if not self._communicators.has_key( resname ) :
+                if resname not in self._communicators :
                     self._communicators[ resname ] = self._configure.make_communicators()[resname]
                 job          = self._configure.make_resources()[ resname ]['Job']
                 communicator = self._communicators[ resname ]

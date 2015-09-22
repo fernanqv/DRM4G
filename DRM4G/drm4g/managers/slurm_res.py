@@ -62,14 +62,14 @@ class Job (drm4g.managers.Job):
         args += '# @ output = $stdout\n'
         args += '# @ error  = $stderr\n'
         args += '# @ total_tasks = $count\n'
-        if parameters.has_key('ppn'):
+        if 'ppn' in parameters :
             args += '# @ tasks_per_node =$ppn\n'
-        if parameters.has_key('maxWallTime'):
+        if 'maxWallTime' in parameters :
             walltime = parameters['maxWallTime']
         else:
             walltime = self.walltime_default
         args += '# @ wall_clock_limit = %s\n' % (walltime)
-        args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
+        args += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())])
         args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)

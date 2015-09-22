@@ -24,6 +24,6 @@ def run( arg ) :
         daemon.stop()
         sleep( 2.0 )
         daemon.start()
-    except Exception , err :
+    except Exception as err :
         logger.error( str( err ) )
 

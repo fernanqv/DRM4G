@@ -79,7 +79,7 @@ class Resource (object):
 		    if index > 0:
 			attr = line[:index]
 			value = line[index + 1:].strip()
-			if record['attr'].has_key( attr ):
+			if attr in record['attr']:
 			    if type( record['attr'][attr] ) == type( [] ):
 				record['attr'][attr].append( value )
 			    else:
@@ -92,7 +92,7 @@ class Resource (object):
 	"""
 	It will return a string with the host available in the resource.
 	"""
-	if self.features.has_key( 'vo' ) :
+        if 'vo' in self.features :	
 	    self.host_list = self._hosts_vo( )
 	    return ' '.join( self.host_list )
 	else :
@@ -103,7 +103,7 @@ class Resource (object):
 	"""
 	Obtain the features of each host
 	"""
-	if self.features.has_key( 'vo' ) :
+        if 'vo' in self.features :	
 	    return self._host_vo_properties( host )
 	else :
 	    return self._host_properties( host ) 
@@ -118,7 +118,7 @@ class Resource (object):
 	attr      = 'GlueCEHostingCluster'
 	bdii      = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )
         result    = []
-	if self.features.has_key( 'host_filter' ) :
+        if 'host_filter' in self.features :	
 	    for host in self.features[ 'host_filter' ].split( ',' ) :
                 ce_filter = '(GlueCEHostingCluster=%s))' % host.strip()
                 result.append( self.ldapsearch( filt + ce_filter , attr , bdii ) )               
@@ -171,7 +171,7 @@ class Resource (object):
             host_info.OsVersion  = result[0]['attr'][ "GlueHostOperatingSystemVersion" ]
             host_info.Arch       = result[0]['attr'][ "GlueHostArchitecturePlatformType" ]
             host_info.CpuSmp     = result[0]['attr'][ "GlueHostArchitectureSMPSize" ]
-        except Exception, err:
+        except Exception as err:
             logger.error("The result of '%s' is wrong: %s " % ( filt , str( result ) ) ) 
   
         return host_info.info()
@@ -251,7 +251,7 @@ class Job (object):
     def createWrapper(self, local_directory, template):
         try:
             f = open(local_directory, 'w')
-        except Exception, e:
+        except Exception as e:
             raise JobException('Error creating wrapper_drm4g :' + str(e))
         else:
             f.write(template)
@@ -265,7 +265,7 @@ class Job (object):
         destination_url = 'gsiftp://_/%s' % remote_directory
         try:
             self.Communicator.copy(source_url, destination_url, 'X')
-        except Exception, e:
+        except Exception as e:
             raise JobException("Error copying wrapper_drm4g : %s" % str(e) )
 
     # To overload 

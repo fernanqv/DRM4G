@@ -40,7 +40,7 @@ class Job (drm4g.managers.Job):
 
     def jobTemplate(self, parameters):
         line  = '#!/bin/bash\n'
-        line += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
+        line += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())])
         line += '\n' 
         line += 'nohup $executable 2> $stderr > $stdout &\n' 
         line += 'echo $$!\n'

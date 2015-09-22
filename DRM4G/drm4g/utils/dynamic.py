@@ -1,5 +1,7 @@
-from __future__       import with_statement
-import Queue
+try :
+    import Queue as queue
+except :
+    import queue 
 import sys
 import traceback
 from threading        import Thread
@@ -37,7 +39,7 @@ class Worker(Thread):
             try:
                 try: 
                     func, args, kargs = self.tasks.get( timeout  ) 
-                except Queue.Empty:
+                except queue.Empty:
                     with lock : 
                         global threads_active, threads_min
                         if threads_active > threads_min:
@@ -61,7 +63,7 @@ class ThreadPool:
     """
     def __init__(self, num_threads_min, num_threads_max):
         self.threads_max = num_threads_max
-        self.tasks = Queue.Queue()
+        self.tasks = queue.Queue()
         with lock :
             global threads_active, threads_min
             threads_active =  num_threads_min

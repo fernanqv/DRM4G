@@ -32,7 +32,7 @@ class Job (drm4g.managers.slurm.Job):
         args += '#MOAB -e $stderr\n'
         args += '#MOAB -l nodes=$count\n'
         args += '#MOAB -V'
-        args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
+        args += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())])
         args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)

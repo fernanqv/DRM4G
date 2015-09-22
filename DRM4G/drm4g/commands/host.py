@@ -44,6 +44,6 @@ def run( arg ):
         logger.info( out )
         if err :
             logger.info( err )
-    except Exception , err :
+    except Exception as err :
         logger.error( str( err ) )
 

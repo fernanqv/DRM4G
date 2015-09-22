@@ -20,6 +20,6 @@ def run( arg ) :
             logger.setLevel(logging.DEBUG)
         Daemon().status()
         Agent().status()
-    except Exception , err :
+    except Exception as err :
         logger.error( str( err ) )
 

@@ -52,7 +52,7 @@ def run( arg ) :
         config.load( )
         if config.check( ) :
             raise Exception( "Review the configuration of '%s'." % ( arg['<resource_name>'] ) )
-        if not config.resources.has_key( arg['<resource_name>'] ):
+        if arg['<resource_name>'] not in config.resources :
             raise Exception( "'%s' is not a configured resource." % ( arg['<resource_name>'] ) )
         lrms         = config.resources.get( arg['<resource_name>'] )[ 'lrms' ]
         communicator = config.resources.get( arg['<resource_name>'] )[ 'communicator' ]
@@ -82,5 +82,5 @@ def run( arg ) :
                 agent.list_key( )
             if lrms == 'cream' :
                 proxy.check( )
-    except Exception , err :
+    except Exception as err :
         logger.error( str( err ) )

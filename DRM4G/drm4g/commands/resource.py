@@ -36,6 +36,6 @@ def run( arg ) :
             resource.check_frontends( )
         else :
             resource.list()       
-    except Exception , err :
+    except Exception as err :
         logger.error( str( err ) )
 

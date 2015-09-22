@@ -56,16 +56,16 @@ class Job (drm4g.managers.Job):
         args += '#SBATCH --error=$stderr\n'
         if parameters['queue'] != 'default':
             args += '#SBATCH -p $queue\n'
-        if parameters.has_key('maxWallTime'): 
+        if 'maxWallTime' in parameters : 
             args += '#SBATCH --time=%s\n' % (parameters['maxWallTime'])
-        if parameters.has_key('maxMemory'):
+        if 'maxMemory' in parameters :
             args += '#SBATCH --mem=%s\n' % (parameters['maxMemory'])
-        if parameters.has_key('ppn'): 
+        if 'ppn' in parameters : 
             args += '#SBATCH --ntasks-per-node=$ppn'
-        if parameters.has_key('nodes'): 
+        if 'nodes' in parameters :  
             args += '#SBATCH --nodes=$nodes'
         args += '#SBATCH --ntasks=$count\n'
-        args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
+        args += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())])
         args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)

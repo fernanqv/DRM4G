@@ -250,9 +250,9 @@ class Job( object ):
         Create string template.
         """
         str = ''
-        for key, val in self.args.items() :
+        for key, val in list(self.args.items()) :
             if key == 'ENVIRONMENT':
-                str = str + '%s = %s\n' % ( key, ','.join( "%s %s" % (k,v) for k,v in key.items() ) ) 
+                str = str + '%s = %s\n' % ( key, ','.join( "%s %s" % (k,v) for k,v in list(key.items()) ) ) 
             elif key in ( 'INPUT_FILES', 'OUTPUT_FILES' ):    
                 str = str + '%s = %s\n' % ( key, ','.join( val ) )
             else :

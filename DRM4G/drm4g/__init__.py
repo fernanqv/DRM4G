@@ -1,4 +1,4 @@
-__all__ = ["communicators", "core", "managers", "utils", "commands"]
+__all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
 __version__  = '2.3.1'
 __author__   = 'Carlos Blanco'

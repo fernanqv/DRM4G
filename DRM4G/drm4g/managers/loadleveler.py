@@ -77,18 +77,18 @@ class Job (drm4g.managers.Job):
         else:
             args += '#@ job_type  = serial\n'
         args += '#@ node = $count\n'
-        if parameters.has_key('maxWallTime'): 
+        if 'maxWallTime' in parameters: 
             args += '#@ wall_clock_limit = $maxWallTime\n'
-        if parameters.has_key('maxCpuTime'):
+        if 'maxCpuTime' in parameters:
             args += '#@ job_cpu_limit = $maxCpuTime\n' 
-        if parameters.has_key('maxMemory'):
+        if 'maxMemory' in parameters :
             args += '#@ resources = ConsumableMemory($maxMemory)\n'
-        if parameters.has_key('ppn'):
+        if 'ppn' in parameters:
             args += '#@ tasks_per_node = $ppn'
-        if parameters.has_key('project') :
+        if 'project' in parameters:
             args += '#@ account_no = $project\n'
         args += '#@ queue\n'
-        args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
+        args += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())]) 
         args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)

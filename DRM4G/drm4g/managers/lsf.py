@@ -58,9 +58,9 @@ class Job (drm4g.managers.Job):
         if parameters['queue'] != 'default':
             args += '#BSUB -q $queue\n'
         args += '#BSUB -W $maxWallTime\n'
-        if parameters.has_key('ppn'): 
+        if 'ppn' in parameters: 
             args += '#BSUB -R"span[ptile=$ppn]"'
-        args += ''.join(['export %s=%s\n' % (k, v) for k, v in parameters['environment'].items()])
+        args += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())])
         args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)

@@ -1,4 +1,3 @@
-from __future__      import with_statement
 import re
 import sys
 import logging
@@ -83,7 +82,7 @@ class Job (drm4g.managers.Job):
     def _renew_voms_proxy(self):
         output = "The proxy 'x509up.%s' has probably expired" %  self.resfeatures[ 'vo' ]  
         logger.debug( output )
-        if self.resfeatures.has_key( 'myproxy_server' ) :
+        if 'myproxy_server' in self.resfeatures :
             LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s" % join ( REMOTE_VOS_DIR , self.resfeatures[ 'myproxy_server' ] ) 
         else :
             LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s/${MYPROXY_SERVER}" % ( REMOTE_VOS_DIR )
@@ -217,19 +216,19 @@ class Job (drm4g.managers.Job):
         output_files = ','.join( [ '"%s"' % (f) for f in self.default_output_files ] )
                     
         requirements = ''
-        if parameters.has_key('maxWallTime'):  
+        if 'maxWallTime' in parameters: 
             requirements += '(other.GlueCEPolicyMaxWallClockTime <= %s)' % parameters['maxWallTime']
-        if parameters.has_key('maxCpuTime'):
+        if 'maxCpuTime' in parameters:
             if requirements: 
                 requirements += ' && '
             requirements += '(other.GlueCEPolicyMaxCPUTime <= %s)' % parameters['maxCpuTime']
-        if parameters.has_key('maxMemory'):
+        if 'maxMemory' in parameters:
             if requirements: 
                 requirements += ' && '
             requirements += ' (other.GlueHostMainMemoryRAMSize <= %s)' % parameters['maxMemory'] 
         Requirements = 'Requirements=%s;' % (requirements) if requirements else ''
         
-        env = ','.join(['"%s=%s"' %(k, v) for k, v in parameters['environment'].items()])
+        env = ','.join(['"%s=%s"' %(k, v) for k, v in list(parameters['environment'].items())])
             
         return """
 [
