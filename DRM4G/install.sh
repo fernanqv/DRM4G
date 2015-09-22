@@ -6,8 +6,7 @@
 
 BASE_URL="https://meteo.unican.es/work/DRM4G"
 DRM4G_DEPLOYMENT_DIR=$PWD
-DRM4G_HARDWARE=$(uname -m)
-FILE_VERSIONS="drm4g_${DRM4G_HARDWARE}_versions"
+FILE_VERSIONS="drm4g_versions"
 
 have_command () {
     type "$1" >/dev/null 2>/dev/null
@@ -141,7 +140,7 @@ fi
 echo ""
 echo "This script will install DRM4G version: $DRM4G_VERSION"
 
-DRM4G_BUNDLE="drm4g-${DRM4G_VERSION}-${DRM4G_HARDWARE}.tar.gz"
+DRM4G_BUNDLE="drm4g-${DRM4G_VERSION}.tar.gz"
 echo ""
 echo "--> Downloading $DRM4G_BUNDLE from $BASE_URL ..."
 echo ""
