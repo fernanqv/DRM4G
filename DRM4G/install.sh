@@ -8,7 +8,7 @@ BASE_URL="https://meteo.unican.es/work/DRM4G"
 PIP_URL="https://bootstrap.pypa.io/get-pip.py"
 DRM4G_DEPLOYMENT_DIR=$PWD
 FILE_VERSIONS="drm4g_versions"
-DRM4G_REQUIREMENTS="paramiko docopt"
+DRM4G_REQUIREMENTS="paramiko"
 
 have_command () {
     type "$1" >/dev/null 2>/dev/null
