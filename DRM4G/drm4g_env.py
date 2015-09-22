@@ -19,7 +19,7 @@ try:
         logging.config.fileConfig(DRM4G_LOGGER, {"DRM4G_DIR": DRM4G_DIR})
     except :
         pass
-except Exception, e:
+except Exception as e:
     traceback.print_exc(file=sys.stdout)
     exit( 'Caught exception: %s: %s' % (e.__class__, str(e)) )
 from optparse import OptionParser
