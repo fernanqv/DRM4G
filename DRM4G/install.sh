@@ -191,7 +191,7 @@ else
 fi
 
 echo ""
-echo "--> Downloading pip from $BASE_PIP ..."
+echo "--> Downloading pip from $PIP_URL ..."
 echo ""
 download_pip
 
