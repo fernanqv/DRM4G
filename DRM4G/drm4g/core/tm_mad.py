@@ -2,7 +2,6 @@ import sys
 import threading
 import os
 import re
-import time
 import logging
 from drm4g.utils.url       import urlparse
 from drm4g.utils.dynamic   import ThreadPool
@@ -163,15 +162,7 @@ class GwTmMad (object):
             com.copy( SRC_URL , DST_URL , EXE_MODE )
             out = 'CP %s %s SUCCESS -' % ( JID , TID )
         except Exception as err :
-            self.logger.warning( 'Error copying from %s to %s : %s' %( SRC_URL , DST_URL, str( err ) ) , exc_info=1 )
-            time.sleep( 60 )
-            try:
-                self.logger.debug( 'Copying again from %s to %s' % ( SRC_URL , DST_URL ) )
-                com = self._update_com( urlparse( SRC_URL ).host )
-                com.copy( SRC_URL , DST_URL , EXE_MODE )
-                out = 'CP %s %s SUCCESS -' % (JID, TID)
-            except Exception as err :
-                out = 'CP %s %s FAILURE %s' % ( JID , TID , str( err ) )   
+            out = 'CP %s %s FAILURE %s' % ( JID , TID , str( err ) )   
         self.message.stdout( out )
         self.logger.debug(out , exc_info=1 )
         
