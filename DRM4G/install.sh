@@ -26,10 +26,10 @@ require_command () {
 
 require_python () {
     require_command "python"
-    # Support 2.5 >= python >= 3.3 
+    # Support 2.5 > python >= 3.3 
     python_version=$(python <<EOF
 import sys
-print(sys.version_info[0]==2 and sys.version_info[1] >= 5 or sys.version_info[0]==3 and sys.version_info[1] >= 3 )
+print(sys.version_info[0]==2 and sys.version_info[1] > 5 or sys.version_info[0]==3 and sys.version_info[1] >= 3 )
 EOF
 )
 
@@ -43,7 +43,7 @@ EOF
     fi
 }
 
-download_drm4g() {
+download_drm4g () {
     wget -N -nv --no-check-certificate $BASE_URL/$DRM4G_BUNDLE
     rc=$?
     if [ $rc -ne 0 ]
@@ -53,7 +53,7 @@ download_drm4g() {
     fi
 }
 
-download_drm4g_versions() {
+download_drm4g_versions () {
     wget -N -nv --no-check-certificate $BASE_URL/$FILE_VERSIONS
     rc=$?
     if [ $rc -ne 0 ]
@@ -63,7 +63,7 @@ download_drm4g_versions() {
     fi
 }
 
-download_pip() {
+download_get_pip () {
     wget -N -nv --no-check-certificate $PIP_URL
     rc=$?
     if [ $rc -ne 0 ]
@@ -73,8 +73,7 @@ download_pip() {
     fi
 }
 
-
-install_drm4g_depencies(){
+install_drm4g_depencies_get_pip () {
     python get-pip.py -t $DRM4G_DEPLOYMENT_DIR/drm4g/libexec $DRM4G_REQUIREMENTS
     rc=$?
     if [ $rc -ne 0 ]
@@ -83,6 +82,16 @@ install_drm4g_depencies(){
         exit 1
     fi
     rm get-pip.py
+}
+
+install_drm4g_depencies_pip () {
+    pip install -t $DRM4G_DEPLOYMENT_DIR/drm4g/libexec $DRM4G_REQUIREMENTS
+    rc=$?
+    if [ $rc -ne 0 ]
+    then
+        echo "ERROR: Unable to install DRM4G depencies"
+        exit 1
+    fi
 }
 
 unpack_drm4g() {
@@ -190,15 +199,23 @@ else
     unpack_drm4g
 fi
 
-echo ""
-echo "--> Downloading pip from $PIP_URL ..."
-echo ""
-download_pip
+if [ $(have_command "pip") ] 
+then
+    echo ""
+    echo "--> Downloading pip from $PIP_URL ..."
+    echo ""
+    download_get_pip
+fi
 
 echo ""
 echo "--> Installing DRM4G requirements $DRM4G_REQUIREMENTS ..."
 echo ""
-install_drm4g_depencies
+if [ $(have_command "pip") ] 
+then
+    install_drm4g_depencies_get_pip
+else
+    install_drm4g_depencies_pip
+fi
 
 cat <<EOF
 ====================================
@@ -214,4 +231,3 @@ You need to run the above command on every new shell you
 open before using DRM4G, but just once per session.
 
 EOF
-
