@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-#__version__  = '2.4.0'
+#__version__  = '2.4.1'
 #__author__   = 'Carlos Blanco'
 #__revision__ = "$Id$"
 
@@ -8,7 +8,7 @@ BASE_URL="https://meteo.unican.es/work/DRM4G"
 PIP_URL="https://bootstrap.pypa.io/get-pip.py"
 DRM4G_DEPLOYMENT_DIR=$PWD
 FILE_VERSIONS="drm4g_versions"
-DRM4G_REQUIREMENTS="paramiko"
+DRM4G_REQUIREMENTS="paramiko<2"
 
 have_command () {
     type "$1" >/dev/null 2>/dev/null
@@ -85,7 +85,8 @@ install_drm4g_depencies_get_pip () {
 }
 
 install_drm4g_depencies_pip () {
-    pip install -t $DRM4G_DEPLOYMENT_DIR/drm4g/libexec $DRM4G_REQUIREMENTS
+    echo "pip install $DRM4G_REQUIREMENTS -t $DRM4G_DEPLOYMENT_DIR/drm4g/libexec"
+    pip install $DRM4G_REQUIREMENTS -t $DRM4G_DEPLOYMENT_DIR/drm4g/libexec
     rc=$?
     if [ $rc -ne 0 ]
     then
@@ -216,6 +217,8 @@ then
 else
     install_drm4g_depencies_pip
 fi
+
+rm -rf $FILE_VERSIONS
 
 cat <<EOF
 ====================================
