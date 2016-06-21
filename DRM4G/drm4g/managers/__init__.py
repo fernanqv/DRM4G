@@ -17,9 +17,9 @@ def sec_to_H_M_S( sec ):
     """
     Convert seconds into HH:MM:SS 
     """
-    m, s = divmod( int( sec ) , 60)
-    h, m = divmod( m , 60 ) 
-    return "%d:%02d:%02d" % ( h , m , s )
+    m, s = divmod( int( sec ), 60)
+    h, m = divmod( m, 60 ) 
+    return "%d:%02d:%02d" % ( h, m, s )
 
 class ResourceException(Exception): 
     pass 
@@ -38,7 +38,7 @@ class Resource (object):
 	self.Communicator   = None
 	self.host_list      = []
     
-    def ldapsearch( self , filt = '' , attr = '*', bdii = 'lcg-bdii.cern.ch:2170', base = 'Mds-Vo-name=local,o=grid' ) :
+    def ldapsearch(self, filt = '', attr = '*', bdii = 'lcg-bdii.cern.ch:2170', base = 'Mds-Vo-name=local,o=grid'):
 	""" 
 	Wrapper for ldapserch.
 	Input parameters:
@@ -92,18 +92,18 @@ class Resource (object):
 	"""
 	It will return a string with the host available in the resource.
 	"""
-        if 'vo' in self.features :	
+        if 'vo' in self.features and 'cream' in self.features :	
 	    self.host_list = self._hosts_vo( )
 	    return ' '.join( self.host_list )
 	else :
 	    self.host_list = [ self.name ]
 	    return self.name
 		
-    def host_properties(self , host ):
+    def host_properties(self, host ):
 	"""
 	Obtain the features of each host
 	"""
-        if 'vo' in self.features :	
+        if 'vo' in self.features and 'cream' in self.features :	
 	    return self._host_vo_properties( host )
 	else :
 	    return self._host_properties( host ) 
@@ -123,7 +123,7 @@ class Resource (object):
                 ce_filter = '(GlueCEHostingCluster=%s))' % host.strip()
                 result.append( self.ldapsearch( filt + ce_filter , attr , bdii ) )               
         else :
-             result.append( self.ldapsearch( filt + ')' , attr , bdii ) )
+            result.append( self.ldapsearch( filt + ')' , attr , bdii ) )
         hosts = []
         for value in result :
             for each_host in value :
@@ -160,6 +160,7 @@ class Resource (object):
             host_info.Nodes      = value['attr']["GlueCEInfoTotalCPUs"]
             host_info.LrmsName   = value['attr']["GlueCEUniqueID"].split('/')[1].rsplit('-',1)[0]
             host_info.LrmsType   = value['attr']["GlueCEInfoLRMSType"]
+        host_info.addQueue( Queue() )
         # Second search    
         filt   = "(&(objectclass=GlueHostOperatingSystem)(GlueSubClusterName=%s))"  % ( host )
         attr   = '*'
@@ -182,20 +183,21 @@ class Resource (object):
         """
         host_info       = HostInformation()
         host_info.Name  = host
-        host_info.Name, host_info.OsVersion, host_info.Arch, host_info.Os  = self.system_information()
+        host_info.Name, host_info.OsVersion, host_info.Arch, host_info.Os = self.system_information()
         
-        q_features = [ ( q_elem.strip() , jobr_elem.strip() , jobq_elem.strip() ) 
-                      for q_elem , jobr_elem , jobq_elem in zip( 
+        q_features = [ ( q_elem.strip(), jobr_elem.strip(), jobq_elem.strip() ) 
+                      for q_elem, jobr_elem, jobq_elem in zip( 
                                                   self.features[ 'queue' ].split( ',' ) , 
                                                   self.features[ 'max_jobs_running' ].split( ',' ) ,
                                                   self.features[ 'max_jobs_in_queue' ].split( ',' )
                                                   ) ]
-        for queue_name , max_jobs_running , max_jobs_in_queue in q_features  :
+        for queue_name, max_jobs_running, max_jobs_in_queue in q_features  :
             queue                = Queue()
             queue.Name           = queue_name
             queue.MaxRunningJobs = max_jobs_running 
             queue.MaxJobsInQueue = max_jobs_in_queue
             host_info.addQueue( self.additional_queue_properties( queue ) )
+        host_info.addQueue( Queue() )
         host_info.LrmsName = self.features[ 'lrms' ]
         host_info.LrmsType = self.features[ 'lrms' ]
         return host_info.info()
@@ -284,7 +286,7 @@ class Job (object):
 class Queue( object ) :
     
     def __init__(self):
-        self.Name           = "NULL"
+        self.Name           = ""
         self.Nodes          = "0"
         self.FreeNodes      = "0"
         self.MaxTime        = "0"
@@ -312,7 +314,7 @@ class Queue( object ) :
 class HostInformation( object ) :
    
     def __init__(self):
-        self.Name       = "NULL"
+        self.Name       = ""
         self.Arch       = "NULL"
         self.Os         = "NULL"
         self.OsVersion  = "NULL"
@@ -336,7 +338,7 @@ class HostInformation( object ) :
     def showQueues(self):
         return self._queues
 
-    def info (self): 
+    def info(self): 
         """
         @return: the information of the host and the host queues
         @rtype: string 

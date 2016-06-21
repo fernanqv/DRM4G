@@ -12,7 +12,6 @@ __version__  = '2.4.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-
 class GwTmMad (object):
     """
     Transfer manager MAD
@@ -66,7 +65,7 @@ class GwTmMad (object):
         self._max_thread   = 30
         self._min_thread   = 5
         self._lock         = threading.Lock()
-        self._communicator = dict ()
+        self._communicator = dict()
         self._configure    = None
     
     def do_INIT(self, args):

@@ -175,7 +175,7 @@ class Agent( object ):
 class Daemon( object ):
     
     def __init__( self ):
-        self.gwd_pid  = join( DRM4G_DIR  , 'var' , 'gwd.pid' )
+        self.gwd_pid  = join( DRM4G_DIR, 'var', 'gwd.pid' )
                 
     def status( self ):
         if self.is_alive() :
@@ -198,9 +198,9 @@ class Daemon( object ):
             lock = join( DRM4G_DIR , 'var', '/.lock' )
             if exists( lock ) : 
                 os.remove( lock )
-            os.environ[ 'PATH' ] = '%s:%s' % ( DRM4G_BIN , os.getenv( 'PATH' ) )
+            os.environ[ 'PATH' ] = '%s:%s' % ( DRM4G_BIN, os.getenv( 'PATH' ) )
             logger.debug( "Starting gwd .... " )
-            out , err = exec_cmd( join( DRM4G_BIN , 'gwd' ) )
+            out , err = exec_cmd( join( DRM4G_BIN, 'gwd' ) )
             if err :
                 logger.info( err )
             if out :
@@ -213,7 +213,7 @@ class Daemon( object ):
     def stop( self ):
         logger.info( "Stopping DRM4G .... " )
         logger.debug( "Stopping gwd .... " )
-        out , err = exec_cmd( "%s -k" % join( DRM4G_BIN , "gwd" ) )
+        out , err = exec_cmd( "%s -k" % join( DRM4G_BIN, "gwd" ) )
         if err :
             logger.info( err )
         if out :
@@ -222,7 +222,7 @@ class Daemon( object ):
             logger.info( " OK" )
             
     def clear( self ):
-        yes_choise = yes_no_choice( "Do you want to continue clearing DRM4G " )
+        yes_choise = yes_no_choice( "Do you want to continue clearing DRM4G? " )
         if yes_choise :
             logger.info( "Clearing DRM4G .... " )
             cmd = "%s -c" % join( DRM4G_BIN , "gwd" )
@@ -285,7 +285,7 @@ class Resource( object ):
         List the features of a given resource.
         """
         self.check( )
-        for resname , resdict in sorted( self.config.resources.items() ) :
+        for resname, resdict in sorted( self.config.resources.items() ) :
             logger.info( "Resource '%s' :" % ( resname ) )
             for key , val in sorted( resdict.items() ) :
                 logger.info( " --> '%s' : '%s'" % ( key, val ) )         
@@ -298,6 +298,14 @@ class Resource( object ):
         errors = self.config.check()
         if errors :
             raise Exception( "Please, review your configuration file" )
+
+    def create_vms( self ) :
+        """
+        """
+        self.check( )
+        for resname, resdict in sorted( self.config.resources.items() ) :
+            
+
     
 class Proxy( object ):
     
@@ -305,12 +313,14 @@ class Proxy( object ):
         self.resource     = resource
         self.communicator = communicator
         if 'myproxy_server' in self.resource :
-            self.prefix = "X509_USER_PROXY=%s MYPROXY_SERVER=%s " % (
+            self.prefix = "X509_USER_PROXY=%s MYPROXY_SERVER=%s %s" % (
                                                                  join( REMOTE_VOS_DIR , self.resource[ 'myproxy_server' ] ),
-                                                                 self.resource[ 'myproxy_server' ]
+                                                                 self.resource[ 'myproxy_server' ],
+                                                                 "GT_PROXY_MODE=rfc" if self.resource.features[ "lrms" ] == "fedcloud" else ""
                                                                  )
         else :
-            self.prefix = "X509_USER_PROXY=%s/${MYPROXY_SERVER} " % REMOTE_VOS_DIR
+            self.prefix = "X509_USER_PROXY=%s/${MYPROXY_SERVER} %s" % ( REMOTE_VOS_DIR, 
+                                                                        "GT_PROXY_MODE=rfc" if self.resource.features[ "lrms" ] == "fedcloud" else "" )
         
     def create( self , proxy_lifetime ):
         logger.info("--> Creating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR )

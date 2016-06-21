@@ -96,6 +96,10 @@ class Configuration(object):
                 output = "'max_jobs_running' key is mandatory for '%s' resource" % resname
                 logger.error( output )
                 errors.append( output )
+            if ( resdict[ 'lrms' ] != 'cream' and not resdict.get( 'max_jobs_running' ) ) :
+                output = "'max_jobs_running' key has a wrong value for '%s' resource" % resname
+                logger.error( output )
+                errors.append( output )
             if ( not ( 'max_jobs_in_queue' in reslist ) and ( 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) ) :
                 self.resources[resname]['max_jobs_in_queue'] = resdict['max_jobs_running']
                 logger.debug( "'max_jobs_in_queue' will be the same as the 'max_jobs_running'" )

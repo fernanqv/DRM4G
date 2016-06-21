@@ -2,7 +2,7 @@
 Manage computing resources on DRM4G.
     
 Usage: 
-    drm4g resource [ list | edit | check ] [ options ]
+    drm4g resource [ list | edit | check | create | destroy ] [ options ]
     
  Options:
     --dbg                   Debug mode.
@@ -11,6 +11,8 @@ Commands:
     list                    Show resources available.    
     edit                    Configure resouces.
     check                   Check out if configured resources are accessible.
+    create
+    destroy 
 """
 __version__  = '2.4.0'
 __author__   = 'Carlos Blanco'
@@ -34,6 +36,10 @@ def run( arg ) :
             resource.edit()
         elif arg[ 'check' ] :
             resource.check_frontends( )
+        elif arg[ 'create' ] :
+            resource.create_vms()
+        elif arg[ 'destroy' ] :
+            resource.destroy_vms( )
         else :
             resource.list()       
     except Exception as err :
