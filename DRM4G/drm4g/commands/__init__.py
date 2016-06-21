@@ -298,14 +298,6 @@ class Resource( object ):
         errors = self.config.check()
         if errors :
             raise Exception( "Please, review your configuration file" )
-
-    def create_vms( self ) :
-        """
-        """
-        self.check( )
-        for resname, resdict in sorted( self.config.resources.items() ) :
-            
-
     
 class Proxy( object ):
     
