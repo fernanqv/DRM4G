@@ -28,7 +28,7 @@ __version__  = '2.4.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-class Communicator (drm4g.communicators.Communicator):
+class Communicator(drm4g.communicators.Communicator):
     """
     Create a SSH session to remote resources.  
     """
@@ -49,45 +49,42 @@ class Communicator (drm4g.communicators.Communicator):
                 agent = Agent()
                 keys  = agent.get_keys()
                 if not keys :
-                    logger.error( "Error trying to connect to '%s'" % self.frontend )
-                    logger.error( "Impossible to load '%s' key from the ssh-agent"  % self.private_key )
+                    logger.warning( "Error trying to connect to '%s'" % self.frontend )
+                    logger.warning( "Impossible to load '%s' key from the ssh-agent"  % self.private_key )
                     try:
                         status_ssh_agent = agent._conn
                     except Exception as err :
-                        logger.warning("Probably you are using paramiko version <= 1.7.7.2 : %s " % str( err ) )
+                        logger.warning( "Probably you are using paramiko version <= 1.7.7.2 : %s " % err )
                         status_ssh_agent = agent.conn
                     if not status_ssh_agent:
-                        output = "'ssh-agent' is not running"
-                        raise ComException( output ) 
+                        logger.warning( "'ssh-agent' is not running" )
                     else:
                         if agent.get_keys():
-                            output = "ssh-agent is running but none of the keys have been accepted" 
-                            "by remote frontend %s." % self.frontend
-                            raise ComException( output )
+                            logger.warning( "ssh-agent is running but none of the keys have been accepted" 
+                            "by remote frontend %s." % self.frontend )
                         else:
-                            output = "'ssh-agent' is running but without any keys"
-                            raise ComException( output  )
-                """
-                logger.debug("Trying '%s' key ... " % self.private_key )
-                private_key_path = expanduser( self.private_key )
-                if ( not exists( private_key_path ) ) and ( not 'PRIVATE KEY' in  self.private_key ):
-                    output = "'%s'key does not exist" % private_key_path
-                    raise ComException( output ) 
-                for pkey_class in (RSAKey, DSSKey):
-                    try :
-                        if 'PRIVATE KEY' in self.private_key :
-                            import StringIO
-                            key  = pkey_class.from_private_key( StringIO.StringIO ( self.private_key.strip( "'" ) ) )
-                        else : 
-                            key  = pkey_class.from_private_key_file( private_key_path )
-                        keys = (key,)
-                    except Exception :
-                        pass
+                            logger.warning( "'ssh-agent' is running but without any keys" )
+                if self.private_key :
+                    logger.debug("Trying '%s' key ... " % self.private_key )
+                    private_key_path = expanduser( self.private_key )
+                    if ( not exists( private_key_path ) ) and ( not 'PRIVATE KEY' in  self.private_key ):
+                        output = "'%s'key does not exist" % private_key_path
+                        raise ComException( output ) 
+                    for pkey_class in (RSAKey, DSSKey):
+                        try :
+                            if 'PRIVATE KEY' in self.private_key :
+                                import StringIO
+                                key  = pkey_class.from_private_key( StringIO.StringIO ( self.private_key.strip( "'" ) ) )
+                            else : 
+                                key  = pkey_class.from_private_key_file( private_key_path )
+                            keys = (key,)
+                        except Exception :
+                            pass
                 if not keys :
-                    output = "Impossible to load '%s' key "  % self.private_key
+                    output = "Impossible to load any keys" 
                     logger.error( output )
-                    raise ComException( ) 
-                """
+                    raise ComException( output )
+ 
                 for key in keys:
                     try:
                         sock = socket.socket()
@@ -111,7 +108,8 @@ class Communicator (drm4g.communicators.Communicator):
                     except Exception as  err :
                         logger.warning( "Error connecting '%s': %s" % ( self.frontend , str ( err ) ) ) 
             if not self._trans :
-                output = "Authentication failed to '%s'. Try to execute `ssh -vvv -p %d %s@%s` and see the response." % ( self.frontend , self.port, self.username, self.frontend )
+                output = "Authentication failed to '%s'. Try to execute `ssh -vvv -p %d %s@%s` and see the response." % ( 
+                          self.frontend , self.port, self.username, self.frontend )
                 raise ComException( output  )
        
     def execCommand(self , command , input = None ):

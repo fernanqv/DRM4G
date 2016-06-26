@@ -145,17 +145,17 @@ class Configuration(object):
                         errors.append( output )
                     else :
                         self.resources[resname]['private_key'] = abs_private_key
-                public_key = resdict.get( 'public_key' )
-                if not public_key :
-                    abs_public_key = abs_private_key + '.pub'
-                else :
-                    abs_public_key = os.path.expandvars( os.path.expanduser( public_key ) ) 
-                if not os.path.isfile( abs_private_key ) :     
-                    output = "'%s' does not exist for '%s' resource" % ( abs_public_key , resname )
-                    logger.error( output )
-                    errors.append( output )
-                else :
-                    self.resources[resname]['public_key'] = abs_public_key 
+                    public_key = resdict.get( 'public_key' )
+                    if not public_key :
+                        abs_public_key = abs_private_key + '.pub'
+                    else :
+                        abs_public_key = os.path.expandvars( os.path.expanduser( public_key ) ) 
+                    if not os.path.isfile( abs_private_key ) :     
+                        output = "'%s' does not exist for '%s' resource" % ( abs_public_key , resname )
+                        logger.error( output )
+                        errors.append( output )
+                    else :
+                        self.resources[resname]['public_key'] = abs_public_key 
             grid_cert = resdict.get( 'grid_cert' )
             if grid_cert : 
                 abs_grid_cert = os.path.expandvars( os.path.expanduser( grid_cert ) ) 
