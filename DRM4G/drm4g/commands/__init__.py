@@ -76,19 +76,19 @@ class Agent( object ):
             match = re.search( 'SSH_AUTH_SOCK=(?P<SSH_AUTH_SOCK>[^;]+);.*' \
                            + 'SSH_AGENT_PID=(?P<SSH_AGENT_PID>\d+);', out, re.DOTALL)
             if match :
-                logger.info( " OK" )
+                logger.info( "  OK" )
                 self.agent_env = match.groupdict()
-                logger.debug( ' Agent pid: %s'  % self.agent_env['SSH_AGENT_PID'])
+                logger.debug( '  Agent pid: %s'  % self.agent_env['SSH_AGENT_PID'])
             else:
                 logger.error( err )
-                raise Exception( ' Cannot determine agent data from output: %s' % out )
+                raise Exception( '  Cannot determine agent data from output: %s' % out )
             with open( self.agent_file , 'w') as f:
                 f.write( self.agent_env['SSH_AGENT_PID'] + '\n' + self.agent_env['SSH_AUTH_SOCK'] )
         logger.info('Starting ssh-agent ...') 
         if not self.is_alive() :
             _start()
         elif self.is_alive() :
-            logger.warn( " WARNING: ssh-agent is already running" )
+            logger.warn( "  WARNING: ssh-agent is already running" )
         elif not self.agent_env:
             self.get_agent_env()
  
@@ -163,7 +163,7 @@ class Agent( object ):
             if err :
                 logger.info( err )
             else :
-                logger.info( " OK" )
+                logger.info( "  OK" )
         else:
             logger.warn( ' WARNING: ssh-agent is already stopped' )
         try:
@@ -206,9 +206,9 @@ class Daemon( object ):
             if out :
                 logger.info( out ) 
             if not err and not out :
-                logger.info( " OK" )
+                logger.info( "  OK" )
         else :
-            logger.info( " WARNING: DRM4G is already running." )
+            logger.info( "  WARNING: DRM4G is already running." )
                 
     def stop( self ):
         logger.info( "Stopping DRM4G .... " )
@@ -219,7 +219,7 @@ class Daemon( object ):
         if out :
             logger.info( out )
         if not err and not out :
-            logger.info( " OK" )
+            logger.info( "  OK" )
             
     def clear( self ):
         yes_choise = yes_no_choice( "Do you want to continue clearing DRM4G? " )
@@ -233,7 +233,7 @@ class Daemon( object ):
             if out :
                 logger.info( out )
             if not err and not out :
-                logger.info( " OK" )
+                logger.info( "  OK" )
         else :
             self.start()
             
