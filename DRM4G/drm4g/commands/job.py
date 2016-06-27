@@ -2,7 +2,7 @@
 Submit, get status and history and cancel jobs.
 
 Usage: 
-    drm4g job submit  [ options ] [ --dep <job_id> ... ] <template> 
+    drm4g job submit  [ options ] [ --ntasks <total_tasks> ] [ --dep <job_id> ... ] <template> 
     drm4g job list    [ options ] [ <job_id> ] 
     drm4g job cancel  [ options ] <job_id> ... 
     drm4g job log     [ options ] <job_id>
@@ -11,8 +11,10 @@ Usage:
 Arguments:
    <job_id>               Job identifier.
    <template>             Job template.
+   <total_tasks>          Total number of tasks in the job array.
 
 Options:
+   --ntasks <total_tasks> Number of tasks to submit. 
    --dep=<job_id> ...     Define the job dependency list of the job.
    --dbg                  Debug mode.
     
@@ -61,7 +63,8 @@ def run( arg ) :
             raise Exception( 'DRM4G is stopped. ')
         if arg['submit']:
             dependencies = '-d "%s"' % ' '.join( arg['--dep'] ) if arg['--dep'] else ''
-            cmd = '%s/gwsubmit %s -v %s' % ( DRM4G_BIN , dependencies  , arg['<template>'] )
+            number_of_tasks = '-n %s' % arg['--ntasks'] if arg['--ntasks'] else ''
+            cmd = '%s/gwsubmit %s -v %s %s' % ( DRM4G_BIN, dependencies, arg['<template>'], number_of_tasks )
         elif arg['list']:
             cmd = '%s/gwps -o Jsetxjh '  % ( DRM4G_BIN )
             if arg['<job_id>'] :
