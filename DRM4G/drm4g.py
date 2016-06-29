@@ -26,7 +26,7 @@ drm4g commands are:
  
 See 'drm4g <command> --help' for more information on a specific command.
 """
-__version__  = '2.4.0'
+__version__  = '2.4.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

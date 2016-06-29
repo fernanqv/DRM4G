@@ -5,7 +5,7 @@ from os.path             import join, exists
 from drm4g               import DRM4G_BIN, DRM4G_DIR
 from drm4g.utils.command import exec_cmd
 
-__version__  = '2.4.0'
+__version__  = '2.4.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
     

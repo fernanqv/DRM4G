@@ -1,6 +1,6 @@
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
-__version__  = '2.4.0'
+__version__  = '2.4.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -69,6 +69,7 @@ RESOURCE_MANAGERS = {
                      "mnslurm"      : "drm4g.managers.marenostrum",
                      "slurm_res"    : "drm4g.managers.slurm_res",
                      "neptuno"      : "drm4g.managers.neptuno",
+                     "fedcloud"     : "drm4g.managers.fedcloud",
                      }
 
 

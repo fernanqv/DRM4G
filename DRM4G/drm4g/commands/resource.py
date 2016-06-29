@@ -14,7 +14,7 @@ Commands:
     create
     destroy 
 """
-__version__  = '2.4.0'
+__version__  = '2.4.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
