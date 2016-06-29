@@ -62,7 +62,6 @@ class Configuration(object):
                 except Exception as err:
                     output = "Configuration file '%s' is unreadable or malformed: %s" % ( DRM4G_CONFIG_FILE , str( err ) )
                     logger.error( output )
-                    raise ConfigureException( output )
                 
                 for sectname in parser.sections():
                     name                   = sectname
@@ -73,7 +72,6 @@ class Configuration(object):
             except Exception as err:
                 output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err)) 
                 logger.error( output )
-                raise ConfigureException( output )
         finally:
             file.close()
             
@@ -187,7 +185,6 @@ class Configuration(object):
             except Exception as err:
                 output = "Failed creating communicator for resource '%s' : %s" % ( name, str( err ) )
                 logger.warning( output , exc_info=1 )
-                raise ConfigureException( output )
         return communicators 
 
     def make_resources(self):
@@ -211,7 +208,6 @@ class Configuration(object):
             except Exception as err:
                 output = "Failed creating objects for resource '%s' of type : %s" % ( name, str( err ) )
                 logger.warning( output , exc_info=1 )
-                raise ConfigureException( output )
         return resources
 
 
