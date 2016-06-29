@@ -77,7 +77,7 @@ class Communicator(drm4g.communicators.Communicator):
                                 key  = pkey_class.from_private_key( StringIO.StringIO ( self.private_key.strip( "'" ) ) )
                             else : 
                                 key  = pkey_class.from_private_key_file( private_key_path )
-                            keys = (key,)
+                            keys = keys + (key,)
                         except Exception :
                             pass
                 if not keys :
