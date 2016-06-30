@@ -2,7 +2,7 @@
 
 #__version__  = '2.4.0'
 #__author__   = 'Carlos Blanco'
-#__revision__ = "$Id$"
+#__revision__ = "$Id: install.sh 2986 2016-06-21 11:52:59Z carlos $"
 
 BASE_URL="https://meteo.unican.es/work/DRM4G"
 PIP_URL="https://bootstrap.pypa.io/get-pip.py"
@@ -156,7 +156,9 @@ DRM4G installation script
 ==========================
 EOF
 
-# Check wget and python  
+# Check wget, bash and python  
+require_command bash
+
 require_command wget
 
 require_python
@@ -192,19 +194,21 @@ if [ -d "$DRM4G_DEPLOYMENT_DIR/drm4g" ]
 then
     echo "WARNING: DRM4G already exists"
     read -p "Are you sure you want to install it? [y/N] " response
-    case $response in y|Y|yes|Yes) $DRM4G_DEPLOYMENT_DIR/drm4g/bin/drm4g stop; unpack_drm4g;; *);; esac
+    case $response in y|Y|yes|Yes) $DRM4G_DEPLOYMENT_DIR/drm4g/bin/drm4g stop 2>/dev/null; unpack_drm4g;; *);; esac
 else
     unpack_drm4g
 fi
 
-if [ $(have_command "pip") ] 
+have_command "pip"
+pip_rc=$?
+if [ ! ${pip_rc} -eq 0 ] 
 then
     download_get_pip
 fi
 
 echo ""
 echo "--> Installing DRM4G python requirements locally ..."
-if [ $(have_command "pip") ] 
+if [ ! ${pip_rc} -eq 0 ]
 then
     install_drm4g_depencies_get_pip
 else
@@ -221,7 +225,7 @@ Installation of DRM4G $DRM4G_VERSION is done!
 In order to work with DRM4G you have to enable its 
 environment with the command:
 
-    . $DRM4G_DEPLOYMENT_DIR/drm4g/bin/drm4g_init.sh
+    source $DRM4G_DEPLOYMENT_DIR/drm4g/bin/drm4g_init.sh
 
 You need to run the above command on every new shell you 
 open before using DRM4G, but just once per session.
