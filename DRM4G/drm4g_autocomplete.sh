@@ -221,7 +221,13 @@ _drm4g_job_submit()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W '--dep=' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dep= --ntask=' -- $cur) )
+        # Expand tilder to $HOME
+        [[ ${cur} == "~/"* ]] && cur=${cur/\~/$HOME}
+        compopt +o filenames
+        local files=("${cur}"*)
+        # Show completion if path exist (and escape spaces)
+        [[ -e ${files[0]} ]] && COMPREPLY=( "${files[@]// /\ }" )
     fi
 }
 
