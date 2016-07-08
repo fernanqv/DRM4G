@@ -14,23 +14,7 @@ __version__  = '2.4.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-
-##
-# Configure logger
-##
-logging.basicConfig( format='%(message)s', level = logging.INFO , stream = sys.stdout )
 logger = logging.getLogger(__name__)
-
-if exists( DRM4G_DIR ) is False  :
-    logger.info( "Creating a DRM4G local configuration in '%s'" %  DRM4G_DIR )
-    abs_dir = join ( DRM4G_DIR , 'var' , 'acct' )
-    logger.info( "Creating '%s' directory" % abs_dir )
-    os.makedirs( abs_dir )
-    from  shutil import copytree
-    src  = join ( DRM4G_DEPLOYMENT_DIR , 'etc' )
-    dest = join ( DRM4G_DIR            , 'etc' )
-    logger.info( "Coping from '%s' to '%s'" % ( src , dest ) )
-    copytree( src , dest )
 
 def process_is_runnig( pid ):
     """

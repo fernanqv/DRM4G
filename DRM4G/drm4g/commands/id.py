@@ -38,7 +38,8 @@ __revision__ = "$Id$"
 import logging
 from os.path              import expanduser, exists, expandvars
 from drm4g.core.configure import Configuration
-from drm4g.commands       import exec_cmd, Daemon, Agent, Proxy, logger
+from drm4g.commands       import exec_cmd, Daemon, Agent, Proxy
+from drm4g                import logger 
 
 def run( arg ) :
     if arg[ '--dbg' ] :

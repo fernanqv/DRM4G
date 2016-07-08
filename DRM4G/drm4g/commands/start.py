@@ -12,7 +12,8 @@ __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 import logging
-from drm4g.commands       import Daemon, Agent, logger
+from drm4g                import logger
+from drm4g.commands       import Daemon, Agent
 
 def run( arg ) :
     try:

@@ -51,8 +51,8 @@ __revision__ = "$Id$"
 
 import logging
 from os.path              import join, exists
-from drm4g                import DRM4G_BIN, DRM4G_DIR
-from drm4g.commands       import exec_cmd, Daemon, logger
+from drm4g                import DRM4G_BIN, DRM4G_DIR, logger
+from drm4g.commands       import exec_cmd, Daemon
 
 def run( arg ) :
     if arg[ '--dbg' ] :
