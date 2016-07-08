@@ -13,8 +13,7 @@ __revision__ = "$Id$"
 
 import logging
 from time                 import sleep
-from drm4g                import logger
-from drm4g.commands       import Daemon
+from drm4g.commands       import Daemon, logger
 
 def run( arg ) :
     try:

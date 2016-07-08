@@ -13,7 +13,8 @@ __revision__ = "$Id$"
 
 import logging
 import os
-from drm4g  import DRM4G_DAEMON, DRM4G_LOGGER, DRM4G_SCHED, logger
+from drm4g          import DRM4G_DAEMON, DRM4G_LOGGER, DRM4G_SCHED
+from drm4g.commands import logger 
 
 def run( arg ) :
     if arg[ '--dbg' ] :

@@ -27,8 +27,8 @@ __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 import logging
-from drm4g                import DRM4G_BIN, logger
-from drm4g.commands       import exec_cmd, Daemon
+from drm4g                import DRM4G_BIN
+from drm4g.commands       import exec_cmd, Daemon, logger
 
 def run( arg ):
     if arg[ '--dbg' ] :
