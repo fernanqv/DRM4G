@@ -14,6 +14,8 @@ __version__  = '2.4.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
+PY2 = sys.version_info[0] == 2
+
 logger = logging.getLogger(__name__)
 
 def process_is_runnig( pid ):
@@ -49,9 +51,12 @@ def yes_no_choice( message ,  default = 'y' ) :
     """
     Ask for Yes/No questions
     """
-    choices = 'Y/n' if default.lower() in ('y', 'yes') else 'y/N'
-    choice = eval(input("%s (%s) " % (message, choices)))
-    values = ('y', 'yes', '') if default == 'y' else ('y', 'yes')
+    choices = 'Y/n' if default.lower() in ( 'y', 'yes' ) else 'y/N'
+    if PY2 :
+        choice = raw_input( "%s (%s) " % ( message, choices ) )
+    else :
+        choice = input( "%s (%s) " % ( message, choices ) )
+    values = ( 'y', 'yes', '' ) if default == 'y' else ( 'y', 'yes' )
     return choice.strip().lower() in values
 
 class Agent( object ):
