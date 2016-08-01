@@ -426,17 +426,17 @@ am__relativize = \
     dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
   done; \
   reldir="$$dir2"
-ACLOCAL = ${SHELL} /home/carlos/DRM4G/config/missing --run aclocal-1.11
+ACLOCAL = ${SHELL} /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8/config/missing --run aclocal-1.11
 ALLOCA = 
-AMTAR = ${SHELL} /home/carlos/DRM4G/config/missing --run tar
+AMTAR = ${SHELL} /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8/config/missing --run tar
 AR = ar
-AUTOCONF = ${SHELL} /home/carlos/DRM4G/config/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/carlos/DRM4G/config/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/carlos/DRM4G/config/missing --run automake-1.11
-AWK = gawk
+AUTOCONF = ${SHELL} /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8/config/missing --run autoconf
+AUTOHEADER = ${SHELL} /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8/config/missing --run autoheader
+AUTOMAKE = ${SHELL} /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8/config/missing --run automake-1.11
+AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=none
-CFLAGS =  -DGWSYSLOG=LOG_USER
+CFLAGS = -g -O2
 CPP = gcc -E
 CPPFLAGS = 
 CXX = g++
@@ -444,7 +444,7 @@ CXXCPP = g++ -E
 CXXDEPMODE = depmode=none
 CXXFLAGS = -g -O2
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"GridWay\" -DPACKAGE_TARNAME=\"gridway\" -DPACKAGE_VERSION=\"5.8.0\" -DPACKAGE_STRING=\"GridWay\ 5.8.0\" -DPACKAGE_BUGREPORT=\"contact@gridway.org\" -DPACKAGE_URL=\"http://gridway.org\" -DPACKAGE=\"gridway\" -DVERSION=\"5.8.0\" -DYYTEXT_POINTER=1 -DHAVE_LIBPTHREAD=1 -DHAVE_LIBDB=1 -DHAVE_DIRENT_H=1 -DSTDC_HEADERS=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ARPA_INET_H=1 -DHAVE_FCNTL_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_LIBINTL_H=1 -DHAVE_LIMITS_H=1 -DHAVE_NETDB_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDDEF_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FLOAT_H=1 -DHAVE_MALLOC_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_ALLOCA_H=1 -DHAVE_ALLOCA=1 -DHAVE_MBSTATE_T=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DHAVE_STDLIB_H=1 -DHAVE_REALLOC=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_SYS_SOCKET_H=1 -DSELECT_TYPE_ARG1=int -DSELECT_TYPE_ARG234=\(fd_set\ \*\) -DSELECT_TYPE_ARG5=\(struct\ timeval\ \*\) -DLSTAT_FOLLOWS_SLASHED_SYMLINK=1 -DHAVE_VPRINTF=1 -DHAVE_DUP2=1 -DHAVE_GETCWD=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_GETHOSTNAME=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_MEMSET=1 -DHAVE_REALPATH=1 -DHAVE_SELECT=1 -DHAVE_SOCKET=1 -DHAVE_STRCASECMP=1 -DHAVE_STRCHR=1 -DHAVE_STRDUP=1 -DHAVE_STRERROR=1 -DHAVE_STRRCHR=1 -DHAVE_STRSTR=1 -DHAVE_RMDIR=1 -DHAVE_SETENV=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\"
+DEFS = -DPACKAGE_NAME=\"GridWay\" -DPACKAGE_TARNAME=\"gridway\" -DPACKAGE_VERSION=\"5.8.0\" -DPACKAGE_STRING=\"GridWay\ 5.8.0\" -DPACKAGE_BUGREPORT=\"contact@gridway.org\" -DPACKAGE_URL=\"http://gridway.org\" -DPACKAGE=\"gridway\" -DVERSION=\"5.8.0\" -DHAVE_LIBPTHREAD=1 -DHAVE_DIRENT_H=1 -DSTDC_HEADERS=1 -DHAVE_SYS_WAIT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_ARPA_INET_H=1 -DHAVE_FCNTL_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_LIBINTL_H=1 -DHAVE_LIMITS_H=1 -DHAVE_NETDB_H=1 -DHAVE_NETINET_IN_H=1 -DHAVE_STDDEF_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FLOAT_H=1 -DHAVE_MALLOC_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_ALLOCA_H=1 -DHAVE_ALLOCA=1 -DHAVE_MBSTATE_T=1 -DHAVE_FORK=1 -DHAVE_VFORK=1 -DHAVE_WORKING_VFORK=1 -DHAVE_WORKING_FORK=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DHAVE_STDLIB_H=1 -DHAVE_REALLOC=1 -DHAVE_SYS_SELECT_H=1 -DHAVE_SYS_SOCKET_H=1 -DSELECT_TYPE_ARG1=int -DSELECT_TYPE_ARG234=\(fd_set\ \*\) -DSELECT_TYPE_ARG5=\(struct\ timeval\ \*\) -DLSTAT_FOLLOWS_SLASHED_SYMLINK=1 -DHAVE_VPRINTF=1 -DHAVE_DUP2=1 -DHAVE_GETCWD=1 -DHAVE_GETHOSTBYNAME=1 -DHAVE_GETHOSTNAME=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_MEMSET=1 -DHAVE_REALPATH=1 -DHAVE_SELECT=1 -DHAVE_SOCKET=1 -DHAVE_STRCASECMP=1 -DHAVE_STRCHR=1 -DHAVE_STRDUP=1 -DHAVE_STRERROR=1 -DHAVE_STRRCHR=1 -DHAVE_STRSTR=1 -DHAVE_RMDIR=1 -DHAVE_SETENV=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\"
 DEPDIR = .deps
 DSYMUTIL = 
 DUMPBIN = 
@@ -460,19 +460,19 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-JAVAC_PATH = /usr/bin/javac
+JAVAC_PATH = 
 LD = /usr/bin/ld -m elf_x86_64
-LDFLAGS =  -L/usr/lib
-LEX = flex
-LEXLIB = -lfl
-LEX_OUTPUT_ROOT = lex.yy
+LDFLAGS = 
+LEX = ${SHELL} /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8/config/missing --run flex
+LEXLIB = 
+LEX_OUTPUT_ROOT = 
 LIBOBJS = 
-LIBS = -ldb -lpthread 
+LIBS = -lpthread 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/carlos/DRM4G/config/missing --run makeinfo
+MAKEINFO = ${SHELL} /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8/config/missing --run makeinfo
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
 NMEDIT = 
@@ -495,12 +495,12 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = strip
 VERSION = 5.8.0
-YACC = bison -y
+YACC = yacc
 YFLAGS = 
-abs_builddir = /home/carlos/DRM4G/src
-abs_srcdir = /home/carlos/DRM4G/src
-abs_top_builddir = /home/carlos/DRM4G
-abs_top_srcdir = /home/carlos/DRM4G
+abs_builddir = /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8/src
+abs_srcdir = /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8/src
+abs_top_builddir = /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8
+abs_top_srcdir = /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 ac_ct_DUMPBIN = 
@@ -529,8 +529,8 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/carlos/DRM4G/config/install-sh
-java_home = /usr/lib/jvm/java-8-oracle
+install_sh = ${SHELL} /home/antonio/Documentos/drm4g_source/build_3/source_code/gridway-5.8/config/install-sh
+java_home = 
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -540,7 +540,7 @@ mandir = ${datarootdir}/man
 mkdir_p = /bin/mkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /home/carlos/drm4g
+prefix = /home/antonio/Documentos/drm4g_source/build_3/drm4g
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -591,7 +591,7 @@ DRMAA = $(srcdir)/drmaa
 DRMAA_PACK = $(srcdir)/$(DRMAA_SRC_DIR)/org/ggf/drmaa
 DRMAA1_PACK = $(srcdir)/$(DRMAA1_SRC_DIR)/org/ggf/drmaa
 SSH = $(srcdir)/ssh
-JAVA_HOME = /usr/lib/jvm/java-8-oracle
+JAVA_HOME = 
 
 # --------------------------------
 # Object Dependencies
@@ -992,7 +992,7 @@ __srcdir__drmaa_libDrmaaJNI_la_LINK = $(LIBTOOL) --tag=CC --mode=link $(LINK)
 # ----------------------------
 # TESTS
 # ----------------------------
-#testdir = /home/carlos/drm4g/test/
+#testdir = /home/antonio/Documentos/drm4g_source/build_3/drm4g/test/
 #__srcdir__test_gwtest_SOURCES = test/gw_test.c \
 #        $(CMDS)/gw_cmds_common.c \
 #        $(CLIENT_SRC) \
