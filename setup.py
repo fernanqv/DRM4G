@@ -39,9 +39,9 @@ class Builder(object):
         # self.call('sudo rm %s' % filename) --- filename = '/usr/local/lib/libhdf5.so.8.0.1
         #cd gridway-5.8; ./configure --prefix=$HOME/Documentos/drm4g_source/build_3/drm4g; make; make install; cd ..; cp ./bin/* $HOME/Documentos/drm4g_source/build_3/drm4g/bin; 
         #export PYTHONPATH=%s:$PYTHONPATH && -- lo anadi antes porque me d
-	    #self.call('export PYTHONPATH=%s:$PYTHONPATH' % drm4g_install_dir) #se necesita antes - That .pth error is a build check that python-setuptools has.
-    	#self.call('echo $PYTHONPATH')
-        self.call(('export DRM4G_DIR=%s && cd gridway-5.8 && ./configure %s && make && make install && make clear') % (drm4g_dir,config['post']))
+        #self.call('export PYTHONPATH=%s:$PYTHONPATH' % drm4g_install_dir) #se necesita antes - That .pth error is a build check that python-setuptools has.
+        #self.call('echo $PYTHONPATH')
+        self.call(('cd gridway-5.8 && ./configure %s && make && make install && make clear') % (config['post']))
         #self.call('echo "#####################\nSKIPPING CONFIGURE && MAKE\n#####################"')
 
 
