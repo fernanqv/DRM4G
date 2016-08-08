@@ -41,7 +41,20 @@ class Builder(object):
         #export PYTHONPATH=%s:$PYTHONPATH && -- lo anadi antes porque me d
         #self.call('export PYTHONPATH=%s:$PYTHONPATH' % drm4g_install_dir) #se necesita antes - That .pth error is a build check that python-setuptools has.
         #self.call('echo $PYTHONPATH')
-        self.call(('cd gridway-5.8 && ./configure %s && make && make install && make clear') % (config['post']))
+        #self.call(('cd gridway-5.8 && ./configure %s && make && make install && make clear') % (config['post']))
+        try:
+            self.call('cd gridway-5.8')
+            self.call('./configure %s' % config['post'])
+            self.call('make')
+            self.call('make install')
+            self.call('make clear')
+        except Exception as exc:
+            print '#####################\nAN ERROR OCCURED WHILE DOING THE BUILD\n#####################'
+            print exc
+            raise
+
+
+        
         #self.call('echo "#####################\nSKIPPING CONFIGURE && MAKE\n#####################"')
 
 
