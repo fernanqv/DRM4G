@@ -1,10 +1,34 @@
 from setuptools import setup
 from setuptools import find_packages
 from distutils.command.build import build
+from os import path
 import os
 import subprocess
 import glob
+import sys
+import ast
 
+
+here = path.abspath(path.dirname(__file__))
+
+directory=''
+arguments=str(sys.argv)
+arguments=ast.literal_eval(arguments) #convert from string to list
+
+#Going through the whole list since the options can be defined in different ways (--prefix=dir> or --prefix <dir>)
+#Could also do it with a while and make it stop if it finds '--prefix' or '--home'
+for i in range(len(arguments)):
+    option=arguments[i]
+    if '--prefix' in option or '--home' in option:
+        #TODO
+        if '=' in option:
+            #this is assuming that spaces are not permited TEST IT!! (--prefix=/home)
+            #directory=option[option.find('=')+1:] #substring that goes from the position after the '=' till the end 
+            directory=arguments[i]
+        else:
+            directory=arguments[i+1]
+
+#print '\n\n\n\n{}\n\n\n\n'.format(directory)
 
 def get_long_description():
     readme_file = 'README'
@@ -22,11 +46,6 @@ def get_long_description():
     return description
 
 
-
-config={'pre': '','post': '--prefix=$HOME/Documentos/drm4g_source/build_3/drm4g'}
-drm4g_dir='$HOME/Documentos/drm4g_source/build_3/drm4g_dir'
-drm4g_install_dir='/home/antonio/Documentos/drm4g_source/build_3/drm4g'
-
 class Builder(object):
 
     def __init__(self, lib):''
@@ -34,7 +53,7 @@ class Builder(object):
     def call(self, cmd):
         return subprocess.call(cmd, shell=True)
 
-    
+    []
     def build(self):
         # self.call('sudo rm %s' % filename) --- filename = '/usr/local/lib/libhdf5.so.8.0.1
         #cd gridway-5.8; ./configure --prefix=$HOME/Documentos/drm4g_source/build_3/drm4g; make; make install; cd ..; cp ./bin/* $HOME/Documentos/drm4g_source/build_3/drm4g/bin; 
@@ -42,16 +61,38 @@ class Builder(object):
         #self.call('export PYTHONPATH=%s:$PYTHONPATH' % drm4g_install_dir) #se necesita antes - That .pth error is a build check that python-setuptools has.
         #self.call('echo $PYTHONPATH')
         #self.call(('cd gridway-5.8 && ./configure %s && make && make install && make clear') % (config['post']))
+        gridway=path.join( here, "gridway-5.8")
         try:
-            self.call('cd gridway-5.8')
-            self.call('./configure %s' % config['post'])
-            self.call('make')
-            self.call('make install')
-            self.call('make clear')
+            if not path.exists(gridway) :
+                raise Exception("The specified directory %s doesn't exist" % gridway)
+
+            current_path = os.getcwd()
+            os.chdir( gridway )
+
+
+            self.call('pwd')
+            exit_code = self.call('./configure %s' % directory)
+            if exit_code:
+                raise Exception("Configure failed - check config.log for more detailed information")
+            
+            exit_code = self.call('make')
+            if exit_code:
+                raise Exception("make failed")
+            
+            exit_code = self.call('make install')
+            if exit_code:
+                raise Exception("make install failed")
+                        
+            exit_code = self.call('make clean')
+            if exit_code:
+                print("make clean failed")
+            
         except Exception as exc:
-            print '#####################\nAN ERROR OCCURED WHILE DOING THE BUILD\n#####################'
-            print exc
+            print('#####################\nAN ERROR OCCURED WHILE DOING THE BUILD\n#####################')
+            print(exc)
             raise
+        finally:
+            os.chdir( current_path )
 
 
         
@@ -74,7 +115,8 @@ class build_wrapper(build):
 #hacia falta instalar/incluir un header file?
 #requires='paramiko<2.0',
 #2.7 Installing Additional Files, me incumbe?
-bin_scripts= glob.glob(os.path.join('bin', '*.sh'))
+bin_scripts= glob.glob(os.path.join('bin', '*'))
+conf_files= glob.glob(os.path.join('etc', '*'))
 
 setup(
     name='drm4g',
@@ -90,10 +132,15 @@ setup(
         "Intended Audience :: Science/Research",
         "Programming Language :: Python",
         "Topic :: Scientific/Engineering",
-        "Topic :: Office/Business :: Scheduling",     
+        "Topic :: Office/Business :: Scheduling",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
     ],
     install_requires=['paramiko<2.0',],
     scripts=bin_scripts,
+    data_files=[('etc', conf_files)],
     cmdclass={
         'build': build_wrapper,
     },

@@ -5,4 +5,9 @@ drm4g.egg-info/
 /logger.conf
 /resources.conf
 /resources_default.conf
-
+*.o
+*.lo
+*.la
+*.dirstamp
+*.log
+gridway-5.8/src/drmaa/ruby/Makefile
