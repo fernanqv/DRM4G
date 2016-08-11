@@ -11,6 +11,11 @@ import shutil #this package might not work on Mac
 #from distutils.core import setup
 #from distutils.command.build import build
 
+try: 
+    input = raw_input
+except NameError:
+    pass
+
 #To ensure a script runs with a minimal version requirement of the Python interpreter
 #assert sys.version_info >= (2,5)
 
@@ -36,7 +41,6 @@ if 'bash' in user_shell:
 else:
     user_shell='.profile'
 
-
 def get_long_description():
     readme_file = 'README'
     if not os.path.isfile(readme_file):
@@ -59,12 +63,8 @@ def yes_no_choice( message,  default = 'y') :
     choices = 'Y/n' if default.lower() in ( 'y', 'yes' ) else 'y/N'
     values = ( 'y', 'yes', 'n', 'no' )
     choice = ''
-    if python_ver[0] == '2':
-        while not choice.strip().lower() in values:
-            choice = raw_input( "%s \n(%s) " % ( message, choices ) )
-    else:
-        while not choice.strip().lower() in values:
-            choice = input( "%s \n(%s) " % ( message, choices ) )
+    while not choice.strip().lower() in values:
+        choice = input( "%s \n(%s) " % ( message, choices ) )
     return choice.strip().lower()
 
 class Builder(object):
@@ -237,23 +237,4 @@ setup(
         'install': build_wrapper,
     },
 )
-
-print("""
-
-========
-WARNING!
-========
-
-You have just installed Django over top of an existing
-installation, without removing it first. Because of this,
-your install may now include extraneous files from a
-previous version that have since been removed from
-Django. This is known to cause a variety of problems. You
-should manually remove the
-
-%(existing_path)s
-
-directory and re-install Django.
-
-""" % {"existing_path": existing_path})
 
