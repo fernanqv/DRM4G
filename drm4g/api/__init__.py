@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 from os.path             import join, exists
-from drm4g               import DRM4G_BIN, DRM4G_DIR
+from drm4g               import DRM4G_DIR
 from drm4g.utils.command import exec_cmd
 
 __version__  = '2.4.1'
@@ -292,10 +292,9 @@ class DRM4G( object ):
         str_template  = job.create_template()
         job.create_file( str_template )
         depend = "-d %s -r %s" % ( ' '.join( dep ), type_dep ) if dep else ''
-        cmd = "%s/gwsubmit -p %d -v %s -t %s" % ( DRM4G_BIN, 
-                                                  priority, 
-                                                  depend, 
-                                                  job.get_template_file() )
+        cmd = "gwsubmit -p %d -v %s -t %s" % ( priority, 
+                                               depend, 
+                                               job.get_template_file() )
         code, out = exec_cmd( cmd )
         logging.debug( out )
         if code : raise Exception( out )
@@ -328,7 +327,7 @@ class DRM4G( object ):
         JID DM   EM   START    END      EXEC    XFER    EXIT HOST                      
         33  fail ---- 09:53:18 09:56:57 0:00:00 0:01:00 --   localmachine/fork
         """
-        cmd = '%s/gwps -n -o setxh %d'  % ( DRM4G_BIN, job_id ) 
+        cmd = 'gwps -n -o setxh %d'  % ( job_id ) 
         code, out = exec_cmd( cmd )
         if code : raise Exception( "Error getting status for job %d" % job_id )
         header = [ 'DM', 'EM', 'START', 'END', 'EXEC', 'XFER', 'EXIT', 'HOST' ]
@@ -343,7 +342,7 @@ class DRM4G( object ):
         @param hard: asynchronous cancel option
         @type  hard: boolean
         """
-        cmd = "%s/gwkill %s %d" % ( DRM4G_BIN, '-9' if hard else '', job_id )
+        cmd = "gwkill %s %d" % ( '-9' if hard else '', job_id )
         code, out = exec_cmd( cmd )
         if code : raise Exception( "Error canceling job %d" % job_id )
                 
@@ -356,7 +355,7 @@ class DRM4G( object ):
         @param priority: fixed priority
         @type  priority: integer
         """
-        cmd = "%s/gwkill -9 -p %d %d" % ( DRM4G_BIN, priority, job_id )
+        cmd = "gwkill -9 -p %d %d" % ( priority, job_id )
         code, out = exec_cmd( cmd )
         if code : raise Exception( "Error updating priority for job %d" % job_id )
 

@@ -51,7 +51,7 @@ __revision__ = "$Id$"
 
 import logging
 from os.path              import join, exists
-from drm4g                import DRM4G_BIN, DRM4G_DIR, logger
+from drm4g                import DRM4G_DIR, logger
 from drm4g.commands       import exec_cmd, Daemon
 
 def run( arg ) :
@@ -64,13 +64,13 @@ def run( arg ) :
         if arg['submit']:
             dependencies = '-d "%s"' % ' '.join( arg['--dep'] ) if arg['--dep'] else ''
             number_of_tasks = '-n %s' % arg['--ntasks'] if arg['--ntasks'] else ''
-            cmd = '%s/gwsubmit %s -v %s %s' % ( DRM4G_BIN, dependencies, arg['<template>'], number_of_tasks )
+            cmd = 'gwsubmit %s -v %s %s' % ( dependencies, arg['<template>'], number_of_tasks )
         elif arg['list']:
-            cmd = '%s/gwps -o Jsetxjh '  % ( DRM4G_BIN )
+            cmd = 'gwps -o Jsetxjh ' 
             if arg['<job_id>'] :
                 cmd = cmd + arg['<job_id>'][0] 
         elif arg['history']:
-            cmd = '%s/gwhistory %s' % ( DRM4G_BIN , arg['<job_id>'][ 0 ] )
+            cmd = 'gwhistory %s' % ( arg['<job_id>'][ 0 ] )
         elif arg['log']:
             directory = join(
                               DRM4G_DIR ,
@@ -83,7 +83,7 @@ def run( arg ) :
                 raise Exception( 'There is not a log available for this job.')
             cmd = 'cat %s' % ( directory )
         else :
-            cmd = '%s/gwkill -9 %s' % ( DRM4G_BIN , ' '.join( arg['<job_id>'] ) )  
+            cmd = 'gwkill -9 %s' % ( ' '.join( arg['<job_id>'] ) )  
         out , err = exec_cmd( cmd )
         logger.info( out )
         if err :

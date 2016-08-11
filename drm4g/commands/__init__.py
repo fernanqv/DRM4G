@@ -7,7 +7,7 @@ import logging
 import subprocess
 import datetime
 
-from drm4g     import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_BIN, DRM4G_DIR
+from drm4g     import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
 from os.path   import expanduser, join, dirname, exists, basename, expandvars
 
 __version__  = '2.4.1'
@@ -146,7 +146,7 @@ class Agent( object ):
     
     def copy_key( self ):
         logger.info("--> Copy '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
-        out , err = exec_cmd( '%s/ssh-copy-id -i %s %s@%s' % ( DRM4G_BIN, self.private_key, self.user, self.frontend ),
+        out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' % ( self.private_key, self.user, self.frontend ),
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         logger.debug( out ) 
     
@@ -203,9 +203,8 @@ class Daemon( object ):
             lock = join( DRM4G_DIR , 'var', '/.lock' )
             if exists( lock ) : 
                 os.remove( lock )
-            os.environ[ 'PATH' ] = '%s:%s' % ( DRM4G_BIN, os.getenv( 'PATH' ) )
             logger.debug( "Starting gwd .... " )
-            out , err = exec_cmd( join( DRM4G_BIN, 'gwd' ) )
+            out , err = exec_cmd( 'gwd' )
             if err :
                 logger.info( err )
             if out :
@@ -218,7 +217,7 @@ class Daemon( object ):
     def stop( self ):
         logger.info( "Stopping DRM4G .... " )
         logger.debug( "Stopping gwd .... " )
-        out , err = exec_cmd( "%s -k" % join( DRM4G_BIN, "gwd" ) )
+        out , err = exec_cmd( "%s -k" % ( "gwd" ) )
         if err :
             logger.info( err )
         if out :
@@ -230,7 +229,7 @@ class Daemon( object ):
         yes_choise = yes_no_choice( "Do you want to continue clearing DRM4G? " )
         if yes_choise :
             logger.info( "Clearing DRM4G .... " )
-            cmd = "%s -c" % join( DRM4G_BIN , "gwd" )
+            cmd = "%s -c" % ( "gwd" )
             out , err = exec_cmd( cmd )
             logger.debug( out ) 
             if err :

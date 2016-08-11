@@ -8,7 +8,6 @@ import sys
 import os
 import logging.config
 from os.path import dirname , join , expandvars , exists , abspath
-from drm4g.utils.commands import which
 
 if sys.version_info < (2,5) and sys.version_info > (3,0):
     exit( 'The version number of the Python has to be > = 2.5 and < 3.0' )
@@ -16,13 +15,10 @@ if sys.version_info < (2,5) and sys.version_info > (3,0):
 ########################################
 # Default values used in DRM4G package.#
 ########################################
-HOME                 = os.environ.get( 'HOME' )
-DRM4G_DIR            = os.environ.get( 'DRM4G_DIR' , join ( HOME , '.drm4g' ) )
-os.environ[ 'GW_LOCATION' ] = DRM4G_DIR
-DRM4G_BIN            = dirname( which('drm4g') )
-DRM4G_DEPLOYMENT_DIR = dirname( DRM4G_BIN )
-DRM4G_CONFIG_FILE    = join( DRM4G_DIR , 'etc' , 'resources.conf' )
-DRM4G_LOGGER         = join( DRM4G_DIR , 'etc' , 'logger.conf')
+HOME              = os.environ.get( 'HOME' )
+DRM4G_DIR         = os.environ[ 'GW_LOCATION' ] = os.environ.get( 'DRM4G_DIR' , join ( HOME , '.drm4g' ) )
+DRM4G_CONFIG_FILE = join( DRM4G_DIR , 'etc' , 'resources.conf' )
+DRM4G_LOGGER      = join( DRM4G_DIR , 'etc' , 'logger.conf')
 
 ##
 # Configure logger
@@ -36,8 +32,8 @@ if exists( DRM4G_DIR ) is False  :
     logger.info( "Creating '%s' directory" % abs_dir )
     os.makedirs( abs_dir )
     from  shutil import copytree
-    src  = join ( DRM4G_DEPLOYMENT_DIR , 'etc' )
-    dest = join ( DRM4G_DIR            , 'etc' )
+    src  = join ( abspath( dirname( __file__ ) ), 'conf' )
+    dest = join ( DRM4G_DIR, 'etc' )
     logger.info( "Coping from '%s' to '%s'" % ( src , dest ) )
     copytree( src , dest )
 
