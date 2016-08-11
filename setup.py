@@ -229,7 +229,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
     ],
-    install_requires=['paramiko<2.0',],
+    install_requires=['paramiko<2.0', 'docopt' ],
     scripts=bin_scripts,
     #data_files=[('etc', conf_files)],
     cmdclass={

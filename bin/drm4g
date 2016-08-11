@@ -30,7 +30,7 @@ __version__  = '2.4.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-from drm4g.utils.docopt import docopt
+from docopt import docopt
 
 if __name__ == "__main__":
     args = docopt( __doc__, version = __version__ , options_first = True )
