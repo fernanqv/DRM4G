@@ -540,7 +540,7 @@ mandir = ${datarootdir}/man
 mkdir_p = /bin/mkdir -p
 oldincludedir = /usr/include
 pdfdir = ${docdir}
-prefix = /home/antonio/Documentos/drm4g_source/build_3/drm4g
+prefix = /home/antonio/Documentos/drm4g_source/build_3/source_code/build/temp.gridway-5.8
 program_transform_name = s,x,x,
 psdir = ${docdir}
 sbindir = ${exec_prefix}/sbin
@@ -992,7 +992,7 @@ __srcdir__drmaa_libDrmaaJNI_la_LINK = $(LIBTOOL) --tag=CC --mode=link $(LINK)
 # ----------------------------
 # TESTS
 # ----------------------------
-#testdir = /home/antonio/Documentos/drm4g_source/build_3/drm4g/test/
+#testdir = /home/antonio/Documentos/drm4g_source/build_3/source_code/build/temp.gridway-5.8/test/
 #__srcdir__test_gwtest_SOURCES = test/gw_test.c \
 #        $(CMDS)/gw_cmds_common.c \
 #        $(CLIENT_SRC) \
