@@ -52,6 +52,21 @@ def get_long_description():
         description = open(readme_file).read()
     return description
 
+def yes_no_choice( message,  default = 'y') :
+    """
+    Ask for Yes/No questions
+    """
+    choices = 'Y/n' if default.lower() in ( 'y', 'yes' ) else 'y/N'
+    values = ( 'y', 'yes', 'n', 'no' )
+    choice = ''
+    if python_ver[0] == '2':
+        while not choice.strip().lower() in values:
+            choice = raw_input( "%s \n(%s) " % ( message, choices ) )
+    else:
+        while not choice.strip().lower() in values:
+            choice = input( "%s \n(%s) " % ( message, choices ) )
+    return choice.strip().lower()
+
 class Builder(object):
 
     export_dir=''
@@ -107,32 +122,14 @@ class Builder(object):
                     " or manually find and execute DRM4G everytime you wish to use it.\n" \
                     "Do you want us to continue?".format(user_shell)
 
-                ans=self.yes_no_choice(message)
+                ans=yes_no_choice(message)
                 if ans[0]=='y':
                     #when installing they'll have to define the variable PYTHONPATH, but with this, they won't have to do it again in order to use DRM4G
                     #self.call('echo "export PYTHONPATH={}:$PYTHONPATH" >> ~/{}'.format(self.export_dir,user_shell))
                     home=os.path.expanduser('~') #to ensure that it will find $HOME directory in all platforms
                     with open('{}/{}'.format(home,user_shell),'a') as f:
                         f.write('export PYTHONPATH={}:$PYTHONPATH'.format(self.export_dir))
-    """
-    Ask for Yes/No questions
-    """
-    def yes_no_choice(self, message,  default = 'y') :
-        PY2 = python_ver[0] == '2'
-        choices = 'Y/n' if default.lower() in ( 'y', 'yes' ) else 'y/N'
-        values = ( 'y', 'yes', 'n', 'no' )
-        choice = ''
-        if PY2:
-            while not choice.strip().lower() in values:
-                choice = raw_input( "%s \n(%s) " % ( message, choices ) )
-        else:
-            while not choice.strip().lower() in values:
-                choice = input( "%s \n(%s) " % ( message, choices ) )
-        
-        return choice.strip().lower()
 
-    
-    [] #I don't know what's this doing here (it was uncommented)
     def build(self):
         gridway=path.join( here, "gridway-5.8")
         current_path = os.getcwd()
@@ -145,7 +142,7 @@ class Builder(object):
 
             os.chdir( gridway )
 
-            exit_code = self.call('./configure --prefix={}'.format(path.join(here,'build/temp.gridway-5.8')))
+            exit_code = self.call( './configure' )
             if exit_code:
                 raise Exception("Configure failed - check config.log for more detailed information")
             
@@ -227,6 +224,7 @@ setup(
         "Topic :: Office/Business :: Scheduling",
         "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
