@@ -1,3 +1,4 @@
+.eggs/
 dist/
 build/
 drm4g.egg-info/
@@ -10,4 +11,6 @@ drm4g.egg-info/
 *.la
 *.dirstamp
 *.log
+*.pyc
 gridway-5.8/src/drmaa/ruby/Makefile
+Makefile

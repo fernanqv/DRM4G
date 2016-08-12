@@ -69,7 +69,7 @@ def yes_no_choice( message,  default = 'y') :
 
 class Builder(object):
 
-    export_dir=''
+    export_dir=sys.prefix
     prefix_directory=''
     arguments=str(sys.argv)
     arguments=ast.literal_eval(arguments) #convert from string to list
@@ -230,7 +230,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
     ],
-    install_requires=['paramiko<2.0', 'docopt' ],
+    setup_requires=['paramiko<2.0', 'docopt' ],
     scripts=bin_scripts,
     #data_files=[('etc', conf_files)],
     cmdclass={
