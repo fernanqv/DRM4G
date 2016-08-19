@@ -25,6 +25,8 @@ __revision__ = "$Id$"
 
 from drm4g.core.em_mad import GwEmMad
 from drm4g             import DRM4G_LOGGER, DRM4G_DIR
+from optparse import OptionParser
+import exceptions, sys, traceback, logging
 
 def main():
     parser = OptionParser(description = 'Execution manager MAD',

@@ -27,9 +27,6 @@ import subprocess
 import glob
 import sys
 import ast
-import shutil #this package might not work on Mac
-#from distutils.core import setup
-#from distutils.command.build import build
 
 #To ensure a script runs with a minimal version requirement of the Python interpreter
 #assert sys.version_info >= (2,5)
