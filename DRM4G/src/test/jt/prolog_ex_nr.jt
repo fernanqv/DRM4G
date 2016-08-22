@@ -1,5 +1,0 @@
-EXECUTABLE = doesnt_exist 
-
-RANK         = CPU_MHZ
-
-RESCHEDULE_ON_FAILURE = no

@@ -1,3 +1,0 @@
-EXECUTABLE=/bin/echo
-ARGUMENTS="I am the output of job A"
-NAME=A

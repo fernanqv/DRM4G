@@ -1,6 +1,0 @@
-EXECUTABLE = exit_with.sh
-ARGUMENTS = 1 
-
-RANK         = CPU_MHZ
-
-RESCHEDULE_ON_FAILURE = no
