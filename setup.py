@@ -41,6 +41,8 @@ except NameError:
 here = path.abspath(path.dirname(__file__))
 python_ver=sys.version[:3]
 user_shell=os.environ['SHELL']
+lib_dir=''
+path_dir=''
 
 #I consider bash a special case because of what is said here http://superuser.com/questions/49289/what-is-the-bashrc-file
 if 'bash' in user_shell:
@@ -92,7 +94,6 @@ class Builder(object):
             option=self.arguments[i]
             #folder name can't contain '--prefix' or '--home'
             if '--prefix' in option or '--home' in option:
-                lib_dir=''
                 #I'm working under the impression that the path passed on to prefix has to be an absolute path
                 #for the moment, if you use a relative path, gridway's binary files will be copied to a directory relative to where ./gridway-5.8 is
                 if '=' in option:
@@ -102,10 +103,14 @@ class Builder(object):
                     self.export_dir=self.arguments[i+1]
                     self.prefix_directory='--prefix '+self.export_dir
 
+                global lib_dir
+                global path_dir
                 if '--prefix' in option:
                     lib_dir=os.path.join(self.export_dir,'lib/python{}/site-packages'.format(python_ver))
                 elif '--home' in option:
                     lib_dir=os.path.join(self.export_dir,'lib/python')
+
+                path_dir=os.path.join(self.export_dir,'bin')
 
                 try:
                     os.makedirs(lib_dir)
@@ -113,7 +118,7 @@ class Builder(object):
                     print('\nDirectory {} already exists'.format(lib_dir))
 
                 message="\nWe are about to modify your {} file.\n" \
-                    "If we don't you'll have to define the environment variable PYTHONPATH" \
+                    "If we don't you'll have to define the environment variables PATH and PYTHONPATH" \
                     " or access your installation directory everytime you wish to execute DRM4G.\n" \
                     "Should we proceed?".format(user_shell)
 
@@ -121,15 +126,17 @@ class Builder(object):
                 if ans[0]=='y':
                     line_exists=False
                     home=os.path.expanduser('~') #to ensure that it will find $HOME directory in all platforms
-                    export_line='export PYTHONPATH={}:$PYTHONPATH'.format(lib_dir)
+                    python_export_line='export PYTHONPATH={}:$PYTHONPATH'.format(lib_dir)
+                    path_export_line='export PATH={}:$PATH'.format(path_dir)
+
                     with open('{}/{}'.format(home,user_shell),'r') as f:
                         for i in f.readlines():
-                            if export_line in i:
+                            if python_export_line in i:
                                 line_exists=True
 
                     if not line_exists :
                         with open('{}/{}'.format(home,user_shell),'a') as f:
-                            f.write('\n'+export_line+'\n')
+                            f.write('\n'+python_export_line+'\n'+path_export_line+'\n')
 
     def build(self):
         gridway=path.join( here, "gridway-5.8")
@@ -195,3 +202,8 @@ setup(
         'install': build_wrapper,
     },
 )
+
+if lib_dir:
+    print('\n\033[93mTo finish with the installation, you have to add the following paths to your $PYTHONPATH and $PATH:\e[0m\n' \
+        '    export PYTHONPATH={}:$PYTHONPATH\n' \
+        '    export PATH={}:$PATH\033[0m'.format(lib_dir,path_dir))
