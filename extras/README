@@ -1,0 +1,24 @@
+This directory contains extra stuff that can improve your experience using DRM4G.
+
+drm4g_autocomplete.sh bash script adds tab-completion features to drm4g.
+
+========
+Checking 
+========
+
+To check the DRM4G completion without any instalation:
+
+     source /path/to/extras/drm4g_autocomplete.sh
+
+After you do that, tab-completion will immediately be available in your current Bash shell. 
+But it won't be available next time you log in.
+
+============
+Installing
+============
+
+To install drm4g_autocomplete.sh, add the the line bellow in your .bashrc or .profile file :
+
+     source /path/to/extras/drm4g_autocomplete.sh
+
+Thus tab-completion will take effect the next time you log in.
