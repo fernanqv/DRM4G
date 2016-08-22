@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -20,14 +20,14 @@
 
 """
 Configure DRM4G daemon, scheduler and logger parameters.
-                
-Usage:  
-   drm4g conf ( daemon | sched | logger ) [ options ] 
+
+Usage:
+   drm4g conf ( daemon | sched | logger ) [ options ]
 
 Options:
    --dbg    Debug mode
 """
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -21,13 +21,13 @@
 try :
     import Queue as queue
 except :
-    import queue 
+    import queue
 import sys
 import traceback
 from threading        import Thread
 from threading        import Lock
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -53,28 +53,28 @@ class Worker(Thread):
         self.tasks = tasks
         self.setDaemon(True)
         self.start()
-    
+
     def run(self):
         while True:
             try:
-                try: 
-                    func, args, kargs = self.tasks.get( timeout  ) 
+                try:
+                    func, args, kargs = self.tasks.get( timeout  )
                 except queue.Empty:
-                    with lock : 
+                    with lock :
                         global threads_active, threads_min
                         if threads_active > threads_min:
                             threads_active -= 1
                             break
-                        else : 
+                        else :
                             continue
-                except Exception: 
+                except Exception:
                     sys.exit(-1)
                 else:
-                    try: 
+                    try:
                         func(*args, **kargs)
-                    except : 
+                    except :
                         traceback.print_exc(file=sys.stdout)
-            except Exception: 
+            except Exception:
                 pass
 
 class ThreadPool:
@@ -88,7 +88,7 @@ class ThreadPool:
             global threads_active, threads_min
             threads_active =  num_threads_min
             threads_min    = num_threads_min
-        for _ in range(num_threads_min): 
+        for _ in range(num_threads_min):
             Worker(self.tasks)
 
     def add_task(self, func, *args, **kargs):
@@ -98,10 +98,10 @@ class ThreadPool:
         with lock :
             global threads_active
             try:
-                if threads_active < self.threads_max: 
+                if threads_active < self.threads_max:
                     Worker(self.tasks)
                     threads_active += 1
                 self.tasks.put((func, args, kargs))
             except :
-                traceback.print_exc(file=sys.stdout) 
-            
+                traceback.print_exc(file=sys.stdout)
+

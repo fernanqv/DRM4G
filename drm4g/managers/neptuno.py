@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -19,11 +19,11 @@
 #
 
 import re
-import drm4g.managers.slurm 
+import drm4g.managers.slurm
 from string         import Template
 from drm4g.managers import sec_to_H_M_S
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -37,13 +37,13 @@ class Resource (drm4g.managers.slurm.Resource):
     pass
 
 class Job (drm4g.managers.slurm.Job):
-    
+
     def jobSubmit(self, pathScript):
         out, err = self.Communicator.execCommand('%s %s' % (MSUB, pathScript))
         if out:
             return out.split()[0]
         else:
-            raise drm4g.managers.JobException(' '.join(err.split('\n')))        
+            raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobTemplate(self, parameters):
         args  = '#!/bin/bash\n'

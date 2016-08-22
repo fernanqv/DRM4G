@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -20,14 +20,14 @@
 
 import threading
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 class List (object):
     """
     Dictionary self-protected.
-    """	
+    """
     def __init__(self):
         self._map = { }
         self._lock = threading.Lock()
@@ -55,7 +55,7 @@ class List (object):
                 pass
         finally:
             self._lock.release()
-            
+
     def has_key(self, key):
         self._lock.acquire()
         try:
@@ -79,4 +79,4 @@ class List (object):
 
 
 
-            
+

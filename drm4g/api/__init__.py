@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -25,10 +25,10 @@ from os.path             import join, exists
 from drm4g               import DRM4G_DIR
 from drm4g.utils.command import exec_cmd
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
-    
+
 class Job( object ):
     """
     DRM4G job
@@ -46,14 +46,14 @@ class Job( object ):
         if not type( job_name ) == str :
             raise Exception( 'Expected a string for job name' )
         else:
-            self.args[ 'NAME' ] = job_name 
+            self.args[ 'NAME' ] = job_name
 
     def get_name(self):
         """
         Get job name
         """
         return self.args.get( 'NAME' )
-    
+
     def set_executable(self, executable ):
         """
         The executable file
@@ -64,7 +64,7 @@ class Job( object ):
         if not type( executable ) == str :
             raise Exception( 'Expected a string for executable' )
         else :
-            self.args[ 'EXECUTABLE' ] =  executable 
+            self.args[ 'EXECUTABLE' ] =  executable
 
     def get_executable(self):
         """
@@ -82,7 +82,7 @@ class Job( object ):
         if not type( arguments ) == str :
             raise Exception( 'Expected a string for arguments' )
         else:
-            self.args[ 'ARGUMENTS' ] = arguments 
+            self.args[ 'ARGUMENTS' ] = arguments
 
     def get_arguments(self):
         """
@@ -100,7 +100,7 @@ class Job( object ):
         if not type( environment ) == dict :
             raise Exception( 'Expected a dictionary for environment' )
         else:
-            self.args[ 'ENVIRONMENT' ] = environment 
+            self.args[ 'ENVIRONMENT' ] = environment
 
     def get_environment(self):
         """
@@ -110,16 +110,16 @@ class Job( object ):
 
     def set_input_files(self, files):
         """
-        Pair of "local remote" filenames. If the remote filename is missing, 
+        Pair of "local remote" filenames. If the remote filename is missing,
         the local filename will be preserved in the execution host.
 
         @param files: Input sandbox files
-        @type  files: String or list of strings 
+        @type  files: String or list of strings
         """
         if type( files ) == list :
-            self.args[ 'INPUT_FILES' ] = files 
+            self.args[ 'INPUT_FILES' ] = files
         elif type( files ) == str :
-            self.args[ 'INPUT_FILES' ] = [files] 
+            self.args[ 'INPUT_FILES' ] = [files]
         else:
             raise Exception( 'Expected a string or a list for input files' )
 
@@ -127,20 +127,20 @@ class Job( object ):
         """
         Get input files.
         """
-        return self.args.get( 'INPUT_FILES' )       
-        
+        return self.args.get( 'INPUT_FILES' )
+
     def set_output_files(self, files):
         """
-        Pair of remote filename local filename. If the local filename is missing, 
+        Pair of remote filename local filename. If the local filename is missing,
         the remote filename will be preserved in the client host.
-        
+
         @param files: Output sandbox files
-        @type  files: String or list of strings 
+        @type  files: String or list of strings
         """
         if type( files ) == list :
-            self.args[ 'OUTPUT_FILES' ] = files 
+            self.args[ 'OUTPUT_FILES' ] = files
         elif type( files ) == str :
-            self.args[ 'OUTPUT_FILES' ] = [files] 
+            self.args[ 'OUTPUT_FILES' ] = [files]
         else:
             raise Exception( 'Expected a string or a list for input files' )
 
@@ -160,7 +160,7 @@ class Job( object ):
         if not type( stdin_file ) == str :
             raise Exception( 'Expected a string for stdin file' )
         else:
-            self.args[ 'STDIN_FILE' ] = stdin_file 
+            self.args[ 'STDIN_FILE' ] = stdin_file
 
     def get_stdin_file(self):
         """
@@ -178,14 +178,14 @@ class Job( object ):
         if not type( stdout_file ) == str :
             raise Exception( 'Expected a string for stdout file' )
         else:
-            self.args[ 'STDOUT_FILE' ] = stdout_file 
+            self.args[ 'STDOUT_FILE' ] = stdout_file
 
     def get_stdout_file(self):
         """
         Get standard output file.
         """
         return self.args.get( 'STDOUT_FILE' )
-    
+
     def set_stderr_file(self, stderr_file ):
         """
         Standard error file.
@@ -196,14 +196,14 @@ class Job( object ):
         if not type( stderr_file ) == str :
             raise Exception( 'Expected a string for error file' )
         else:
-            self.args[ 'STDERR_FILE' ] = stderr_file 
+            self.args[ 'STDERR_FILE' ] = stderr_file
 
     def get_stderr_file(self):
         """
         Get standard error file.
         """
         return self.args.get( 'STDERR_FILE' )
-        
+
     def set_requirements(self, requirements ):
         """
         A boolean expression evaluated for each host, if it
@@ -216,25 +216,25 @@ class Job( object ):
         if not type( requirements ) == str :
             raise Exception( 'Expected a string for requirements' )
         else:
-            self.args[ 'REQUIREMENTS' ] = requirements 
+            self.args[ 'REQUIREMENTS' ] = requirements
 
     def get_requirements(self):
         """
         Get requirement expression.
         """
         return self.args.get( 'REQUIREMENTS' )
-    
+
     def set_np(self, np ):
         """
         Number of process.
-        
+
         @param np: number of process
         @type  np: string or integer
         """
         if type( np ) == int :
-            self.args[ 'NP' ] = str(np) 
+            self.args[ 'NP' ] = str(np)
         elif type( np ) == str :
-            self.args[ 'NP' ] = np 
+            self.args[ 'NP' ] = np
         else:
             raise Exception( 'Expected a string or a ingeter for np' )
 
@@ -247,9 +247,9 @@ class Job( object ):
     def set_template_file(self, file ):
         """
         Number of process.
-        
+
         @param file: number of process
-        @type  file: string 
+        @type  file: string
         """
         if not type( file ) == str :
             raise Exception( 'Expected a string for fime template' )
@@ -260,7 +260,7 @@ class Job( object ):
         """
         Get template file.
         """
-        if not self.template_file :            
+        if not self.template_file :
             return './template.job'
         else :
             return self.template_file
@@ -272,11 +272,11 @@ class Job( object ):
         str = ''
         for key, val in list(self.args.items()) :
             if key == 'ENVIRONMENT':
-                str = str + '%s = %s\n' % ( key, ','.join( "%s %s" % (k,v) for k,v in list(key.items()) ) ) 
-            elif key in ( 'INPUT_FILES', 'OUTPUT_FILES' ):    
+                str = str + '%s = %s\n' % ( key, ','.join( "%s %s" % (k,v) for k,v in list(key.items()) ) )
+            elif key in ( 'INPUT_FILES', 'OUTPUT_FILES' ):
                 str = str + '%s = %s\n' % ( key, ','.join( val ) )
             else :
-                str = str + "%s = %s\n" % ( key, val ) 
+                str = str + "%s = %s\n" % ( key, val )
         return str
 
     def create_file(self, string_template ):
@@ -295,12 +295,12 @@ class DRM4G( object ):
     """
     Class to intact with DRM4G
     """
-     
+
     def submit(self, job, dep = [] , priority = 0, type_dep = "afterok" ):
         """
         Submit jobs.
 
-        @param job_id: DRM4G job 
+        @param job_id: DRM4G job
         @type  job: object
         @param dep: job dependencies
         @type  dep: list
@@ -312,8 +312,8 @@ class DRM4G( object ):
         str_template  = job.create_template()
         job.create_file( str_template )
         depend = "-d %s -r %s" % ( ' '.join( dep ), type_dep ) if dep else ''
-        cmd = "gwsubmit -p %d -v %s -t %s" % ( priority, 
-                                               depend, 
+        cmd = "gwsubmit -p %d -v %s -t %s" % ( priority,
+                                               depend,
                                                job.get_template_file() )
         code, out = exec_cmd( cmd )
         logging.debug( out )
@@ -336,7 +336,7 @@ class DRM4G( object ):
             return f.readlines()
         finally :
             f.close()
- 
+
     def status(self, job_id):
         """
         Get job status
@@ -344,18 +344,18 @@ class DRM4G( object ):
         @param job_id: job identifier
         @type  job_id: integer
 
-        JID DM   EM   START    END      EXEC    XFER    EXIT HOST                      
+        JID DM   EM   START    END      EXEC    XFER    EXIT HOST
         33  fail ---- 09:53:18 09:56:57 0:00:00 0:01:00 --   localmachine/fork
         """
-        cmd = 'gwps -n -o setxh %d'  % ( job_id ) 
+        cmd = 'gwps -n -o setxh %d'  % ( job_id )
         code, out = exec_cmd( cmd )
         if code : raise Exception( "Error getting status for job %d" % job_id )
         header = [ 'DM', 'EM', 'START', 'END', 'EXEC', 'XFER', 'EXIT', 'HOST' ]
-        return dict( ( key, val ) for key, val in zip( header, out.split() ) ) 
+        return dict( ( key, val ) for key, val in zip( header, out.split() ) )
 
     def cancel(self, job_id, hard = False):
         """
-        Cancel a job. 
+        Cancel a job.
 
         @param job_id: job identifier
         @type  job_id: integer
@@ -365,7 +365,7 @@ class DRM4G( object ):
         cmd = "gwkill %s %d" % ( '-9' if hard else '', job_id )
         code, out = exec_cmd( cmd )
         if code : raise Exception( "Error canceling job %d" % job_id )
-                
+
     def set_priority(self, job_id, priority = 0):
         """
         Set fixed priority to a job.

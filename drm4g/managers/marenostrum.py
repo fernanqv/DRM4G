@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -21,16 +21,16 @@
 import xml.dom.minidom
 import re
 import time
-import drm4g.managers 
+import drm4g.managers
 from string import Template
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.
-MNSUBMIT = 'LANG=POSIX mnsubmit' #mnsubmit - submits a job script to the queue system 
+MNSUBMIT = 'LANG=POSIX mnsubmit' #mnsubmit - submits a job script to the queue system
 CHECKJOB = 'LANG=POSIX checkjob' #checkjob - obtains detailed information about a specific job
 MNCANCEL = 'LANG=POSIX mncancel' #mncancel - removes his/her job from the queue system, canceling the execution of the job if it was already running
 MNQ      = 'LANG=POSIX mnq'      #mnq      - shows all the jobs submitted
@@ -39,9 +39,9 @@ class Resource (drm4g.managers.Resource):
     pass
 
 class Job (drm4g.managers.Job):
-    
+
     #clock_wall_time is mandatory
-    walltime_default = '172800' # 48 hours 
+    walltime_default = '172800' # 48 hours
     #mn job status <--> GridWay job status
     states_mn = {
                   'BatchHold' : 'PENDING',
@@ -59,8 +59,8 @@ class Job (drm4g.managers.Job):
                   'Starting'  : 'PENDING',   #The batch system has attempted to start the job and the job is currently performing pre-start tasks which may including provisioning resources, staging data,executing system pre-launch scripts, etc.
                   'Completed' :	'DONE',      #Job has completed running
                   'Suspended' : 'SUSPENDED', #Job was running but has been suspended by the scheduler or an admin.
-                }                 
-    
+                }
+
     def jobSubmit(self, pathScript):
         out, err = self.Communicator.execCommand('%s %s' % (MNSUBMIT, pathScript))
         re_job_id = re.compile(r'Submitted batch job (\d*)').search(err)
@@ -77,7 +77,7 @@ class Job (drm4g.managers.Job):
             out_parser = xml.dom.minidom.parseString(out)
             state = out_parser.getElementsByTagName('Data')[0].getElementsByTagName('job')[0].getAttribute('EState')
             return self.states_mn.setdefault(state, 'UNKNOWN')
-    
+
     def jobCancel(self):
         out, err = self.Communicator.execCommand('%s %s' % (MNCANCEL, self.JobId))
         if not "job '%s' cancelled" % (self.JobId) in out:

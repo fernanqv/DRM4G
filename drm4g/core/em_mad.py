@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -31,24 +31,24 @@ except :
     from queue               import Queue
 from drm4g                   import REMOTE_JOBS_DIR
 from drm4g.utils.rsl2        import Rsl2Parser
-from drm4g.utils.list        import List 
+from drm4g.utils.list        import List
 from drm4g.core.configure    import Configuration
 from drm4g.utils.dynamic     import ThreadPool
 from drm4g.utils.message     import Send
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 class GwEmMad (object):
     """
-    Execution manager MAD 
+    Execution manager MAD
 
     GridWay uses a Middleware Access Driver (MAD) module to submit,
     control and monitor the execution of jobs.
 
-    The format to send a request to the Execution MAD, through its 
-    standard input, is:    
+    The format to send a request to the Execution MAD, through its
+    standard input, is:
     OPERATION JID HOST/JM RSL
 
 	Where:
@@ -60,11 +60,11 @@ class GwEmMad (object):
 	-CANCEL: Cancels a job (i.e. CANCEL JID - -).
 	-FINALIZE:Finalizes the MAD (i.e. FINALIZE - - -).
     -JID: Is a job identifier, chosen by GridWay.
-    -HOST: If the operation is SUBMIT, it specifies the resource contact 
+    -HOST: If the operation is SUBMIT, it specifies the resource contact
         to submit the job. Otherwise it is ignored.
-    -JM: If the operation is SUBMIT, it specifies the job manager to submit 
+    -JM: If the operation is SUBMIT, it specifies the job manager to submit
         the job. Otherwise it is ignored.
-    -RSL: If the operation is SUBMIT, it specifies the resource specification 
+    -RSL: If the operation is SUBMIT, it specifies the resource specification
         to submit the job. Otherwise it is ignored.
 
     The format to receive a response from the MAD, through its standard output, is:
@@ -73,12 +73,12 @@ class GwEmMad (object):
 
          Where:
 
-    -OPERATION: Is the operation specified in the request that originated 
-        the response or CALLBACK, in the case of an asynchronous notification 
+    -OPERATION: Is the operation specified in the request that originated
+        the response or CALLBACK, in the case of an asynchronous notification
         of a state change.
     -JID: It is the job identifier, as provided in the submission request.
     -RESULT: It is the result of the operation. Could be SUCCESS or FAILURE
-    -INFO: If RESULT is FAILURE, it contains the cause of failure. Otherwise, 
+    -INFO: If RESULT is FAILURE, it contains the cause of failure. Otherwise,
         if OPERATION is POLL or CALLBACK,it contains the state of the job.
     """
     logger  = logging.getLogger(__name__)
@@ -89,10 +89,10 @@ class GwEmMad (object):
         self._max_thread        = 10
         self._min_thread        = 3
         self._job_list          = List()
-        self._configure         = None  
+        self._configure         = None
         self._communicators     = dict()
         self._lock              = threading.Lock()
-	        
+
     def do_INIT(self, args):
         """
         Initializes the MAD (i.e. INIT - - -)
@@ -102,7 +102,7 @@ class GwEmMad (object):
         out = 'INIT - SUCCESS -'
         self.message.stdout( out )
         self.logger.debug( out )
-  
+
     def do_SUBMIT(self, args):
         """
         Submits a job(i.e. SUBMIT JID HOST/JM RSL).
@@ -117,11 +117,11 @@ class GwEmMad (object):
             job.Communicator  = communicator
             # Parse rsl
             rsl                = Rsl2Parser(RSL).parser()
-            if 'project' in job.resfeatures : 
+            if 'project' in job.resfeatures :
                 rsl['project']      = job.resfeatures[ 'project' ]
-            if 'parallel_env' in job.resfeatures : 
+            if 'parallel_env' in job.resfeatures :
                 rsl['parallel_env'] = job.resfeatures[ 'parallel_env' ]
-            if 'vo' in job.resfeatures and "::" in HOST : 
+            if 'vo' in job.resfeatures and "::" in HOST :
                 _ , host                    = HOST.split('::')
                 job.resfeatures['host']     = host
                 job.resfeatures['jm']       = JM
@@ -131,12 +131,12 @@ class GwEmMad (object):
             ABS_REMOTE_JOBS_DIR = job.get_abs_directory( job.resfeatures.get( 'scratch', REMOTE_JOBS_DIR ) )
             for key in [ "stdout" , "stderr" , "executable" ] :
                 rsl[key] = join( ABS_REMOTE_JOBS_DIR , rsl[key] )
-            # Create and copy wrapper_drm4g file 
+            # Create and copy wrapper_drm4g file
             local_file    = join( dirname ( RSL ), "wrapper_drm4g.%s" % RSL.split( '.' )[ -1 ] )
             remote_file   = join( dirname ( rsl[ 'executable' ] ), 'wrapper_drm4g' )
             job.createWrapper( local_file, job.jobTemplate( rsl ) )
             job.copyWrapper( local_file, remote_file )
-            # Execute wrapper_drm4g 
+            # Execute wrapper_drm4g
             job.JobId = job.jobSubmit( remote_file )
             self._job_list.put( JID, job )
             out = 'SUBMIT %s SUCCESS %s:%s' % ( JID, HOST, job.JobId )
@@ -153,9 +153,9 @@ class GwEmMad (object):
         """
         out = 'FINALIZE - SUCCESS -'
         self.message.stdout( out )
-        self.logger.debug( out ) 
-        sys.exit( 0 )    
-    
+        self.logger.debug( out )
+        sys.exit( 0 )
+
     def do_POLL(self, args):
         """
         Polls a job to obtain its state (i.e. POLL JID - -).
@@ -164,37 +164,37 @@ class GwEmMad (object):
         """
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
-            if self._job_list.has_key( JID ) : 
+            if self._job_list.has_key( JID ) :
                 job    = self._job_list.get( JID )
                 status = job.getStatus( )
                 out = 'POLL %s SUCCESS %s' % ( JID, status )
             else:
-                out = 'POLL %s FAILURE Job not submitted' % ( JID ) 
+                out = 'POLL %s FAILURE Job not submitted' % ( JID )
         except Exception as err:
             out = 'POLL %s FAILURE %s' % ( JID, str( err ) )
         self.message.stdout( out )
         self.logger.debug( out )
-        
+
     def do_RECOVER(self, args):
         """
         Polls a job to obtain its state (i.e. RECOVER JID - -).
         @param args : arguments of operation
-        @type args : string 
+        @type args : string
         """
         OPERATION, JID, HOST_JM, RSL = args.split()
         try:
             HOST, remote_job_id = HOST_JM.split( ':', 1 )
-            job , communicator  = self._update_resource( HOST )            
+            job , communicator  = self._update_resource( HOST )
             job.Communicator    = communicator
             job.JobId           = remote_job_id
             job.refreshJobStatus( )
             self._job_list.put( JID, job )
             out = 'RECOVER %s SUCCESS %s' % ( JID, job.getStatus( ) )
         except Exception as err:
-            out = 'RECOVER %s FAILURE %s' % ( JID, str( err ) )    
+            out = 'RECOVER %s FAILURE %s' % ( JID, str( err ) )
         self.message.stdout( out )
         self.logger.debug( out, exc_info=1 )
-            
+
     def do_CALLBACK(self):
         """
         Show the state of the job
@@ -219,7 +219,7 @@ class GwEmMad (object):
                     out = 'CALLBACK %s FAILURE %s' % ( JID, str( err ) )
                     self.message.stdout( out )
                     self.logger.debug( out, exc_info=1 )
-        
+
     def do_CANCEL(self, args):
         """
         Cancels a job (i.e. CANCEL JID - -).
@@ -234,10 +234,10 @@ class GwEmMad (object):
             else:
                 out = 'CANCEL %s FAILURE Job not submitted' % (JID)
         except Exception as e:
-            out = 'CANCEL %s FAILURE %s' % ( JID, str(e) )    
+            out = 'CANCEL %s FAILURE %s' % ( JID, str(e) )
         self.message.stdout( out )
         self.logger.debug( out )
-        
+
     methods = {'INIT'    : do_INIT,
                'SUBMIT'  : do_SUBMIT,
                'POLL'    : do_POLL,
@@ -263,17 +263,17 @@ class GwEmMad (object):
                     if OPERATION in ( 'FINALIZE', 'INIT', 'SUBMIT', 'RECOVER' ):
                         self.methods[ OPERATION ]( self, ' '.join(input) )
                     else:
-                        pool.add_task( self.methods[ OPERATION ], self, ' '.join(input) )    
+                        pool.add_task( self.methods[ OPERATION ], self, ' '.join(input) )
                 else:
                     out = 'WRONG COMMAND'
                     self.message.stdout( out )
                     self.logger.debug( out )
         except Exception as err:
             self.logger.warning( str( err ) )
-    
+
     def _update_resource(self, host):
         with self._lock :
-            if not self._configure.check_update() or not self._configure.resources : 
+            if not self._configure.check_update() or not self._configure.resources :
                 self._configure.load()
                 errors = self._configure.check()
                 if errors :
@@ -284,7 +284,7 @@ class GwEmMad (object):
                     _resname , _ = host.split( '::' )
                     if resname != _resname :
                         continue
-                elif resname != host : 
+                elif resname != host :
                     continue
                 if resname not in self._communicators :
                     self._communicators[ resname ] = self._configure.make_communicators()[resname]
@@ -292,4 +292,4 @@ class GwEmMad (object):
                 communicator = self._communicators[ resname ]
                 return job, communicator
 
-  
+

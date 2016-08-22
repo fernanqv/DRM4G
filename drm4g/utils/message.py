@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -21,14 +21,14 @@
 import threading
 import sys
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 class Send (object):
     """
-    This class provides basic messaging 
-    """	
+    This class provides basic messaging
+    """
     def __init__(self):
         self._lock = threading.Lock()
 
@@ -48,4 +48,4 @@ class Send (object):
         finally:
             self._lock.release()
 
-            
+

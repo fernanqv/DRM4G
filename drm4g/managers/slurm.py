@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -19,10 +19,10 @@
 #
 
 import re
-import drm4g.managers 
+import drm4g.managers
 from string import Template
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -36,26 +36,26 @@ class Resource (drm4g.managers.Resource):
     pass
 
 class Job (drm4g.managers.Job):
-   
+
     #job status <--> GridWay job status
-    states_SLURM = {'CANCELLED': 'DONE', 
-                  'COMPLETED' : 'DONE', 
-                  'COMPLETING': 'ACTIVE',  
-                  'RUNNING'   : 'ACTIVE',  
-                  'NODE_FAIL' : 'FAILED',  
+    states_SLURM = {'CANCELLED': 'DONE',
+                  'COMPLETED' : 'DONE',
+                  'COMPLETING': 'ACTIVE',
+                  'RUNNING'   : 'ACTIVE',
+                  'NODE_FAIL' : 'FAILED',
                   'FAILED'    : 'FAILED',
-                  'PENDING'   : 'PENDING',  
+                  'PENDING'   : 'PENDING',
                   'SUSPENDED' : 'SUSPENDED',
                   'TIMEOUT'   : 'FAILED',
                 }
-    
+
     def jobSubmit(self, pathScript):
         out, err = self.Communicator.execCommand('%s %s' % (SBATCH, pathScript))
         re_job_id = re.compile(r'Submitted batch job (\d*)').search(out)
         if re_job_id:
             return re_job_id.group(1)
         else:
-            raise drm4g.managers.JobException(' '.join(err.split('\n')))        
+            raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobStatus(self):
         out, err = self.Communicator.execCommand('squeue -h -o %T -j ' + self.JobId)
@@ -63,10 +63,10 @@ class Job (drm4g.managers.Job):
             return 'DONE'
         else:
             return self.states_SLURM.setdefault(out.rstrip('\n'), 'UNKNOWN')
-    
+
     def jobCancel(self):
         out, err = self.Communicator.execCommand('%s %s' % (SCANCEL, self.JobId))
-        if err: 
+        if err:
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobTemplate(self, parameters):
@@ -76,13 +76,13 @@ class Job (drm4g.managers.Job):
         args += '#SBATCH --error=$stderr\n'
         if parameters['queue'] != 'default':
             args += '#SBATCH -p $queue\n'
-        if 'maxWallTime' in parameters : 
+        if 'maxWallTime' in parameters :
             args += '#SBATCH --time=%s\n' % (parameters['maxWallTime'])
         if 'maxMemory' in parameters :
             args += '#SBATCH --mem=%s\n' % (parameters['maxMemory'])
-        if 'ppn' in parameters : 
+        if 'ppn' in parameters :
             args += '#SBATCH --ntasks-per-node=$ppn'
-        if 'nodes' in parameters :  
+        if 'nodes' in parameters :
             args += '#SBATCH --nodes=$nodes'
         args += '#SBATCH --ntasks=$count\n'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())])

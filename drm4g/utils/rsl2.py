@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -20,7 +20,7 @@
 
 import xml.dom.minidom
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -28,7 +28,7 @@ class Rsl2Parser(object):
 
   """
    Parser of RSL2 files. It is used like this:
-   
+
            rsl    = RSL2Parser(filename)
            stdout = rsl.parse()
   """
@@ -37,7 +37,7 @@ class Rsl2Parser(object):
 
   def __init__(self, filename):
     """
-    @param filename : file name or file 
+    @param filename : file name or file
     @type filename : string
     """
     self._values = { }

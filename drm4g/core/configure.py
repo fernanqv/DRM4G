@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -34,7 +34,7 @@ try :
 except ImportError :
     import ConfigParser as configparser
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -50,14 +50,14 @@ class Configuration(object):
     * parse DRM4G_CONFIG_FILE resources
     * check key resources
     * instantiate objects such as communicators or managers
-    
+
     """
     def __init__(self):
         self.resources  = dict()
         if not os.path.exists( DRM4G_CONFIG_FILE ):
             assert DRM4G_CONFIG_FILE, "resources.conf does not exist, please provide one"
         self.init_time = os.stat( DRM4G_CONFIG_FILE ).st_mtime
-        
+
     def check_update(self):
         """
         It checks if DRM4G file configuration has been updated.
@@ -73,7 +73,7 @@ class Configuration(object):
         Read the configuration file.
         """
         logger.debug("Reading file '%s' ..." % DRM4G_CONFIG_FILE)
-        try: 
+        try:
             try:
                 file   = open(DRM4G_CONFIG_FILE, 'r')
                 parser = configparser.RawConfigParser()
@@ -82,7 +82,7 @@ class Configuration(object):
                 except Exception as err:
                     output = "Configuration file '%s' is unreadable or malformed: %s" % ( DRM4G_CONFIG_FILE , str( err ) )
                     logger.error( output )
-                
+
                 for sectname in parser.sections():
                     name                   = sectname
                     logger.debug(" Reading configuration for resource '%s'." % name )
@@ -90,15 +90,15 @@ class Configuration(object):
                     logger.debug("Resource '%s' defined by: %s.",
                              sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name].items())]))
             except Exception as err:
-                output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err)) 
+                output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err))
                 logger.error( output )
         finally:
             file.close()
-            
+
     def check(self):
         """
-        Check if the drm4g.conf file has been configured well. 
-        
+        Check if the drm4g.conf file has been configured well.
+
         Return a list with the errors.
         """
         errors = []
@@ -137,12 +137,12 @@ class Configuration(object):
                 output = "'host_filter' key is only available for 'cream' lrms"
                 logger.error( output )
                 errors.append( output )
-            if resdict[ 'communicator' ] not in COMMUNICATORS : 
+            if resdict[ 'communicator' ] not in COMMUNICATORS :
                 output = "'%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
                 logger.error( output )
                 errors.append( output )
-            if resdict[ 'communicator' ] == 'ssh' and 'username' not in resdict : 
-                output = "'username' key is mandatory for 'ssh' communicator, '%s' resource" % resname 
+            if resdict[ 'communicator' ] == 'ssh' and 'username' not in resdict :
+                output = "'username' key is mandatory for 'ssh' communicator, '%s' resource" % resname
                 logger.error( output )
                 errors.append( output )
             if resdict[ 'lrms' ] not in RESOURCE_MANAGERS :
@@ -156,7 +156,7 @@ class Configuration(object):
                     logger.error( output )
                     errors.append( output )
                 else :
-                    abs_private_key = os.path.expandvars( os.path.expanduser( private_key ) ) 
+                    abs_private_key = os.path.expandvars( os.path.expanduser( private_key ) )
                     if not os.path.isfile( abs_private_key ) :
                         output = "'%s' does not exist for '%s' resource" % ( private_key , resname )
                         logger.error( output )
@@ -167,16 +167,16 @@ class Configuration(object):
                     if not public_key :
                         abs_public_key = abs_private_key + '.pub'
                     else :
-                        abs_public_key = os.path.expandvars( os.path.expanduser( public_key ) ) 
-                    if not os.path.isfile( abs_private_key ) :     
+                        abs_public_key = os.path.expandvars( os.path.expanduser( public_key ) )
+                    if not os.path.isfile( abs_private_key ) :
                         output = "'%s' does not exist for '%s' resource" % ( abs_public_key , resname )
                         logger.error( output )
                         errors.append( output )
                     else :
-                        self.resources[resname]['public_key'] = abs_public_key 
+                        self.resources[resname]['public_key'] = abs_public_key
             grid_cert = resdict.get( 'grid_cert' )
-            if grid_cert : 
-                abs_grid_cert = os.path.expandvars( os.path.expanduser( grid_cert ) ) 
+            if grid_cert :
+                abs_grid_cert = os.path.expandvars( os.path.expanduser( grid_cert ) )
                 if not os.path.isfile( abs_grid_cert ) :
                     output = "'%s' does not exist for '%s' resource" % ( abs_grid_cert , resname )
                     logger.error( output )
@@ -184,7 +184,7 @@ class Configuration(object):
                 else :
                     self.resources[resname]['grid_cert'] = abs_grid_cert
         return errors
-                
+
     def make_communicators(self):
         """
         Make communicator objects corresponding to the configured resources.
@@ -205,7 +205,7 @@ class Configuration(object):
             except Exception as err:
                 output = "Failed creating communicator for resource '%s' : %s" % ( name, str( err ) )
                 logger.warning( output , exc_info=1 )
-        return communicators 
+        return communicators
 
     def make_resources(self):
         """

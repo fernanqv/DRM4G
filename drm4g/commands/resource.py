@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -20,21 +20,21 @@
 
 """
 Manage computing resources on DRM4G.
-    
-Usage: 
+
+Usage:
     drm4g resource [ list | edit | check | create | destroy ] [ options ]
-    
+
  Options:
     --dbg                   Debug mode.
-    
+
 Commands:
-    list                    Show resources available.    
+    list                    Show resources available.
     edit                    Configure resouces.
     check                   Check out if configured resources are accessible.
     create
-    destroy 
+    destroy
 """
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -61,7 +61,7 @@ def run( arg ) :
         elif arg[ 'destroy' ] :
             resource.destroy_vms( )
         else :
-            resource.list()       
+            resource.list()
     except Exception as err :
         logger.error( str( err ) )
 

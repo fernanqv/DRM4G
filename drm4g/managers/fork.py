@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -19,10 +19,10 @@
 #
 
 import os
-import drm4g.managers 
+import drm4g.managers
 from string import Template
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -32,26 +32,26 @@ class Resource (drm4g.managers.Resource):
     pass
 
 class Job (drm4g.managers.Job):
-    
+
     def jobSubmit(self, pathScript):
         out, err = self.Communicator.execCommand('%s %s' % (SH, pathScript))
-        if err: 
+        if err:
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
         job_id = out.rstrip('\n')
-        return job_id          
+        return job_id
 
     def jobStatus(self):
         out, err = self.Communicator.execCommand('ps --no-heading -p %s' %(self.JobId))
         if out:
             return 'ACTIVE'
-        else:   
+        else:
             return 'DONE'
-    
+
     def jobCancel(self):
         jobs_to_kill = [self.JobId]
         while jobs_to_kill:
             for job in jobs_to_kill:
-                 out, err = self.Communicator.execCommand('ps ho pid --ppid %s' % (job)) 
+                 out, err = self.Communicator.execCommand('ps ho pid --ppid %s' % (job))
                  jobs_to_kill = [line.lstrip() for line in out.splitlines()] + jobs_to_kill
                  out, err = self.Communicator.execCommand('kill -9 %s' % (job))
                  if err:
@@ -61,8 +61,8 @@ class Job (drm4g.managers.Job):
     def jobTemplate(self, parameters):
         line  = '#!/bin/bash\n'
         line += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())])
-        line += '\n' 
-        line += 'nohup $executable 2> $stderr > $stdout &\n' 
+        line += '\n'
+        line += 'nohup $executable 2> $stderr > $stdout &\n'
         line += 'echo $$!\n'
         return Template(line).safe_substitute(parameters)
 

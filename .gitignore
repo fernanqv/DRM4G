@@ -14,3 +14,4 @@ drm4g.egg-info/
 *.pyc
 gridway-5.8/src/drmaa/ruby/Makefile
 Makefile
+drm4g/communicators/openssh.py

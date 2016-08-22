@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -19,10 +19,10 @@
 #
 
 import re
-import drm4g.managers 
+import drm4g.managers
 from string import Template
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -36,26 +36,26 @@ class Resource (drm4g.managers.Resource):
     pass
 
 class Job (drm4g.managers.Job):
-   
+
     #job status <--> GridWay job status
-    states_LSF = {'DONE'  : 'DONE', 
-                  'EXIT'  : 'DONE',  
-                  'RUN'   : 'ACTIVE',  
-                  'ZOMBI' : 'FAILED',  
-                  'PEND'  : 'PENDING',  
+    states_LSF = {'DONE'  : 'DONE',
+                  'EXIT'  : 'DONE',
+                  'RUN'   : 'ACTIVE',
+                  'ZOMBI' : 'FAILED',
+                  'PEND'  : 'PENDING',
                   'PSUSP' : 'SUSPENDED',
                   'USUSP' : 'SUSPENDED',
                   'SSUSP' : 'SUSPENDED',
                   'UNKWN' : 'UNKNOWN',
                   }
-    
+
     def jobSubmit(self, pathScript):
         out, err = self.Communicator.execCommand('%s < %s' % (BSUB, pathScript))
         reJobId = re.compile(r'Job <(\d*)> is submitted').search(out)
         if reJobId:
             return reJobId.group(1)
         else:
-            raise drm4g.managers.JobException(' '.join(err.split('\n')))        
+            raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobStatus(self):
         out, err = self.Communicator.execCommand('%s %s' % (BJOBS, self.JobId))
@@ -63,10 +63,10 @@ class Job (drm4g.managers.Job):
             return 'UNKNOWN'
         else:
             return self.states_LSF.setdefault(out.split()[10], 'UNKNOWN')
-    
+
     def jobCancel(self):
         out, err = self.Communicator.execCommand('%s %s' % (BKILL, self.JobId))
-        if err: 
+        if err:
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobTemplate(self, parameters):
@@ -78,7 +78,7 @@ class Job (drm4g.managers.Job):
         if parameters['queue'] != 'default':
             args += '#BSUB -q $queue\n'
         args += '#BSUB -W $maxWallTime\n'
-        if 'ppn' in parameters: 
+        if 'ppn' in parameters:
             args += '#BSUB -R"span[ptile=$ppn]"'
         args += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())])
         args += '\n'

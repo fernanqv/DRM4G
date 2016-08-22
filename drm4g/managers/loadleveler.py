@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -19,10 +19,10 @@
 #
 
 import re
-import drm4g.managers 
+import drm4g.managers
 from string import Template
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -33,11 +33,11 @@ LLSUBMIT = 'llsubmit'   #submit ajob
 LLQ      = 'llq'        #show jobs' status
 LLCANCEL = 'llcancel'   #delete ajob
 
-class Resource (drm4g.managers.Resource): 
+class Resource (drm4g.managers.Resource):
     pass
 
 class Job (drm4g.managers.Job):
-   
+
     #loadleveler job status <--> GridWay job status
     states_loadleveler = {'CA': 'DONE',
                   'CK': 'ACTIVE',
@@ -55,11 +55,11 @@ class Job (drm4g.managers.Job):
                   'RM': 'DONE',
                   'RP': 'SUSPENDED',
                   'MP': 'ACTIVE',
-                  'R' : 'ACTIVE', 
+                  'R' : 'ACTIVE',
                   'ST': 'ACTIVE',
                   'S' : 'PENDING',
-                  'TX': 'PENDING', 
-                  'HS': 'PENDING',  
+                  'TX': 'PENDING',
+                  'HS': 'PENDING',
                   'H' : 'PENDING',
                   'V' : 'DONE',
                   'VP': 'PENDING',
@@ -79,10 +79,10 @@ class Job (drm4g.managers.Job):
         else:
             status = out.split('\n')[2].strip()
             return self.states_loadleveler.setdefault(status, 'UNKNOWN')
-    
+
     def jobCancel(self):
         out, err = self.Communicator.execCommand('%s %s' % (LLCANCEL, self.JobId))
-        if err: 
+        if err:
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobTemplate(self, parameters):
@@ -97,10 +97,10 @@ class Job (drm4g.managers.Job):
         else:
             args += '#@ job_type  = serial\n'
         args += '#@ node = $count\n'
-        if 'maxWallTime' in parameters: 
+        if 'maxWallTime' in parameters:
             args += '#@ wall_clock_limit = $maxWallTime\n'
         if 'maxCpuTime' in parameters:
-            args += '#@ job_cpu_limit = $maxCpuTime\n' 
+            args += '#@ job_cpu_limit = $maxCpuTime\n'
         if 'maxMemory' in parameters :
             args += '#@ resources = ConsumableMemory($maxMemory)\n'
         if 'ppn' in parameters:
@@ -108,7 +108,7 @@ class Job (drm4g.managers.Job):
         if 'project' in parameters:
             args += '#@ account_no = $project\n'
         args += '#@ queue\n'
-        args += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())]) 
+        args += ''.join(['export %s=%s\n' % (k, v) for k, v in list(parameters['environment'].items())])
         args += '\n'
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)

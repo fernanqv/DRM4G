@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -26,7 +26,7 @@ from os.path         import basename , dirname , exists, join
 from drm4g           import REMOTE_VOS_DIR
 from drm4g.managers  import JobException
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -35,13 +35,13 @@ logger = logging.getLogger(__name__)
 X509_USER_PROXY = 'X509_USER_PROXY=' +  join( REMOTE_VOS_DIR , 'x509up.%s ' )
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.
-CREAM_DELEGATE = X509_USER_PROXY + 'glite-ce-delegate-proxy' 
-CREAM_PX_RENEW = X509_USER_PROXY + 'glite-ce-proxy-renew' 
-CREAM_SUBMIT   = X509_USER_PROXY + 'glite-ce-job-submit'  
-CREAM_STATUS   = X509_USER_PROXY + 'glite-ce-job-status'     
-CREAM_DEL      = X509_USER_PROXY + 'glite-ce-job-cancel' 
-CREAM_PURGE    = X509_USER_PROXY + 'glite-ce-job-purge'  
-GLOBUS_CP      = X509_USER_PROXY + 'globus-url-copy'     
+CREAM_DELEGATE = X509_USER_PROXY + 'glite-ce-delegate-proxy'
+CREAM_PX_RENEW = X509_USER_PROXY + 'glite-ce-proxy-renew'
+CREAM_SUBMIT   = X509_USER_PROXY + 'glite-ce-job-submit'
+CREAM_STATUS   = X509_USER_PROXY + 'glite-ce-job-status'
+CREAM_DEL      = X509_USER_PROXY + 'glite-ce-job-cancel'
+CREAM_PURGE    = X509_USER_PROXY + 'glite-ce-job-purge'
+GLOBUS_CP      = X509_USER_PROXY + 'globus-url-copy'
 
 # Regular expressions for parsing.
 re_status          = re.compile( "Current Status\s*=\s*\[(.*)\]" )
@@ -58,7 +58,7 @@ def sandbox_files(env_file):
         match = re_exp.search(env)
         if match :
             for file in match.group( 1 ).split(','):
-                if file.startswith( "gsiftp://" ) or file.startswith( "lfn://" ) : 
+                if file.startswith( "gsiftp://" ) or file.startswith( "lfn://" ) :
                     continue
                 if " " in file:
                     if type == 'output' :
@@ -67,7 +67,7 @@ def sandbox_files(env_file):
                         _  , file = file.split()
                 files.append( basename( file ) )
         return files
-    
+
     with open( env_file , "r" ) as f :
         line_env = ' '.join( f.readlines() )
     input_files      = parse_files( line_env , 'input' ,  re_input_files )
@@ -78,10 +78,10 @@ class Resource (drm4g.managers.Resource):
     pass
 
 class Job (drm4g.managers.Job):
-    
+
     default_output_files = [
-                            'stdout.execution', 
-                            'stderr.execution', 
+                            'stdout.execution',
+                            'stderr.execution',
                             'stdout.wrapper',
                             'stderr.wrapper'
                             ]
@@ -100,16 +100,16 @@ class Job (drm4g.managers.Job):
                     }
 
     def _renew_voms_proxy(self):
-        output = "The proxy 'x509up.%s' has probably expired" %  self.resfeatures[ 'vo' ]  
+        output = "The proxy 'x509up.%s' has probably expired" %  self.resfeatures[ 'vo' ]
         logger.debug( output )
         if 'myproxy_server' in self.resfeatures :
-            LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s" % join ( REMOTE_VOS_DIR , self.resfeatures[ 'myproxy_server' ] ) 
+            LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s" % join ( REMOTE_VOS_DIR , self.resfeatures[ 'myproxy_server' ] )
         else :
             LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s/${MYPROXY_SERVER}" % ( REMOTE_VOS_DIR )
         cmd = "%s voms-proxy-init -ignorewarn -timeout 30 -valid 24:00 -q -voms %s -noregen -out %s" % (
                                                                                                         LOCAL_X509_USER_PROXY ,
                                                                                                         self.resfeatures[ 'vo' ] ,
-                                                                                                        join( REMOTE_VOS_DIR , 'x509up.%s ' ) % self.resfeatures[ 'vo' ] 
+                                                                                                        join( REMOTE_VOS_DIR , 'x509up.%s ' ) % self.resfeatures[ 'vo' ]
                                                                                                         )
         logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
@@ -119,9 +119,9 @@ class Job (drm4g.managers.Job):
             logger.error( output )
 
     def jobSubmit(self, wrapper_file):
-        cmd = '%s -e %s delegete-proxy' % ( 
-                                           CREAM_DELEGATE % self.resfeatures[ 'vo' ] , 
-                                           self.resfeatures[ 'host' ] 
+        cmd = '%s -e %s delegete-proxy' % (
+                                           CREAM_DELEGATE % self.resfeatures[ 'vo' ] ,
+                                           self.resfeatures[ 'host' ]
                                            )
         logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
@@ -134,12 +134,12 @@ class Job (drm4g.managers.Job):
         if ( not 'succesfully delegated' in out ) and ( not 'already exists' in out ) :
             logger.error( out )
             raise JobException( out )
-        cmd = '%s -D delegete-proxy -r %s:8443/%s-%s %s' % ( 
+        cmd = '%s -D delegete-proxy -r %s:8443/%s-%s %s' % (
                                      CREAM_SUBMIT % self.resfeatures[ 'vo' ] ,
                                      self.resfeatures[ 'host' ] ,
-                                     self.resfeatures[ 'jm' ] , 
+                                     self.resfeatures[ 'jm' ] ,
                                      self.resfeatures[ 'queue' ] ,
-                                     wrapper_file 
+                                     wrapper_file
                                      )
         logger.debug( "Executing command: %s" % cmd )
         out, err = self.Communicator.execCommand( cmd )
@@ -156,7 +156,7 @@ class Job (drm4g.managers.Job):
         return out[ out.find("https://"): ].strip() #cream_id
 
     def jobStatus(self):
-        cmd = '%s -e %s delegete-proxy' % ( 
+        cmd = '%s -e %s delegete-proxy' % (
                                            CREAM_PX_RENEW % self.resfeatures[ 'vo' ] ,
                                            self.resfeatures[ 'host' ]
                                            )
@@ -188,7 +188,7 @@ class Job (drm4g.managers.Job):
             return job_status
         else:
             return 'UNKNOWN'
-    
+
     def jobCancel(self):
         cmd = '%s -N %s' % (CREAM_DEL % self.resfeatures[ 'vo' ]  , self.JobId )
         logger.debug( "Executing command: %s" % cmd )
@@ -199,11 +199,11 @@ class Job (drm4g.managers.Job):
             logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
             logger.debug( out + err )
-        if "ERROR" in err: 
+        if "ERROR" in err:
             output = "Error canceling '%s' job: %s" % ( self.JobId , err )
             logger.error( output )
             raise JobException( output )
-		
+
     def jobPurge(self):
         cmd = '%s -N %s' % (CREAM_PURGE % self.resfeatures[ 'vo' ] , self.JobId )
         logger.debug( "Executing command: %s" % cmd )
@@ -213,49 +213,49 @@ class Job (drm4g.managers.Job):
             self._renew_voms_proxy()
             logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
-        if "ERROR" in err: 
+        if "ERROR" in err:
             output = "Error purging '%s' job: %s" % ( self.JobId , err )
             logger.error( output )
             raise JobException( output )
-        
+
     def jobTemplate(self, parameters):
         dir_temp   = self.local_output_directory = dirname( parameters['executable'] )
-        executable = basename( parameters['executable'] ) 
-        stdout     = basename( parameters['stdout'] ) 
-        stderr     = basename( parameters['stderr'] ) 
-        count      = parameters['count'] 
+        executable = basename( parameters['executable'] )
+        stdout     = basename( parameters['stdout'] )
+        stderr     = basename( parameters['stderr'] )
+        count      = parameters['count']
         ppn        = parameters.get( 'ppn', '1' )
-        
+
         input_sandbox, output_sandbox = sandbox_files( self.resfeatures[ 'env_file' ] )
         if input_sandbox :
-            input_files = ' '.join( [ ',"%(dir_temp)s/' + '%s"' % (f) for f in input_sandbox] ) % {'dir_temp':dir_temp } 
+            input_files = ' '.join( [ ',"%(dir_temp)s/' + '%s"' % (f) for f in input_sandbox] ) % {'dir_temp':dir_temp }
         else :
             input_files = ''
-        
+
         self.default_output_files.extend( output_sandbox )
         output_files = ','.join( [ '"%s"' % (f) for f in self.default_output_files ] )
-                    
+
         requirements = ''
-        if 'maxWallTime' in parameters: 
+        if 'maxWallTime' in parameters:
             requirements += '(other.GlueCEPolicyMaxWallClockTime <= %s)' % parameters['maxWallTime']
         if 'maxCpuTime' in parameters:
-            if requirements: 
+            if requirements:
                 requirements += ' && '
             requirements += '(other.GlueCEPolicyMaxCPUTime <= %s)' % parameters['maxCpuTime']
         if 'maxMemory' in parameters:
-            if requirements: 
+            if requirements:
                 requirements += ' && '
-            requirements += ' (other.GlueHostMainMemoryRAMSize <= %s)' % parameters['maxMemory'] 
+            requirements += ' (other.GlueHostMainMemoryRAMSize <= %s)' % parameters['maxMemory']
         Requirements = 'Requirements=%s;' % (requirements) if requirements else ''
-        
+
         env = ','.join(['"%s=%s"' %(k, v) for k, v in list(parameters['environment'].items())])
-            
+
         return """
 [
 JobType = "Normal";
 Executable = "%(executable)s";
 StdOutput = "%(stdout)s";
-StdError = "%(stderr)s"; 
+StdError = "%(stderr)s";
 CpuNumber = %(count)s;
 SMPGranularity = %(ppn)s;
 OutputSandboxBaseDestURI = "gsiftp://localhost";
@@ -275,9 +275,9 @@ Environment = { %(env)s };
         'Requirements' : Requirements,
         'env'          : env,
         }
-    
+
     def _getOutputURL( self, status_output ):
-        """ 
+        """
         Resolve the URL for the output files
         """
         match = re_obs_url.search( status_output )
@@ -290,11 +290,11 @@ Environment = { %(env)s };
             raise JobException( output )
 
     def _getOutputFiles( self, output_url ):
-        """ 
+        """
         Get output files from the remote output_url
         """
         for file in self.default_output_files :
-            cmd = '%s %s file://%s' % ( 
+            cmd = '%s %s file://%s' % (
                                        GLOBUS_CP % self.resfeatures[ 'vo' ],
                                        join( output_url , file ) ,
                                        join( self.local_output_directory , file )
@@ -305,5 +305,5 @@ Environment = { %(env)s };
                 output = "Error coping file '%s' : %s" % ( file , err )
                 logger.error( output )
                 raise JobException( output )
-            
- 
+
+

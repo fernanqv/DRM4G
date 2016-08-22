@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -20,29 +20,29 @@
 
 """
 Print information about the hosts available on DRM4G.
-     
-Usage: 
-    drm4g [ options ] host [ list ] [ <hid> ] 
-    
+
+Usage:
+    drm4g [ options ] host [ list ] [ <hid> ]
+
 Arguments:
     <hid>         Host identifier.
 
 Options:
-    --dbg         Debug mode.        
- 
+    --dbg         Debug mode.
+
 Host field information:
     HID           Host identifier.
     ARCH          Architecture.
     JOBS(R/T)     Number of jobs: R = running, T = total.
     LRMS          Local Resource Management System.
-    HOSTNAME      Host name. 
+    HOSTNAME      Host name.
     QUEUENAME     Queue name.
     WALLT         Queue wall time.
     CPUT          Queue cpu time.
     MAXR          Max. running jobs.
-    MAXQ          Max. queued jobs. 
+    MAXQ          Max. queued jobs.
 """
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -57,7 +57,7 @@ def run( arg ):
         daemon = Daemon()
         if not daemon.is_alive() :
             raise Exception('DRM4G is stopped.')
-        cmd = 'gwhost '  
+        cmd = 'gwhost '
         if arg[ '<hid>' ] :
             cmd = cmd + arg[ '<hid>' ]
         out , err = exec_cmd( cmd )

@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -26,18 +26,18 @@ from drm4g.core.configure  import Configuration
 from drm4g.managers        import HostInformation
 from drm4g.utils.message   import Send
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 class GwImMad (object):
     """
-    Information manager MAD 
-	
-	The format to send a request to the Information MAD, through its standard input, is: 
-	
+    Information manager MAD
+
+	The format to send a request to the Information MAD, through its standard input, is:
+
 		OPERATION HID HOST ARGS
-		
+
 	Where:
 	-OPERATION: Can be one of the following:
 		-INIT: Initializes the MAD (i.e. INIT - - -).
@@ -46,27 +46,27 @@ class GwImMad (object):
 		-FINALIZE: Finalizes the MAD (i.e. FINALIZE - - -).
 	-HID: if the operation is MONITOR, it is a host identifier, chosen by GridWay. Otherwise it is ignored.
 	-HOST: If the operation is MONITOR it specifies the host to monitor. Otherwise it is ignored.
-			
+
 	The format to receive a response from the MAD, through its standard output, is:
-	    
+
 	    OPERATION HID RESULT INFO
-	    
+
 	Where:
 	-OPERATION: Is the operation specified in the request that originated the response.
 	-HID: It is the host identifier, as provided in the submission request.
 	-RESULT: It is the result of the operation. Could be SUCCESS or FAILURE.
-	-INFO: If RESULT is FAILURE, it contains the cause of failure. Otherwise, if OPERATION 
-		is   DISCOVER, it contains a list of discovered host, or if OPERATION is MONITOR, 
+	-INFO: If RESULT is FAILURE, it contains the cause of failure. Otherwise, if OPERATION
+		is   DISCOVER, it contains a list of discovered host, or if OPERATION is MONITOR,
 		it contains a list of host attributes.
     """
 
     logger  = logging.getLogger(__name__)
     message = Send()
-    
+
     def __init__(self):
         self._resources  = dict()
         self._config     = None
- 
+
     def do_INIT(self, args):
         """
         Initializes the MAD (i.e. INIT - - -)
@@ -76,7 +76,7 @@ class GwImMad (object):
         out = 'INIT - SUCCESS -'
         self.message.stdout(out)
         self.logger.debug(out)
-        
+
     def do_DISCOVER(self, args):
         """
         Discovers hosts (i.e. DISCOVER - - -)
@@ -89,18 +89,18 @@ class GwImMad (object):
             self._config.load()
             errors        = self._config.check()
             assert not errors, ' '.join( errors )
-            
+
             self._resources  = self._config.make_resources()
             communicators    = self._config.make_communicators()
             hosts = ""
             for resname in sorted( self._resources.keys() ) :
-                if  self._config.resources[ resname ][ 'enable' ].lower()  == 'false' : 
+                if  self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
                     self._resources[ resname ][ 'Resource' ].Communicator.connect()
                     hosts = hosts + " " + self._resources[ resname ] [ 'Resource' ].hosts()
-                    self._resources[ resname ][ 'Resource' ].Communicator.close() 
+                    self._resources[ resname ][ 'Resource' ].Communicator.close()
                 except Exception as err :
                     self.logger.error( err , exc_info=1 )
             out = 'DISCOVER %s SUCCESS %s' % ( HID , hosts  )
@@ -108,7 +108,7 @@ class GwImMad (object):
             out = 'DISCOVER - FAILURE %s' % str( err )
         self.message.stdout( out )
         self.logger.debug( out , exc_info=1 )
- 
+
     def do_MONITOR(self, args):
         """
         Monitors a host (i.e. MONITOR HID HOST -)
@@ -119,7 +119,7 @@ class GwImMad (object):
         try:
             info = ""
             for resname, resdict in list(self._resources.items()) :
-                if self._config.resources[ resname ][ 'enable' ].lower() == 'false': 
+                if self._config.resources[ resname ][ 'enable' ].lower() == 'false':
                     raise Exception( "Resource '%s' is not enable" % resname )
                 if HOST in resdict['Resource'].host_list :
                     info = resdict['Resource'].host_properties( HOST )
@@ -131,7 +131,7 @@ class GwImMad (object):
             out = 'MONITOR %s FAILURE %s' % (HID , str( err ) )
         self.message.stdout(out)
         self.logger.debug( out , exc_info=1 )
- 
+
     def do_FINALIZE(self, args):
         """
         Finalizes the MAD (i.e. FINALIZE - - -)
@@ -142,13 +142,13 @@ class GwImMad (object):
         self.message.stdout(out)
         self.logger.debug(out)
         sys.exit(0)
-        
+
     methods = { 'INIT'	  : do_INIT,
                 'DISCOVER': do_DISCOVER,
                 'MONITOR' : do_MONITOR,
                 'FINALIZE': do_FINALIZE,
                 }
-                
+
     def processLine(self):
         """
         Choose the OPERATION through the command line
@@ -166,4 +166,4 @@ class GwImMad (object):
                     self.logger.debug(out)
         except Exception as e:
             self.logger.warning(str(e))
-            
+

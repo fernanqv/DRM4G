@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -19,10 +19,10 @@
 #
 
 import re
-import drm4g.managers 
+import drm4g.managers
 from string import Template
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -33,7 +33,7 @@ QSUB     = 'LANG=POSIX qsub'     #qsub - submit pbs job
 QSTAT    = 'LANG=POSIX qstat'    #qstat - show status of pbs batch jobs
 QDEL     = 'LANG=POSIX qdel'     #qdel - delete pbs batch job
 
-class Resource (drm4g.managers.Resource): 
+class Resource (drm4g.managers.Resource):
 
     def additional_queue_properties(self, queue):
         out, err = self.Communicator.execCommand('%s -q %s' % (QSTAT, queue.Name))
@@ -59,12 +59,12 @@ class Resource (drm4g.managers.Resource):
             if lm != '--':
                 try:
                     queue.MaxRunningJobs = lm
-                except: 
+                except:
                     pass
         return queue
 
 class Job (drm4g.managers.Job):
-   
+
     #pbs job status <--> GridWay job status
     states_pbs = {'E': 'ACTIVE',    #Job is exiting after having run.
                   'H': 'SUSPENDED', #Job is held.
@@ -75,10 +75,10 @@ class Job (drm4g.managers.Job):
                   'S': 'SUSPENDED', #Job is suspend.
                   'C': 'DONE',	    #Job finalize.
                 }
-    
+
     def jobSubmit(self, pathScript):
         out, err = self.Communicator.execCommand('%s %s' % (QSUB, pathScript))
-        if err: 
+        if err:
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
         return out.strip() #job_id
 
@@ -91,10 +91,10 @@ class Job (drm4g.managers.Job):
         else:
             state = out.split()[-2]
             return self.states_pbs.setdefault(state, 'UNKNOWN')
-    
+
     def jobCancel(self):
         out, err = self.Communicator.execCommand('%s %s' % (QDEL, self.JobId))
-        if err: 
+        if err:
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobTemplate(self, parameters):
@@ -106,10 +106,10 @@ class Job (drm4g.managers.Job):
             args += '#PBS -q $queue\n'
         args += '#PBS -o $stdout\n'
         args += '#PBS -e $stderr\n'
-        if 'maxWallTime' in parameters : 
-            args += '#PBS -l walltime=$maxWallTime\n' 
-        if 'maxCpuTime' in parameters : 
-            args += '#PBS -l cput=$maxCpuTime\n' 
+        if 'maxWallTime' in parameters :
+            args += '#PBS -l walltime=$maxWallTime\n'
+        if 'maxCpuTime' in parameters :
+            args += '#PBS -l cput=$maxCpuTime\n'
         if 'maxMemory' in parameters :
             args += '#PBS -l vmem=$maxMemoryMB\n'
         if 'ppn' in parameters and 'nodes' in parameters :

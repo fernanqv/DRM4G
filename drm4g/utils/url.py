@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -18,7 +18,7 @@
 # permissions and limitations under the Licence.
 #
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -43,11 +43,11 @@ def urlparse (url):
         url, query  = url.split('?', 1)
         params = dict(( elem.split('=')[0], elem.split('=')[1]) for elem in query.split(';') if '=' in elem)
     if '/' in url:
-        if scheme == 'file': 
+        if scheme == 'file':
             path = url
         else:
             url, path  = url.split('/', 1)
-    netloc = url        
+    netloc = url
     return ParseResult(scheme, netloc, path, params, query, fragment)
 
 class ParseResult(object):
@@ -61,8 +61,8 @@ class ParseResult(object):
         self._path     = path
         self._params   = params
         self._query    = query
-        self._fragment = fragment 
-  
+        self._fragment = fragment
+
     def getscheme(self):
         return self._scheme
 
@@ -77,7 +77,7 @@ class ParseResult(object):
 
     def getquery(self):
         return self._query
-    
+
     def getfragment(self):
         return self._fragment
 
@@ -124,4 +124,4 @@ class ParseResult(object):
     username = property(getusername)
     password = property(getpassword)
     host     = property(gethost)
-    port     = property(getport) 
+    port     = property(getport)

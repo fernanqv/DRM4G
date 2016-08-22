@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -22,7 +22,7 @@ import re
 import drm4g.managers
 from string import Template
 
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -30,9 +30,9 @@ __revision__ = "$Id$"
 # accessible by PATH, specify their location here.
 QCONF = 'LANG=POSIX qconf'
 QHOST = 'LANG=POSIX qhost'
-QSUB  = 'LANG=POSIX qsub'  
-QSTAT = 'LANG=POSIX qstat' 
-QDEL  = 'LANG=POSIX qdel'  
+QSUB  = 'LANG=POSIX qsub'
+QSTAT = 'LANG=POSIX qstat'
+QDEL  = 'LANG=POSIX qdel'
 
 class Resource (drm4g.managers.Resource):
 
@@ -70,14 +70,14 @@ class Job (drm4g.managers.Job):
         's'  : 'SUSPENDED',#Job is suspended
         'S'  : 'SUSPENDED',#Job is suspended
         't'  : 'PENDING',  #Job is transfering
-        'T'  : 'PENDING',  #Job is Threshold 
+        'T'  : 'PENDING',  #Job is Threshold
         'w'  : 'PENDING',  #Job is waiting
         'qw' : 'PENDING',  #Job is waiting
         }
 
     def jobSubmit(self, pathScript):
         out, err = self.Communicator.execCommand('%s %s' % (QSUB, pathScript))
-        if err: 
+        if err:
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
         re_job  = re.compile(r'^Your job (\d*) .*').search(out)
         return re_job.group(1)
@@ -89,26 +89,26 @@ class Job (drm4g.managers.Job):
         else:
             state = out.split()[4]
             return self.states_sge.setdefault(state, 'UNKNOWN')
-    
+
     def jobCancel(self):
         out, err = self.Communicator.execCommand('%s %s' % (QDEL, self.JobId))
-        if err: 
+        if err:
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobTemplate(self, parameters):
         args  = '#!/bin/bash\n'
         args += '#$ -N JID_%s\n' % (parameters['environment']['GW_JOB_ID'])
-        if 'project' in parameters : 
+        if 'project' in parameters :
             args += '#$ -P $project\n'
         if parameters['queue'] != 'default':
             args += '#$ -q $queue\n'
         args += '#$ -o $stdout\n'
         args += '#$ -e $stderr\n'
-        if 'maxWallTime' in parameters : 
+        if 'maxWallTime' in parameters :
             args += '#$ -l h_rt=$maxWallTime\n'
-        if 'maxCpuTime' in parameters : 
-            args += '#$ -l cput=$maxCpuTime\n' 
-        if 'maxMemory' in parameters : 
+        if 'maxCpuTime' in parameters :
+            args += '#$ -l cput=$maxCpuTime\n'
+        if 'maxMemory' in parameters :
             args += '#$ -l mem_free=$maxMemoryM\n'
         if int(parameters['count']) > 1:
             args += '#$ -pe $parallel_env $count\n'

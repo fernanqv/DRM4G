@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -21,23 +21,23 @@
 """
 Submit, get status and history and cancel jobs.
 
-Usage: 
-    drm4g job submit  [ options ] [ --ntasks <total_tasks> ] [ --dep <job_id> ... ] <template> 
-    drm4g job list    [ options ] [ <job_id> ] 
-    drm4g job cancel  [ options ] <job_id> ... 
+Usage:
+    drm4g job submit  [ options ] [ --ntasks <total_tasks> ] [ --dep <job_id> ... ] <template>
+    drm4g job list    [ options ] [ <job_id> ]
+    drm4g job cancel  [ options ] <job_id> ...
     drm4g job log     [ options ] <job_id>
-    drm4g job history [ options ] <job_id> 
-   
+    drm4g job history [ options ] <job_id>
+
 Arguments:
    <job_id>               Job identifier.
    <template>             Job template.
    <total_tasks>          Total number of tasks in the job array.
 
 Options:
-   --ntasks <total_tasks> Number of tasks to submit. 
+   --ntasks <total_tasks> Number of tasks to submit.
    --dep=<job_id> ...     Define the job dependency list of the job.
    --dbg                  Debug mode.
-    
+
 Commands:
    submit                 Command for submitting jobs.
    list                   Monitor jobs previously submitted.
@@ -47,7 +47,7 @@ Commands:
 
 Job field information:
    JID                    Job identification.
-   DM                     Dispatch Manager state, one of: 
+   DM                     Dispatch Manager state, one of:
                                 pend, hold, prol, prew, wrap, epil, canl, stop, migr, done, fail.
    EM                     Execution Manager state: pend, susp, actv, fail, done.
    START                  The time the job entered the system.
@@ -63,9 +63,9 @@ Job field information:
    EPILOG                 Total epilog (file stage-out esphase) time.
    MIGR                   Total migration time.
    REASON                 The reason why the job left this host.
-   QUEUE                  Queue name. 
+   QUEUE                  Queue name.
 """
-__version__  = '2.4.1'
+__version__  = '2.5.0-beta'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -86,9 +86,9 @@ def run( arg ) :
             number_of_tasks = '-n %s' % arg['--ntasks'] if arg['--ntasks'] else ''
             cmd = 'gwsubmit %s -v %s %s' % ( dependencies, arg['<template>'], number_of_tasks )
         elif arg['list']:
-            cmd = 'gwps -o Jsetxjh ' 
+            cmd = 'gwps -o Jsetxjh '
             if arg['<job_id>'] :
-                cmd = cmd + arg['<job_id>'][0] 
+                cmd = cmd + arg['<job_id>'][0]
         elif arg['history']:
             cmd = 'gwhistory %s' % ( arg['<job_id>'][ 0 ] )
         elif arg['log']:
@@ -103,7 +103,7 @@ def run( arg ) :
                 raise Exception( 'There is not a log available for this job.')
             cmd = 'cat %s' % ( directory )
         else :
-            cmd = 'gwkill -9 %s' % ( ' '.join( arg['<job_id>'] ) )  
+            cmd = 'gwkill -9 %s' % ( ' '.join( arg['<job_id>'] ) )
         out , err = exec_cmd( cmd )
         logger.info( out )
         if err :
