@@ -24,7 +24,7 @@ import os
 import subprocess
 import logging
 
-__version__  = '2.5.0-beta'
+__version__  = '2.5.0-0b2'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
