@@ -69,7 +69,7 @@ SFTP_CONNECTIONS    = 3
 PROXY_THRESHOLD     = 178 # Proxy threshold in hours.
 
 COMMUNICATORS = {
-                 "ssh"   : "drm4g.communicators.ssh",
+                 "ssh"   : "drm4g.communicators.openssh",
                  "local" : "drm4g.communicators.local",
                  }
 RESOURCE_MANAGERS = {
