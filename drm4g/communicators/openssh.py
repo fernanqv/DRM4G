@@ -21,7 +21,6 @@
 import sys
 import platform
 from os.path     import dirname, abspath, join, expanduser, exists
-from openssh_wrapper import SSHConnection
 
 import socket
 import re
@@ -32,6 +31,7 @@ from drm4g.commands         import Agent
 from drm4g.communicators    import ComException, logger
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT, DRM4G_DIR
 from drm4g.utils.url        import urlparse
+from openssh_wrapper import SSHConnection
 
 __version__  = '2.5.0-0b2'
 __author__   = 'Carlos Blanco'
@@ -45,27 +45,27 @@ class Communicator(drm4g.communicators.Communicator):
     _sem        = __import__('threading').Semaphore(SFTP_CONNECTIONS)
     _trans      = None
 
-    conn=None
-    #agent=None
-
+    def __init__(self):
+        super(Communicator,self).__init__()
+        self.conn=None
+        self.agent=Agent()
+        self.agent_socket=self.agent.update_agent_env()['SSH_AUTH_SOCK']
+    
     def connect(self):
         """
         To establish the connection to resource.
         """
-        #agent=Agent()
+        if self.conn==None:
+            self.conn = SSHConnection(self.frontend, login=self.username, port=str(self.port), identity_file=self.private_key, 
+                            ssh_agent_socket=self.agent_socket, timeout=SSH_CONNECT_TIMEOUT)
 
     def execCommand(self , command , input = None ):
         '''
         TODO
         para habilitar la multiplexacion, despues del port especificar el configfile=join(DRM4G_DIR, 'etc', 'openssh.conf')
         '''
-        #raise Exception("\n\n\n\nNO APARECE POR NINGUN SITIO\n\n\n\n")
-        #agent_socket=agent.update_agent_env()['SSH_AUTH_SOCK']
-        #logger.debug('\n'+str(agent_socket)+'\n')
-        logger.info("\nHI, HOW YA DOIN' ON THIS MORROW\n")
-        #conn = SSHConnection(self.frontend, login=self.username, port=self.port, identity_file=self.private_key, 
-        #                    ssh_agent_socket=agent_socket, timeout=SSH_CONNECT_TIMEOUT)
-        self.conn = SSHConnection(self.frontend, login=self.username, port=str(self.port), identity_file=self.private_key,timeout=SSH_CONNECT_TIMEOUT)
+        self.connect()
+        logger.info("execCommand")
         ret = self.conn.run(command)
         '''
         self.connect()
@@ -85,37 +85,41 @@ class Communicator(drm4g.communicators.Communicator):
         return ret.stdout , ret.stderr
 
     def mkDirectory(self, url):
+        self.connect()
+        logger.warning('mkDirectory')
         to_dir         = self._set_dir(urlparse(url).path)
         stdout, stderr = self.execCommand( "mkdir -p %s" % to_dir )
         if stderr :
             raise ComException( "Could not create %s directory: %s" % ( to_dir , stderr ) )
 
     def rmDirectory(self, url):
-        logger.warning('HOla')
+        self.connect()
+        logger.warning('rmDirectory')
         to_dir         = self._set_dir(urlparse(url).path)
         stdout, stderr = self.execCommand( "rm -rf %s" % to_dir )
         if stderr:
             raise ComException( "Could not remove %s directory: %s" % ( to_dir , stderr ) )
 
     def copy( self , source_url , destination_url , execution_mode = '' ) :
+        self.connect()
+        logger.warning('copy')
         with self._sem :
             if 'file://' in source_url :
                 from_dir = urlparse( source_url ).path
                 to_dir   = self._set_dir( urlparse( destination_url ).path )
+                self.conn.scp( [from_dir] , target=to_dir )
                 if execution_mode == 'X':
-                    self.conn.scp( from_dir , target=to_dir , mode='+x' )
-                else:
-                    self.conn.scp( from_dir , target=to_dir )
+                    stdout, stderr = self.execCommand( "chmod +x %s" % to_dir )
+                    if stderr :
+                        raise ComException( "Could not change access permissions of %s file: %s" % ( to_dir , stderr ) )        
             else:
                 from_dir = self._set_dir( urlparse( source_url ).path )
                 to_dir   = urlparse(destination_url).path
                 logger.warning( "%s , %s" %  (from_dir, to_dir  ))
-                self.conn.scp( from_dir , target=to_dir )
+                self.conn.scp( [from_dir] , target=to_dir )
 
     #internal
     def _set_dir(self, path):
+        logger.warning('_set_dir')
         work_directory =  re.compile( r'^~' ).sub( self.work_directory , path )
-        if work_directory[0] == r'~' :
-            return ".%s" %  work_directory[ 1: ]
-        else :
-            return  work_directory
+        return  work_directory
