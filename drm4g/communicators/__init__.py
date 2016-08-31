@@ -112,7 +112,3 @@ class Communicator(object):
         @rtype: boolean
         """
         pass
-
-
-
-
