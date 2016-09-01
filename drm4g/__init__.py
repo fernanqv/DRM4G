@@ -62,7 +62,7 @@ REMOTE_VOS_DIR  = "~/.drm4g/security"
 
 # ssh communicator
 SSH_PORT            = 22
-SSH_CONNECT_TIMEOUT = 30 # seconds
+SSH_CONNECT_TIMEOUT = 1200 # seconds
 SFTP_CONNECTIONS    = 3
 
 # Proxy

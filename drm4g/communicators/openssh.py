@@ -20,11 +20,14 @@
 
 import sys
 import platform
+import os
 from os.path     import dirname, abspath, join, expanduser, exists
 
 import socket
 import re
-import logging
+import pipes
+import signal
+import subprocess
 import drm4g.communicators
 import drm4g.commands
 from drm4g.commands         import Agent
@@ -101,7 +104,7 @@ class Communicator(drm4g.communicators.Communicator):
 
     def copy( self , source_url , destination_url , execution_mode = '' ) :
         self.connect()
-        logger.warning('copy')
+        logger.info('copy')
         with self._sem :
             if 'file://' in source_url :
                 from_dir = urlparse( source_url ).path
@@ -134,15 +137,13 @@ class Communicator(drm4g.communicators.Communicator):
         try:
             _, err = pipe.communicate()
         except IOError as exc:
-            # pipe.terminate() # only in python 2.6 allowed
+            #pipe.terminate() # only in python 2.6 allowed
             os.kill(pipe.pid, signal.SIGTERM)
             signal.alarm(0)  # disable alarm
-            #cleanup_tmp_dir()
             raise ComException("%s (under %s): %s" % (' '.join(scp_command), self.username, str(exc)))
         signal.alarm(0)  # disable alarm
         returncode = pipe.returncode
         if returncode != 0:  # ssh client error
-            #cleanup_tmp_dir()
             raise ComException("%s (under %s): %s" % (' '.join(scp_command), self.username, err.strip()))
 
     def scp_command(self, files, target, debug=False):
@@ -151,7 +152,7 @@ class Communicator(drm4g.communicators.Communicator):
         Include target(s) if specified. Internal function
         """
         cmd = ['/usr/bin/scp', debug and '-vvvv' or '-q', '-r']
-
+        
         if self.username:
             remotename = '%s@%s' % (self.username, self.frontend)
         else:
