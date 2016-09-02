@@ -166,6 +166,7 @@ class build_wrapper(install):
         install.run(self)
 
 bin_scripts= glob.glob(os.path.join('bin', '*'))
+bin_scripts.append('LICENSE')
 
 setup(
     name='drm4g',
