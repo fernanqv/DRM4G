@@ -166,6 +166,7 @@ class build_wrapper(install):
         install.run(self)
 
 bin_scripts= glob.glob(os.path.join('bin', '*'))
+bin_scripts.append('LICENSE')
 
 setup(
     name='drm4g',
@@ -177,7 +178,7 @@ setup(
         'gridway-5.8/src/cmds/gwhost', 'gridway-5.8/src/cmds/gwhistory', 'gridway-5.8/src/cmds/gwsubmit', 
         'gridway-5.8/src/cmds/gwps', 'gridway-5.8/src/cmds/gwkill', 'gridway-5.8/src/gwd/gwd', 
         'gridway-5.8/src/scheduler/gw_flood_scheduler', 'gridway-5.8/src/scheduler/gw_sched'])],
-    version='2.5.0b1',
+    version='2.5.0b3',
     author='Meteorology Group UC',
     author_email='josecarlos.blanco@unican.es',
     url='https://meteo.unican.es/trac/wiki/DRM4G',

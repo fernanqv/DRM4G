@@ -23,7 +23,7 @@ import drm4g.managers.slurm
 from string         import Template
 from drm4g.managers import sec_to_H_M_S
 
-__version__  = '2.5.0-0b2'
+__version__  = '2.5.0-0b3'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

@@ -36,7 +36,7 @@ from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT, DRM4G_
 from drm4g.utils.url        import urlparse
 from openssh_wrapper import SSHConnection
 
-__version__  = '2.5.0-0b2'
+__version__  = '2.5.0-0b3'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -113,7 +113,7 @@ class Communicator(drm4g.communicators.Communicator):
                 if execution_mode == 'X':
                     stdout, stderr = self.execCommand( "chmod +x %s" % to_dir )
                     if stderr :
-                        raise ComException( "Could not change access permissions of %s file: %s" % ( to_dir , stderr ) )        
+                        raise ComException( "Could not change access permissions of %s file: %s" % ( to_dir , stderr ) )
             else:
                 from_dir = self._set_dir( urlparse( source_url ).path )
                 to_dir   = urlparse(destination_url).path
@@ -131,7 +131,7 @@ class Communicator(drm4g.communicators.Communicator):
         pipe = subprocess.Popen(scp_command,
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE, env=self.get_env())
-        
+
         signal.alarm(SSH_CONNECT_TIMEOUT)
         err = ''
         try:
@@ -152,7 +152,7 @@ class Communicator(drm4g.communicators.Communicator):
         Include target(s) if specified. Internal function
         """
         cmd = ['/usr/bin/scp', debug and '-vvvv' or '-q', '-r']
-        
+
         if self.username:
             remotename = '%s@%s' % (self.username, self.frontend)
         else:
