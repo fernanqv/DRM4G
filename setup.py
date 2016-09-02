@@ -182,7 +182,7 @@ setup(
     author_email='josecarlos.blanco@unican.es',
     url='https://meteo.unican.es/trac/wiki/DRM4G',
     license='European Union Public License 1.1',
-    description='Placeholder.',
+    description='DRM4G is an open platform for DCIs.',
     long_description = get_long_description(),
     classifiers=[
         "Intended Audience :: Science/Research",
