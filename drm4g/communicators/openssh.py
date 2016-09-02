@@ -151,7 +151,7 @@ class Communicator(drm4g.communicators.Communicator):
         Build the command string to transfer the files identified by filenames.
         Include target(s) if specified. Internal function
         """
-        cmd = ['/usr/bin/scp', debug and '-vvvv' or '-q', '-r']
+        cmd = ['scp', debug and '-vvvv' or '-q', '-r']
 
         if self.username:
             remotename = '%s@%s' % (self.username, self.frontend)
