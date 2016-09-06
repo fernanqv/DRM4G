@@ -149,7 +149,7 @@ class Builder(object):
 
         os.chdir( gridway )
 
-        exit_code = self.call( './configure' )
+        exit_code = self.call( 'chmod +x ./configure && ./configure' )
         if exit_code:
             raise Exception("Configure failed - check config.log for more detailed information")
         

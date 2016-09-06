@@ -36,6 +36,7 @@ __revision__ = "$Id$"
 
 PY2 = sys.version_info[0] == 2
 
+logging.basicConfig( format='%(message)s', level = logging.INFO , stream = sys.stdout )
 logger = logging.getLogger(__name__)
 
 def process_is_runnig( pid ):

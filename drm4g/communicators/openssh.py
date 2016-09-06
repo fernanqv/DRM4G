@@ -121,7 +121,7 @@ class Communicator(drm4g.communicators.Communicator):
 
     #internal
     def _set_dir(self, path):
-        logger.warning('_set_dir')
+        logger.info('_set_dir')
         work_directory =  re.compile( r'^~' ).sub( self.work_directory , path )
         return  work_directory
 
