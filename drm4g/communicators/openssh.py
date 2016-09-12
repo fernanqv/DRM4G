@@ -62,12 +62,15 @@ class Communicator(drm4g.communicators.Communicator):
         """
         To establish the connection to resource.
         """
+        #if exists(join(os.environ['HOME'],'.ssh/drm4g',str(self.username)+'@'+str(self.frontend)+':'+str(self.port))):
+        #    print 'conect    '+str(self.username)+'@'+str(self.frontend)+':'+str(self.port)
         if self.conn==None:
-            self.conn = SSHConnection(self.frontend, login=self.username, port=str(self.port), configfile=self.configfile, identity_file=self.private_key, ssh_agent_socket=self.agent_socket, timeout=SSH_CONNECT_TIMEOUT)
+            self.conn = SSHConnection(self.frontend, login=self.username, port=str(self.port), 
+                configfile=self.configfile, identity_file=self.private_key, 
+                ssh_agent_socket=self.agent_socket, timeout=SSH_CONNECT_TIMEOUT)
 
     def execCommand(self , command , input = None ):
         self.connect()
-        logger.info("execCommand")
         ret = self.conn.run(command)
         '''
         self.connect()
@@ -87,41 +90,63 @@ class Communicator(drm4g.communicators.Communicator):
         return ret.stdout , ret.stderr
 
     def mkDirectory(self, url):
-        self.connect()
-        logger.info('mkDirectory')
-        to_dir         = self._set_dir(urlparse(url).path)
-        stdout, stderr = self.execCommand( "mkdir -p %s" % to_dir )
-        if stderr :
-            raise ComException( "Could not create %s directory: %s" % ( to_dir , stderr ) )
+        try:
+            self.connect()
+            to_dir         = self._set_dir(urlparse(url).path)
+            stdout, stderr = self.execCommand( "mkdir -p %s" % to_dir )
+            if stderr :
+                raise ComException( "Could not create %s directory: %s" % ( to_dir , stderr ) )
+        except Exception as excep:
+            if "disabling multiplexing" in str(excep):
+                subprocess.call("rm -r ~/.ssh/drm4g/%s@%s:%s" % (self.username,self.frontend,str(self.port)),shell=True)
+                self.mkDirectory(url)
+            else:
+                #raise ComException("Error connecting to remote machine %s@%s while trying to create a folder : " % (self.username,self.frontend) + str(excep))
+                raise
 
     def rmDirectory(self, url):
-        self.connect()
-        logger.info('rmDirectory')
-        to_dir         = self._set_dir(urlparse(url).path)
-        stdout, stderr = self.execCommand( "rm -rf %s" % to_dir )
-        if stderr:
-            raise ComException( "Could not remove %s directory: %s" % ( to_dir , stderr ) )
+        try:
+            self.connect()
+            to_dir         = self._set_dir(urlparse(url).path)
+            stdout, stderr = self.execCommand( "rm -rf %s" % to_dir )
+            if stderr:
+                raise ComException( "Could not remove %s directory: %s" % ( to_dir , stderr ) )
+        except Exception as excep:
+            if "disabling multiplexing" in str(excep):
+                subprocess.call("rm -r ~/.ssh/drm4g/%s@%s:%s" % (self.username,self.frontend,str(self.port)),shell=True)
+                self.rmDirectory(url)
+            else:
+                #raise ComException("Error connecting to remote machine %s@%s while trying to remove a folder : " % (self.username,self.frontend) + str(excep))
+                raise
+
 
     def copy( self , source_url , destination_url , execution_mode = '' ) :
-        self.connect()
-        logger.info('copy')
-        with self._sem :
-            if 'file://' in source_url :
-                from_dir = urlparse( source_url ).path
-                to_dir   = self._set_dir( urlparse( destination_url ).path )
-                self.conn.scp( [from_dir] , target=to_dir )
-                if execution_mode == 'X':
-                    stdout, stderr = self.execCommand( "chmod +x %s" % to_dir )
-                    if stderr :
-                        raise ComException( "Could not change access permissions of %s file: %s" % ( to_dir , stderr ) )
+        try:
+            self.connect()
+            with self._sem :
+                if 'file://' in source_url :
+                    from_dir = urlparse( source_url ).path
+                    to_dir   = self._set_dir( urlparse( destination_url ).path )
+                    self.conn.scp( [from_dir] , target=to_dir )
+                    if execution_mode == 'X':
+                        stdout, stderr = self.execCommand( "chmod +x %s" % to_dir )
+                        if stderr :
+                            raise ComException( "Could not change access permissions of %s file: %s" % ( to_dir , stderr ) )
+                else:
+                    from_dir = self._set_dir( urlparse( source_url ).path )
+                    to_dir   = urlparse(destination_url).path
+                    self.remote_scp( [from_dir] , target=to_dir )
+        except Exception as excep:
+            if "disabling multiplexing" in str(excep):
+                subprocess.call("rm -r ~/.ssh/drm4g/%s@%s:%s" % (self.username,self.frontend,str(self.port)),shell=True)
+                self.copy(source_url , destination_url)
             else:
-                from_dir = self._set_dir( urlparse( source_url ).path )
-                to_dir   = urlparse(destination_url).path
-                self.remote_scp( [from_dir] , target=to_dir )
+                #raise ComException("Error connecting to remote machine %s@%s while trying to copy a file : " % (self.username,self.frontend) + str(excep))
+                raise
+
 
     #internal
     def _set_dir(self, path):
-        logger.info('_set_dir')
         work_directory =  re.compile( r'^~' ).sub( self.work_directory , path )
         return  work_directory
 

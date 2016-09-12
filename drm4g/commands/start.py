@@ -40,7 +40,7 @@ def run( arg ) :
         if arg[ '--dbg' ] :
             logger.setLevel(logging.DEBUG)
         Daemon().start()
-        Agent().start()
+        #Agent().start()
     except Exception as err :
         logger.error( str( err ) )
 
