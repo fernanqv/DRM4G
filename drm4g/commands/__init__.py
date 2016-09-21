@@ -332,11 +332,11 @@ class Proxy( object ):
             self.prefix = "X509_USER_PROXY=%s MYPROXY_SERVER=%s %s" % (
                                                                  join( REMOTE_VOS_DIR , self.resource[ 'myproxy_server' ] ),
                                                                  self.resource[ 'myproxy_server' ],
-                                                                 "GT_PROXY_MODE=rfc" if self.resource.features[ "lrms" ] == "fedcloud" else ""
+                                                                 "GT_PROXY_MODE=rfc" if self.resource[ "lrms" ] == "fedcloud" else ""
                                                                  )
         else :
             self.prefix = "X509_USER_PROXY=%s/${MYPROXY_SERVER} %s" % ( REMOTE_VOS_DIR,
-                                                                        "GT_PROXY_MODE=rfc" if self.resource.features[ "lrms" ] == "fedcloud" else "" )
+                                                                        "GT_PROXY_MODE=rfc" if self.resource[ "lrms" ] == "fedcloud" else "" )
 
     def create( self , proxy_lifetime ):
         logger.info("--> Creating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR )
