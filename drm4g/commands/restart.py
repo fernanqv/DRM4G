@@ -19,7 +19,7 @@
 #
 
 """
-Restart DRM4G daemon.
+Restart DRM4G's daemon.
 
 Usage:
     drm4g [ options ] restart

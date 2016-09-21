@@ -19,7 +19,7 @@
 #
 
 """
-Check DRM4G daemon and ssh-agent.
+Check DRM4G's daemon and ssh-agent.
 
 Usage:
     drm4g status [ options ]

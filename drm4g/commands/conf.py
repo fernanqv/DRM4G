@@ -19,7 +19,7 @@
 #
 
 """
-Configure DRM4G daemon, scheduler and logger parameters.
+Configure DRM4G's daemon, scheduler and logger parameters.
 
 Usage:
    drm4g conf ( daemon | sched | logger ) [ options ]

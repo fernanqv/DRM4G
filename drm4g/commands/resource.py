@@ -30,9 +30,9 @@ Usage:
 Commands:
     list                    Show resources available.
     edit                    Configure resouces.
-    check                   Check out if configured resources are accessible.
-    create
-    destroy
+    check                   Check if configured resources are accessible.
+    create                  Create new resource
+    destroy                 Delete a resource
 """
 __version__  = '2.5.0-0b2'
 __author__   = 'Carlos Blanco'

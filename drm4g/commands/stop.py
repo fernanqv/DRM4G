@@ -19,7 +19,7 @@
 #
 
 """
-Stop DRM4G daemon and ssh-agent.
+Stop DRM4G's daemon and ssh-agent.
 
 Usage:
     drm4g stop [ options ]

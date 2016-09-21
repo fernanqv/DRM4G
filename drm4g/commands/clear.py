@@ -19,7 +19,7 @@
 #
 
 """
-Start DRM4G daemon deleting all the jobs available on DRM4G.
+Restart DRM4G's daemon deleting all the jobs available on DRM4G.
 
 Usage:
     drm4g clear [ options ]

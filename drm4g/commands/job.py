@@ -22,48 +22,45 @@
 Submit, get status and history and cancel jobs.
 
 Usage:
-    drm4g job submit  [ options ] [ --ntasks <total_tasks> ] [ --dep <job_id> ... ] <template>
+    drm4g job submit  [ options ] [ --dep <job_id> ... ] <template>
     drm4g job list    [ options ] [ <job_id> ]
     drm4g job cancel  [ options ] <job_id> ...
     drm4g job log     [ options ] <job_id>
     drm4g job history [ options ] <job_id>
 
 Arguments:
-   <job_id>               Job identifier.
-   <template>             Job template.
-   <total_tasks>          Total number of tasks in the job array.
+    <job_id>               Job identifier.
+    <template>             Job template.
 
 Options:
-   --ntasks <total_tasks> Number of tasks to submit.
-   --dep=<job_id> ...     Define the job dependency list of the job.
-   --dbg                  Debug mode.
+    --dep=<job_id> ...     Define the job dependency list of the job.
+    --dbg                  Debug mode.
 
 Commands:
-   submit                 Command for submitting jobs.
-   list                   Monitor jobs previously submitted.
-   cancel                 Cancel jobs.
-   log                    Keep track of a job.
-   history                Get information about the execution history of a job.
+    submit                 Command for submitting jobs.
+    list                   Monitor jobs previously submitted.
+    cancel                 Cancel jobs.
+    log                    Keep track of a job.
+    history                Get information about the execution history of a job.
 
 Job field information:
-   JID                    Job identification.
-   DM                     Dispatch Manager state, one of:
-                                pend, hold, prol, prew, wrap, epil, canl, stop, migr, done, fail.
-   EM                     Execution Manager state: pend, susp, actv, fail, done.
-   START                  The time the job entered the system.
-   END                    The time the job reached a final state (fail or done).
-   EXEC                   Total execution time, includes suspension time in the remote queue system.
-   XFER                   Total file transfer time, includes stage-in and stage-out phases.
-   EXIT                   Job exit code.
-   TEMPLATE               Filename of the job template used for this job.
-   HOST                   Hostname where the job is being executed.
-   HID                    Host identification.
-   PROLOG                 Total prolog (file stage-in phase) time.
-   WRAPPER                Total wrapper (execution phase) time.
-   EPILOG                 Total epilog (file stage-out esphase) time.
-   MIGR                   Total migration time.
-   REASON                 The reason why the job left this host.
-   QUEUE                  Queue name.
+    JID                    Job identification.
+    DM 	                   Dispatch Manager state, one of the following: pend, hold, prol, prew, wrap, epil, canl, stop, migr, done, fail.
+    EM 	                   Execution Manager state: pend, susp, actv, fail or done.
+    START                  The time the job entered the system.
+    END                    The time the job reached a final state (fail or done).
+    EXEC                   Total execution time, includes suspension time in the remote queue system.
+    XFER                   Total file transfer time, includes stage-in and stage-out phases.
+    EXIT                   Job exit code.
+    TEMPLATE               Filename of the job template used for this job.
+    HOST                   Hostname where the job is being executed.
+    HID                    Host identification.
+    PROLOG                 Total prolog (file stage-in phase) time.
+    WRAPPER                Total wrapper (execution phase) time.
+    EPILOG                 Total epilog (file stage-out phase) time.
+    MIGR                   Total migration time.
+    REASON                 The reason why the job left this host.
+    QUEUE                  Queue name.
 """
 __version__  = '2.5.0-0b2'
 __author__   = 'Carlos Blanco'

@@ -32,11 +32,13 @@ Usage:
     --dbg                   Debug mode.
 
 Commands:
-    init                    Create an identity for a while, by default 168 hours
-                            (1 week). Use the option --lifetime to modify this
-                            value. It adds the configured private key to a ssh-agent
-                            and creates a grid proxy using myproxy server.
-                            Append the public key to the remote user's
+
+    init                    Create an identity for a certain period of time, by
+                            default 168 hours (1 week). Use the option --lifetime
+                            to modify this value. It adds the configured private
+                            key to a ssh-agent and creates a grid proxy using
+                            myproxy server.
+                            It appends the public key to the remote user's
                             ~/.ssh/authorized_keys file (creating the file, and
                             directory, if necessary). It tries to load the public
                             key obtained by appending *.pub to the name of the
@@ -46,9 +48,9 @@ Commands:
                             under ~/.globus directory (creating directory,
                             if necessary) if grid_cert variable is defined.
 
-    info                    It gives some information about the identity status.
+    info                    Get some information about the identity's status.
 
-    delete                  The identity is removed from the ssh-agent and the
+    delete                  Remove the identity from the ssh-agent and the
                             myproxy server.
 """
 __version__  = '2.5.0-0b2'

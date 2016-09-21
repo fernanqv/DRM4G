@@ -19,7 +19,7 @@
 #
 
 """
-Start DRM4G daemon and ssh-agent.
+Start DRM4G's daemon and ssh-agent.
 
 Usage:
     drm4g start [ options ]
