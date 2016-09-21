@@ -112,7 +112,7 @@ class Resource (object):
 	"""
 	It will return a string with the host available in the resource.
 	"""
-        if 'vo' in self.features and 'cream' in self.features :
+        if 'vo' in self.features and self.features[ 'lrms' ] == 'cream' :
 	    self.host_list = self._hosts_vo( )
 	    return ' '.join( self.host_list )
 	else :
@@ -123,7 +123,7 @@ class Resource (object):
 	"""
 	Obtain the features of each host
 	"""
-        if 'vo' in self.features and 'cream' in self.features :
+        if 'vo' in self.features and self.features[ 'lrms' ] == 'cream' :
 	    return self._host_vo_properties( host )
 	else :
 	    return self._host_properties( host )
