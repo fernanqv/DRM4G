@@ -31,7 +31,7 @@ import ast
 #To ensure a script runs with a minimal version requirement of the Python interpreter
 #assert sys.version_info >= (2,5)
 if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,3)):
-    exit( 'The version number of the Python has to be >= 2.6 or >= 3.3' )
+    exit( 'The version number of Python has to be >= 2.6 or >= 3.3' )
 
 try: 
     input = raw_input
