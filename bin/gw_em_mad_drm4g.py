@@ -19,7 +19,7 @@
 # permissions and limitations under the Licence.
 #
 
-__version__  = '2.5.0-beta'
+__version__  = '2.5.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

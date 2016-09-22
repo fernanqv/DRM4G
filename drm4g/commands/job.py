@@ -22,7 +22,7 @@
 Submit, get status and history and cancel jobs.
 
 Usage:
-    drm4g job submit  [ options ] [ --dep <job_id> ... ] <template>
+    drm4g job submit  [ options ] [ --ntasks <total_tasks> ] [ --dep <job_id> ... ] <template>
     drm4g job list    [ options ] [ <job_id> ]
     drm4g job cancel  [ options ] <job_id> ...
     drm4g job log     [ options ] <job_id>
@@ -31,8 +31,10 @@ Usage:
 Arguments:
     <job_id>               Job identifier.
     <template>             Job template.
+    <total_tasks>          Total number of tasks in the job array.
 
 Options:
+    --ntasks <total_tasks> Number of tasks to submit.
     --dep=<job_id> ...     Define the job dependency list of the job.
     --dbg                  Debug mode.
 
@@ -62,7 +64,7 @@ Job field information:
     REASON                 The reason why the job left this host.
     QUEUE                  Queue name.
 """
-__version__  = '2.5.0-0b2'
+__version__  = '2.5.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
