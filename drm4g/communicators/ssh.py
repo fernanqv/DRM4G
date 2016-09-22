@@ -23,9 +23,7 @@ import platform
 from os.path     import dirname, abspath, join, expanduser, exists
 
 try:
-    GW_LOCATION  = dirname( dirname ( abspath( __file__ ) ) )
-    sys.path.insert( 0, join( GW_LOCATION , 'utils' ) )
-
+    sys.path.insert( 0, join( dirname( dirname ( abspath( __file__ ) ) ), 'utils' ) )
     from paramiko.transport     import Transport
     from paramiko.agent         import Agent
     from paramiko.dsskey        import DSSKey
