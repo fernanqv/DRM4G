@@ -29,7 +29,7 @@ try :
     from Queue               import Queue
 except :
     from queue               import Queue
-from drm4g                   import REMOTE_JOBS_DIR
+from drm4g                   import REMOTE_JOBS_DIR, DRM4G_DIR
 from drm4g.utils.rsl2        import Rsl2Parser
 from drm4g.utils.list        import List
 from drm4g.core.configure    import Configuration
@@ -290,6 +290,7 @@ class GwEmMad (object):
                     self._communicators[ resname ] = self._configure.make_communicators()[resname]
                 job          = self._configure.make_resources()[ resname ]['Job']
                 communicator = self._communicators[ resname ]
+                communicator.configfile=join(DRM4G_DIR,'etc','openssh_em.conf')
                 return job, communicator
 
 

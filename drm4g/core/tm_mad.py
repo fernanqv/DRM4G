@@ -27,6 +27,7 @@ from drm4g.utils.url       import urlparse
 from drm4g.utils.dynamic   import ThreadPool
 from drm4g.core.configure  import Configuration
 from drm4g.utils.message   import Send
+from drm4g                 import DRM4G_DIR
 
 __version__  = '2.5.0-0b3'
 __author__   = 'Carlos Blanco'
@@ -232,4 +233,5 @@ class GwTmMad (object):
                     continue
                 if resname not in self._communicator:
                     self._communicator[ resname ] = self._configure.make_communicators()[resname]
+                    self._communicator[ resname ].configfile=os.path.join(DRM4G_DIR,'etc','openssh_tm.conf')
                 return self._communicator[ resname ]

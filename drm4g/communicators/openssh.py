@@ -31,7 +31,7 @@ import subprocess
 import drm4g.communicators
 import drm4g.commands
 from drm4g.commands         import Agent
-from drm4g.communicators    import ComException, logger
+from drm4g.communicators    import ComException
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT, DRM4G_DIR
 from drm4g.utils.url        import urlparse
 from openssh_wrapper import SSHConnection
@@ -50,7 +50,7 @@ class Communicator(drm4g.communicators.Communicator):
 
     def __init__(self):
         super(Communicator,self).__init__()
-        self.configfile=join(DRM4G_DIR, 'etc', 'openssh.conf')
+        self.configfile=join(DRM4G_DIR, 'etc', 'openssh_tm.conf')
         self.conn=None
         self.agent=Agent()
         self.agent.start()
@@ -143,7 +143,6 @@ class Communicator(drm4g.communicators.Communicator):
             else:
                 #raise ComException("Error connecting to remote machine %s@%s while trying to copy a file : " % (self.username,self.frontend) + str(excep))
                 raise
-
 
     #internal
     def _set_dir(self, path):

@@ -22,6 +22,7 @@ import sys
 import os
 import threading
 import logging
+from drm4g                 import DRM4G_DIR
 from drm4g.core.configure  import Configuration
 from drm4g.managers        import HostInformation
 from drm4g.utils.message   import Send
@@ -98,6 +99,7 @@ class GwImMad (object):
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
+                    self._resources[ resname ][ 'Resource' ].Communicator.configfile=os.path.join(DRM4G_DIR, 'etc', 'openssh_im.conf')
                     self._resources[ resname ][ 'Resource' ].Communicator.connect()
                     hosts = hosts + " " + self._resources[ resname ] [ 'Resource' ].hosts()
                     self._resources[ resname ][ 'Resource' ].Communicator.close()
