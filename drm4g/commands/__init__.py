@@ -164,11 +164,46 @@ class Agent( object ):
         if err :
             logger.info( err )
 
+    '''
     def copy_key( self ):
         logger.info("--> Copy '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
         out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' % ( self.private_key, self.user, self.frontend ),
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         logger.debug( out )
+    '''
+
+    def copy_key( self ):
+        logger.info("--> Copy '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
+
+        private_key_path = expanduser(self.private_key)
+        public_key_path = expanduser(self.public_key)
+
+        error_message = "Could not find the %s in %s.\n" \
+                "Be sure to first generate the authentication keys with 'ssh_keygen'" \
+                " and then specify it's path.\n" \
+                "By default '~/.ssh/id_rsa' and '~/.ssh/id_rsa.pub' will be " \
+                "considered to be your private and public keys respectively"
+
+        if not exists(private_key_path):
+            raise Exception(error_message % ('private key', private_key_path))
+
+        if not public_key_path:
+            public_key_path = private_key_path+'.pub'
+
+        if not exists(public_key_path):
+            raise Exception(error_message % ('public key', public_key_path))
+
+        answer = subprocess.Popen('cat %s | ssh %s@%s "mkdir -p ~/.ssh; cat > ~/temp_pub_key && grep -qs -f temp_pub_key ~/.ssh/authorized_keys || cat temp_pub_key >> ~/.ssh/authorized_keys && rm temp_pub_key"' % (public_key_path, self.user, self.frontend),
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+
+        #communicate closes each pipe after using them, so there's no need to clean up after it
+        out,err = answer.communicate()
+
+        if err:
+            raise Exception(err)
+
+        logger.debug( out )
+
 
     def list_key( self ):
         logger.info("--> Display '%s' key" % self.private_key )
