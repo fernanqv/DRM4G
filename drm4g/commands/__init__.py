@@ -193,17 +193,29 @@ class Agent( object ):
         if not exists(public_key_path):
             raise Exception(error_message % ('public key', public_key_path))
 
-        answer = subprocess.Popen('cat %s | ssh %s@%s "mkdir -p ~/.ssh; cat > ~/temp_pub_key && grep -qs -f temp_pub_key ~/.ssh/authorized_keys || cat temp_pub_key >> ~/.ssh/authorized_keys && rm temp_pub_key"' % (public_key_path, self.user, self.frontend),
+        answer = subprocess.Popen('cat %s | ssh %s@%s "mkdir -p ~/.ssh; cat > ~/temp_pub_key && grep -q -f temp_pub_key ~/.ssh/authorized_keys || cat temp_pub_key >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh && rm temp_pub_key"' % (public_key_path, self.user, self.frontend),
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 
         #communicate closes each pipe after using them, so there's no need to clean up after it
         out,err = answer.communicate()
 
         if err:
-            raise Exception(err)
+            if "grep" in err:
+                pass
+            else:
+                logger.info( err )
+                raise Exception(err)
 
-        logger.debug( out )
+        '''
+        #this comprobation is not really necessary since it's always going to be empty
+        #the reason is because none of the commands return anything, except for the grep, but i'm making it 
+        #run quietly with the -q option
+        if not out:
+            logger.debug( "The copy of the public key %s has been succesful" % public_key_path )
 
+        #and in the event that something were to be written, in out, it doesn't really matter
+        '''
+        logger.debug( "The copy of the public key %s has been succesful" % public_key_path )
 
     def list_key( self ):
         logger.info("--> Display '%s' key" % self.private_key )
