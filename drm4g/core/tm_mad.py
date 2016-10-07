@@ -83,7 +83,7 @@ class GwTmMad (object):
     message = Send()
 
     def __init__(self):
-        self._max_thread   = 30
+        self._max_thread   = 9
         self._min_thread   = 5
         self._lock         = threading.Lock()
         self._communicator = dict()

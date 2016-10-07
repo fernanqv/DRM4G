@@ -55,7 +55,7 @@ class Communicator(drm4g.communicators.Communicator):
         self.agent=Agent()
         self.agent.start()
         self.agent_socket=self.agent.update_agent_env()['SSH_AUTH_SOCK']
-        if not os.path.exists('~/.ssh/drm4g'):
+        if not os.path.exists(join(expanduser('~'),'.ssh/drm4g')):
             subprocess.call('mkdir -p ~/.ssh/drm4g', shell=True)
 
     def connect(self):
@@ -64,30 +64,37 @@ class Communicator(drm4g.communicators.Communicator):
         """
         #if exists(join(os.environ['HOME'],'.ssh/drm4g',str(self.username)+'@'+str(self.frontend)+':'+str(self.port))):
         #    print 'conect    '+str(self.username)+'@'+str(self.frontend)+':'+str(self.port)
+
+        if not exists(join(expanduser('~'),'.ssh/drm4g', 'im-%s@%s:%s' % (self.username, self.frontend, self.port))):
+            #self.configfile=join(DRM4G_DIR, 'etc', 'openssh_im.conf')
+            #subprocess.call('ssh -F %s -i %s -P %s -T %s@%s &' % (self.configfile, self.private_key, str(self.port), self.username, self.frontend), shell=True)
+            subprocess.call('ssh -M -S ~/.ssh/drm4g/im-%s@%s:%s -o "ControlPersist=2m" -i %s -p %s %s@%s &' % (self.username, self.frontend, str(self.port), self.private_key, str(self.port), self.username, self.frontend), shell=True)
+        if not exists(join(expanduser('~'),'.ssh/drm4g', 'tm-%s@%s:%s' % (self.username, self.frontend, self.port))):
+            #self.configfile=join(DRM4G_DIR, 'etc', 'openssh_tm.conf')
+            #subprocess.call('ssh -F %s -i %s -P %s -T %s@%s &' % (self.configfile, self.private_key, str(self.port), self.username, self.frontend), shell=True)
+            subprocess.call('ssh -M -S ~/.ssh/drm4g/tm-%s@%s:%s -o "ControlPersist=2m" -i %s -p %s %s@%s &' % (self.username, self.frontend, str(self.port), self.private_key, str(self.port), self.username, self.frontend), shell=True)
+        if not exists(join(expanduser('~'),'.ssh/drm4g', 'em-%s@%s:%s' % (self.username, self.frontend, self.port))):
+            #self.configfile=join(DRM4G_DIR, 'etc', 'openssh_em.conf')
+            #subprocess.call('ssh -F %s -i %s -P %s -T %s@%s &' % (self.configfile, self.private_key, str(self.port), self.username, self.frontend), shell=True)
+            subprocess.call('ssh -M -S ~/.ssh/drm4g/em-%s@%s:%s -o "ControlPersist=2m" -i %s -p %s %s@%s &' % (self.username, self.frontend, str(self.port), self.private_key, str(self.port), self.username, self.frontend), shell=True)
+
         if self.conn==None:
-            self.conn = SSHConnection(self.frontend, login=self.username, port=str(self.port), 
-                configfile=self.configfile, identity_file=self.private_key, 
+            self.configfile=join(DRM4G_DIR, 'etc', 'openssh_tm.conf')
+            self.conn = SSHConnection(self.frontend, login=self.username, port=str(self.port),
+                configfile=self.configfile, identity_file=self.private_key,
                 ssh_agent_socket=self.agent_socket, timeout=SSH_CONNECT_TIMEOUT)
 
     def execCommand(self , command , input = None ):
-        self.connect()
-        ret = self.conn.run(command)
-        '''
-        self.connect()
-        with self._lock :
-            channel = self._trans.open_session()
-        channel.settimeout( SSH_CONNECT_TIMEOUT )
-        channel.exec_command( command )
-        if input :
-            for line in input.split( ):
-                channel.makefile( 'wb' , -1 ).write( '%s\n' % line )
-                channel.makefile( 'wb' , -1 ).flush( )
-        stdout = ''.join( channel.makefile( 'rb' , -1 ).readlines( ) )
-        stderr = ''.join( channel.makefile_stderr( 'rb' , -1).readlines( ) )
-        if channel :
-            channel.close( )
-        '''
-        return ret.stdout , ret.stderr
+        try:
+            self.connect()
+            ret = self.conn.run(command)
+            return ret.stdout , ret.stderr
+        except Exception as excep:
+            if "disabling multiplexing" in str(excep):
+                subprocess.call("rm -r ~/.ssh/drm4g/tm-%s@%s:%s" % (self.username,self.frontend,str(self.port)),shell=True)
+                self.execCommand(command, input)
+            else:
+                raise
 
     def mkDirectory(self, url):
         try:
@@ -98,7 +105,7 @@ class Communicator(drm4g.communicators.Communicator):
                 raise ComException( "Could not create %s directory: %s" % ( to_dir , stderr ) )
         except Exception as excep:
             if "disabling multiplexing" in str(excep):
-                subprocess.call("rm -r ~/.ssh/drm4g/%s@%s:%s" % (self.username,self.frontend,str(self.port)),shell=True)
+                subprocess.call("rm -r ~/.ssh/drm4g/tm-%s@%s:%s" % (self.username,self.frontend,str(self.port)),shell=True)
                 self.mkDirectory(url)
             else:
                 #raise ComException("Error connecting to remote machine %s@%s while trying to create a folder : " % (self.username,self.frontend) + str(excep))
@@ -113,7 +120,7 @@ class Communicator(drm4g.communicators.Communicator):
                 raise ComException( "Could not remove %s directory: %s" % ( to_dir , stderr ) )
         except Exception as excep:
             if "disabling multiplexing" in str(excep):
-                subprocess.call("rm -r ~/.ssh/drm4g/%s@%s:%s" % (self.username,self.frontend,str(self.port)),shell=True)
+                subprocess.call("rm -r ~/.ssh/drm4g/tm-%s@%s:%s" % (self.username,self.frontend,str(self.port)),shell=True)
                 self.rmDirectory(url)
             else:
                 #raise ComException("Error connecting to remote machine %s@%s while trying to remove a folder : " % (self.username,self.frontend) + str(excep))
@@ -138,7 +145,7 @@ class Communicator(drm4g.communicators.Communicator):
                     self.remote_scp( [from_dir] , target=to_dir )
         except Exception as excep:
             if "disabling multiplexing" in str(excep):
-                subprocess.call("rm -r ~/.ssh/drm4g/%s@%s:%s" % (self.username,self.frontend,str(self.port)),shell=True)
+                subprocess.call("rm -r ~/.ssh/drm4g/tm-%s@%s:%s" % (self.username,self.frontend,str(self.port)),shell=True)
                 self.copy(source_url , destination_url)
             else:
                 #raise ComException("Error connecting to remote machine %s@%s while trying to copy a file : " % (self.username,self.frontend) + str(excep))
