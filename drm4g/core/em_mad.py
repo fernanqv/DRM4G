@@ -51,14 +51,14 @@ class GwEmMad (object):
     standard input, is:
     OPERATION JID HOST/JM RSL
 
-	Where:
+    Where:
 
     -OPERATION: Can be one of the following:
         -INIT: Initializes the MAD (i.e. INIT - - -).
         -SUBMIT: Submits a job(i.e. SUBMIT JID HOST/JM RSL).
         -POLL: Polls a job to obtain its state (i.e. POLL JID - -).
-	-CANCEL: Cancels a job (i.e. CANCEL JID - -).
-	-FINALIZE:Finalizes the MAD (i.e. FINALIZE - - -).
+    -CANCEL: Cancels a job (i.e. CANCEL JID - -).
+    -FINALIZE:Finalizes the MAD (i.e. FINALIZE - - -).
     -JID: Is a job identifier, chosen by GridWay.
     -HOST: If the operation is SUBMIT, it specifies the resource contact
         to submit the job. Otherwise it is ignored.
@@ -291,6 +291,7 @@ class GwEmMad (object):
                 job          = self._configure.make_resources()[ resname ]['Job']
                 communicator = self._communicators[ resname ]
                 communicator.configfile=join(DRM4G_DIR,'etc','openssh_em.conf')
+                communicator.parent_module='tm'
                 return job, communicator
 
 

@@ -234,4 +234,5 @@ class GwTmMad (object):
                 if resname not in self._communicator:
                     self._communicator[ resname ] = self._configure.make_communicators()[resname]
                     self._communicator[ resname ].configfile=os.path.join(DRM4G_DIR,'etc','openssh_tm.conf')
+                    self._communicator[ resname ].parent_module='tm'
                 return self._communicator[ resname ]

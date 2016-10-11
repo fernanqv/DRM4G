@@ -46,6 +46,7 @@ class Communicator(object):
         self.frontend       = None
         self.private_key    = None
         self.public_key     = None
+        self.configfile     = None
 
     def connect(self):
         """
