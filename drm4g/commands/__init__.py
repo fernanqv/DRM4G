@@ -27,8 +27,9 @@ import logging
 import subprocess
 import datetime
 
-from drm4g     import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
-from os.path   import expanduser, join, dirname, exists, basename, expandvars
+from drm4g             import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
+from drm4g.managers    import hdcloud_cli
+from os.path           import expanduser, join, dirname, exists, basename, expandvars
 
 __version__  = '2.5.0'
 __author__   = 'Carlos Blanco'
@@ -265,6 +266,12 @@ class Resource( object ):
 
     def __init__( self , config ):
         self.config = config
+
+    def create_vms(self):
+        hdcloud_cli.main('start')
+
+    def destroy_vms(self):
+        hdcloud_cli.main('stop')
 
     def check_frontends( self ) :
         """

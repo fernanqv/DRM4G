@@ -16,3 +16,4 @@ gridway-5.8/src/drmaa/ruby/Makefile
 Makefile
 drm4g/communicators/openssh.py
 drm4g/commands/help.py
+*.swp
