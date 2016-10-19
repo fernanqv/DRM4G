@@ -288,7 +288,7 @@ class Resource( object ):
         Edit resources file.
         """
         logger.debug( "Editing '%s' file" % DRM4G_CONFIG_FILE )
-        os.system( "%s %s" % ( os.environ.get('EDITOR', 'vi') , DRM4G_CONFIG_FILE ) )
+        os.system( "%s %s" % ( os.environ.get('EDITOR', 'nano') , DRM4G_CONFIG_FILE ) )
         self.check( )
 
     def list( self ) :
