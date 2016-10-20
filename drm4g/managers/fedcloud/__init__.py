@@ -12,8 +12,9 @@ __version__  = '0.1.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-def main(args):
-    cloud_cli.main(args)    
+#I could bring cloud_cli's contents here, and I'd avoid having to do this
+def main(args, resource_name, config):
+    cloud_cli.main(args, resource_name, config)    
 
 #the rest of manager have this
 #I think it's needed because of this line "resource_object = getattr( manager , 'Resource' ) ()" in make_resources of configure.py
