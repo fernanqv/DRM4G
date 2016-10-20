@@ -7,25 +7,64 @@ import argparse
 import threading
 from os.path import exists, join
 from drm4g          import DRM4G_DIR, REMOTE_VOS_DIR
+from drm4g.core.configure     import Configuration
 
 logger = logging.getLogger(__name__)
 
 cluster_cfg = join(DRM4G_DIR, "etc", "cluster.conf")
 cloudsetup = join(DRM4G_DIR, "etc", "cloudsetup.json")
-pickled_file = join(DRM4G_DIR, "var", "hdcloud_pickled")
+pickled_file = join(DRM4G_DIR, "var", "fedcloud_pickled")
 
 lock = threading.RLock()
 if exists( cluster_cfg ) :
-    from hdcloud import ClusterBasicData
+    from fedcloud import ClusterBasicData
     cluster_ip = os.environ.get( "IP_FILE" )
     if not cluster_ip :
-        exit( "Please define a file to store Hadoop IP nodes" )
+        exit( "Please define a file to store the VM's IP directions" )
     cluster_basic_data = ClusterBasicData( pickled_file, cluster_cfg, cloudsetup )
+
+
+_configure = Configuration()
+        
+if _configure.check_update() or not _configure.resources :
+    _configure.load()
+    errors = _configure.check()
+    if errors :
+        logger.error ( ' '.join( errors ) )
+        raise Exception ( ' '.join( errors ) )
 
 def start_instance( instance ) :
     try:
         instance.create()
-        instance.get_ip() 
+        instance.get_ip()
+        
+        resource_elem = {}
+        resource_elem["enable"] = "True"
+        resource_elem["communicator"] = "ssh"
+        resource_elem["username"] = "drm4g_admin" #read it from the file?
+        resource_elem["frontend"] = instance.ext_ip
+        resource_elem["lrms"] = "fedcloud"
+        resource_elem["vo"] = "fedcloud.egi.eu"
+        resource_elem["myproxy_server"] = "myproxy1.egee.cesnet.cz"
+        resource_elem["endpoint"] = instance.endpoint
+        resource_elem["flavour"] = instance.flavour
+        resource_elem["virtual_image"] = instance.app_name #or instance.app
+        resource_elem["instance"] = "NO IDEA"
+        resource_elem["bdii"] = "NO IDEA"
+        resource_elem["volume"] = instance.volume
+        '''
+        resource_elem[""] = ""
+        resource_elem[""] = ""
+        resource_elem[""] = ""
+        resource_elem[""] = ""
+        resource_elem[""] = ""
+        resource_elem[""] = ""
+        resource_elem[""] = ""
+        resource_elem[""] = ""
+        resource_elem[""] = ""
+        '''
+        _configure.resources[str(instance.int_ip)]=resource_elem
+
     except Exception as err :
         logger.error( "Error creating intance: %s" % str( err ) )
         try :
@@ -65,7 +104,7 @@ def _renew_voms_proxy(self):
     else :
         LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s/${MYPROXY_SERVER}" % ( REMOTE_VOS_DIR )
     cmd = "%s voms-proxy-init -ignorewarn " \
-    "-timeout 30 -valid 24:00 -q -voms %s -noregen -out %s" % (
+    "-timeout 30 -valid 24:00 -q -voms %s -noregen -out %s --rfc" % (
         LOCAL_X509_USER_PROXY ,
         vo ,
         join( REMOTE_VOS_DIR , 'x509up.%s ' ) % vo )
@@ -90,11 +129,11 @@ def main(args):
         if exists( pickled_file ) :
             os.remove( pickled_file )
         try :
-            hdpackage =  __import__( "hdcloud.%s" % cluster_basic_data.cluster_setup.infrastructure )
+            hdpackage =  __import__( "fedcloud.%s" % cluster_basic_data.cluster_setup.infrastructure )
         except Exception as err :
             raise Exception( "The infrastructure selected does not exist"  + str( err ) )
-        context = eval( "hdpackage.%s.Contextualization( cluster_basic_data )" % cluster_basic_data.cluster_setup.infrastructure )
-        context.create()
+        #context = eval( "hdpackage.%s.Contextualization( cluster_basic_data )" % cluster_basic_data.cluster_setup.infrastructure )
+        #context.create()
 
         threads = [] 
         handlers = []

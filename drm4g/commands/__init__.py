@@ -28,7 +28,7 @@ import subprocess
 import datetime
 
 from drm4g             import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
-from drm4g.managers    import hdcloud_cli
+from drm4g.managers    import fedcloud
 from os.path           import expanduser, join, dirname, exists, basename, expandvars
 
 __version__  = '2.5.0'
@@ -268,10 +268,13 @@ class Resource( object ):
         self.config = config
 
     def create_vms(self):
-        hdcloud_cli.main('start')
+        #change names to cloud
+        #self.check( )
+        fedcloud.main('start')
 
     def destroy_vms(self):
-        hdcloud_cli.main('stop')
+        #self.check( )
+        fedcloud.main('stop')
 
     def check_frontends( self ) :
         """
