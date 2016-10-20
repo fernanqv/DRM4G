@@ -5,7 +5,7 @@
       "EGI FedCloud - CESNET" : {
         "endpoint" : "https://carach5.ics.muni.cz:11443",
         "apps" : { 
-          "EGI"          : "http://occi.carach5.ics.muni.cz/occi/infrastructure/os_tpl#uuid_egi_ubuntu_server_14_04_lts_fedcloud_warg_131"
+          "Ubuntu-14.04" : "http://occi.carach5.ics.muni.cz/occi/infrastructure/os_tpl#uuid_egi_ubuntu_server_14_04_lts_fedcloud_warg_131"
         },
         "flavours" : {   
           "Small"  : "http://fedcloud.egi.eu/occi/compute/flavour/1.0#small",

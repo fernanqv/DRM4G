@@ -269,12 +269,16 @@ class Resource( object ):
 
     def create_vms(self):
         #change names to cloud
-        #self.check( )
-        fedcloud.main('start')
+        self.check( )
+        #res_config = {} #i could also add the resname and resdict in here and just have one argument for fedcloud.main()
+        for resname, resdict in self.config.resources.items():
+            if resdict[ 'lrms' ] in ['fedcloud']:
+                #fedcloud.main('start', self.config.resources[resname], resname) #in case self.config's varaibles aren't modified by cloud_cli using the other way
+                fedcloud.main('start', resname, resdict)
 
     def destroy_vms(self):
-        #self.check( )
-        fedcloud.main('stop')
+        self.check( )
+        fedcloud.main('stop', res_config)
 
     def check_frontends( self ) :
         """
