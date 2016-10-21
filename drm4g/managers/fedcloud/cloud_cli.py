@@ -90,15 +90,16 @@ def main():
 def main(args, resource_name, config):
     #if args.action == "start" :
     if args == "start" :
-        if exists( cluster_ip ) :
-            os.remove( cluster_ip )
+        #if exists( cluster_ip ) :
+        #    os.remove( cluster_ip )
         if exists( pickled_file+"_"+resource_name ) :
             os.remove( pickled_file+"_"+resource_name )
         try :
             #hdpackage =  __import__( "fedcloud.%s" % cluster_basic_data.cluster_setup.infrastructure )
-            hdpackage =  __import__( "fedcloud.%s" % config['lrms'] )
+            #hdpackage =  __import__( "fedcloud.%s" % config['lrms'] )
+            hdpackage =  __import__( "%s" % config['lrms'] )
         except Exception as err :
-            raise Exception( "The infrastructure selected does not exist"  + str( err ) )
+            raise Exception( "The infrastructure selected does not exist. "  + str( err ) )
         #context = eval( "hdpackage.%s.Contextualization( cluster_basic_data )" % cluster_basic_data.cluster_setup.infrastructure )
         #context.create()
 
@@ -107,7 +108,8 @@ def main(args, resource_name, config):
         #for number_of_th in range( cluster_basic_data.cluster_setup.nodes )  :
         for number_of_th in range( int(config['nodes']) ):
             #instance = eval( "hdpackage.%s.Instance( cluster_basic_data )" % cluster_basic_data.cluster_setup.infrastructure ) 
-            instance = eval( "hdpackage.%s.Instance( config )" % config['lrms'] )
+            #instance = eval( "hdpackage.%s.Instance( config )" % config['lrms'] )
+            instance = eval( "hdpackage.Instance( config )" )
             th = threading.Thread( target = start_instance, args = ( instance, resource_name, config, ) ) 
             th.start()
             threads.append( th )

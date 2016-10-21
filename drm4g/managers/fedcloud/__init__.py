@@ -1,6 +1,6 @@
 import logging
 import cloud_cli
-from fedcloud.utils import load_json
+from utils import load_json
 try:
     from configparser import SafeConfigParser
 except ImportError:
@@ -18,8 +18,8 @@ def main(args, resource_name, config):
 
 #the rest of manager have this
 #I think it's needed because of this line "resource_object = getattr( manager , 'Resource' ) ()" in make_resources of configure.py
-class Resource (drm4g.managers.Resource):
-    pass
+#class Resource (drm4g.managers.Resource):
+#    pass
 #NOT USING THIS ONE
 class ClusterSetup(object):
     

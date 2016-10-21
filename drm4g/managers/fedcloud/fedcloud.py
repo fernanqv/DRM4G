@@ -3,17 +3,24 @@ import time
 import uuid
 import logging
 from datetime                 import timedelta, datetime
-from os.path                  import exists, join, basename
-from fedcloud.utils           import ( load_json, generate_key, 
+from os.path                  import exists, join, basename, expanduser
+from utils           import ( load_json, generate_key, 
                                      read_key, download_proxy,
                                      is_ip_private )
-from drm4g                    import DRM4G_DIR, COMMUNICATORS, REMOTE_JOBS_DIR
+#from drm4g                    import DRM4G_DIR, COMMUNICATORS, REMOTE_JOBS_DIR, REMOTE_VOS_DIR
+from drm4g                 import ( COMMUNICATORS,
+                                    REMOTE_JOBS_DIR,
+                                    REMOTE_VOS_DIR,
+                                    DRM4G_DIR )
 from drm4g.core.configure     import Configuration
 from drm4g.utils.importlib    import import_module
+from drm4g.managers.fedcloud import CloudSetup
 
 __version__  = '0.1.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
+
+logger = logging.getLogger(__name__)
 
 cloud_setup_file = join(DRM4G_DIR, "etc", "cloudsetup.json")
 generic_cloud_cfg = """
@@ -103,13 +110,14 @@ class Instance(object):
         self.int_ip = None
         self.ext_ip = None
         self.volume = basic_data['volume']
-        self.private_key = basic_data['private_key']
-        self.context_file = join( DRM4G_DIR, var, basename(self.private_key) + ".login" )
+        self.myproxy_server = basic_data.get('myproxy_server', '')
+        self.private_key = expanduser(basic_data['private_key'])
+        self.context_file = join( DRM4G_DIR, "var", basename(self.private_key) + ".login" )
         username = basic_data['username']
         self.vo_user = basic_data.get('vo_user', 'drm4g_admin')
         pub = read_key( self.private_key + ".pub" )
 
-        if not exists self.context_file:
+        if not exists(self.context_file):
             with open( self.context_file , "w" ) as file :
                 file.writelines( generic_cloud_cfg % (self.vo_user, self.vo_user, pub) )
 
@@ -132,7 +140,7 @@ class Instance(object):
             self._renew_voms_proxy()
 
         #if I use this, I'll then have to fill com_objedt's attributes ("com_object=basic_data['username']", etc)
-        communicator = import_module(COMMUNICATORS[ 'ssh' ] ) #could this be 'local'
+        communicator = import_module(COMMUNICATORS[ 'ssh' ] ) #could this be 'local' - change to basic_data['communicator']
         self.com_object = getattr( communicator , 'Communicator' ) ()
         self.com_object.username       = username
         self.com_object.frontend       = basic_data['frontend']
@@ -150,9 +158,9 @@ class Instance(object):
         logger.debug( output )
         #if 'myproxy_server' in self.resfeatures :
         #if 'myproxy_server' in cluster_basic_data.cluster_setup.credentials:
-        if 'myproxy_server' in basic_data:
+        if self.myproxy_server:
             #LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s" % join ( REMOTE_VOS_DIR , self.resfeatures[ 'myproxy_server' ] )
-            LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s" % join ( REMOTE_VOS_DIR , basic_data[ 'myproxy_server' ] )
+            LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s" % join ( REMOTE_VOS_DIR , self.myproxy_server )
         else :
             LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s/${MYPROXY_SERVER}" % ( REMOTE_VOS_DIR )
         cmd = "%s voms-proxy-init -ignorewarn " \
