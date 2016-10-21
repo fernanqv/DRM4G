@@ -20,7 +20,7 @@ def main(args, resource_name, config):
 #I think it's needed because of this line "resource_object = getattr( manager , 'Resource' ) ()" in make_resources of configure.py
 class Resource (drm4g.managers.Resource):
     pass
-
+#NOT USING THIS ONE
 class ClusterSetup(object):
     
     def __init__(self, infrastructure, cloud, app, flavour, nodes = 1, volume = None, credentials = {} ):
@@ -39,7 +39,7 @@ class CloudSetup(object):
         self.vo       = features.get( "vo" )
         self.url      = features.get( "url" )
         self.clouds   = features.get( "clouds" ) 
-
+#NOT USING THIS ONE
 class ClusterBasicData(object):
 
     def __init__(self, pickle_file, cluster_file, setup_file ):

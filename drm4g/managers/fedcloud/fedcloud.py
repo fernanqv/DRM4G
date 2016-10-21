@@ -143,7 +143,7 @@ class Instance(object):
         #and the use the make_communicators
 
     #copied from cream.py
-    def _renew_voms_proxy(self):= 
+    def _renew_voms_proxy(self):
         #output = "The proxy 'x509up.%s' has probably expired" %  self.resfeatures[ 'vo' ]
         output = "The proxy '%s' has probably expired" %  self.proxy_file
         #logger.debug( output )
@@ -211,7 +211,7 @@ class Instance(object):
             self._renew_voms_proxy()
             out, err = self.com_object.execCommand( cmd )
 
-        if err :
+        elif err :
             raise Exception( "Error linking resource and volume: %s" % out )
         self.id_link = out.rstrip('\n')
 
@@ -220,7 +220,12 @@ class Instance(object):
                   '--resource compute --mixin %s --mixin %s --context user_data="file://$PWD/%s"' % (
                          self.endpoint, self.proxy_file, str(self.app_name).lower(), uuid.uuid4().hex, self.app, self.flavour, self.context_file )
         out, err = self.com_object.execCommand( cmd )
-        if err :
+
+        if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+            self._renew_voms_proxy()
+            out, err = self.com_object.execCommand( cmd )
+
+        elif err :
             raise Exception( "Error creating VM : %s" % out )
         self.id = out.rstrip('\n')
 
@@ -229,7 +234,12 @@ class Instance(object):
               "occi.storage.size='num(%s)' --attribute occi.core.title=%s_DRM4G_Workspace_%s" % (
                      self.endpoint, self.proxy_file, str( self.volume ), str(self.app_name).lower(), uuid.uuid4().hex )
         out, err = self.com_object.execCommand( cmd )
-        if err :
+        
+        if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+            self._renew_voms_proxy()
+            out, err = self.com_object.execCommand( cmd )
+
+        elif err :
             raise Exception( "Error creating volume : %s" % out )
         self.id_volume = out.rstrip('\n')
 
@@ -238,25 +248,45 @@ class Instance(object):
             cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action unlink --resource %s" % (
                              self.endpoint, self.proxy_file, self.id_link )
             out, err = self.com_object.execCommand( cmd )
-            if err :
+        
+            if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+                self._renew_voms_proxy()
+                out, err = self.com_object.execCommand( cmd )
+
+            elif err :
                 logging.error( "Error unlinking volume '%s': %s" % ( self.id_volume, out ) )
             time.sleep( 20 )
             cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action delete --resource %s" % (
                              self.endpoint, self.proxy_file, self.id_volume )
             out, err = self.com_object.execCommand( cmd )
-            if err :
+        
+            if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+                self._renew_voms_proxy()
+                out, err = self.com_object.execCommand( cmd )
+
+            elif err :
                 logging.error( "Error deleting volume '%s': %s" % ( self.id_volume, out ) )
         cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action delete --resource %s" % (
                              self.endpoint, self.proxy_file, self.id )
         out, err = self.com_object.execCommand( cmd )
-        if err :
+        
+        if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+            self._renew_voms_proxy()
+            out, err = self.com_object.execCommand( cmd )
+
+        elif err :
             logging.error( "Error deleting node '%s': %s" % ( self.id, out ) )
 
     def get_description(self, id):
         cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action describe --resource %s" % (
                              self.endpoint, self.proxy_file, id )
         out, err = self.com_object.execCommand( cmd )
-        if err :
+        
+        if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+            self._renew_voms_proxy()
+            out, err = self.com_object.execCommand( cmd )
+
+        elif err :
             raise Exception( "Error getting description node '%s': %s" % ( id, out ) )
         return out
 
@@ -266,7 +296,12 @@ class Instance(object):
             cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action link --resource %s --link %s" % (
                       self.endpoint, self.proxy_file, self.id, network_interface )
             out, err = self.com_object.execCommand( cmd )
-            if not out :
+        
+            if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+                self._renew_voms_proxy()
+                out, err = self.com_object.execCommand( cmd )
+
+            elif not out :
                 time.sleep( 10 )
                 out = self.get_description(self.id)
                 pattern = re.compile( "occi.networkinterface.address\s*=\s*(.*)" )
@@ -286,7 +321,12 @@ class Instance(object):
         cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action list --resource network" % (
                              self.endpoint, self.proxy_file )
         out, err = self.com_object.execCommand( cmd )
-        if err :
+        
+        if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+            self._renew_voms_proxy()
+            out, err = self.com_object.execCommand( cmd )
+
+        elif err :
             raise Exception( "Error getting network list" )
         return out.strip().split()
 

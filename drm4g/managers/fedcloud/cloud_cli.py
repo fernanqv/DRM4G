@@ -44,19 +44,19 @@ def start_instance( instance, resource_name, config ) :
         resource_elem["communicator"] = config["ssh"]
         resource_elem["username"] = instance.vo_user
         resource_elem["frontend"] = instance.ext_ip
-        resource_elem["lrms"] = config["lrms"]
+        #resource_elem["lrms"] = config["lrms"] #if its added, the stop won't work well
         resource_elem["vo"] = instance.vo
         resource_elem["myproxy_server"] = config["myproxy_server"]
         resource_elem["endpoint"] = instance.endpoint
         resource_elem["flavour"] = instance.flavour
         resource_elem["virtual_image"] = config['virtual_image'] #or instance.app (instance.app_name = config['virtual_image'] = basic_data['virtual_image'] = 'Ubuntu-14.04')
-        resource_elem["instance"] = "NO IDEA" #instance.app??
+        #resource_elem["instance"] = "NO IDEA" #instance.app??
         resource_elem["bdii"] = conf['bdii']
         resource_elem["volume"] = instance.volume
         '''
         configure.resources[str(instance.int_ip)]=resource_elem
         '''
-        conf.resources[resource_name+'::'+instance.int_ip]=resource_elem
+        conf.resources[resource_name+'::'+instance.int_ip]=resource_elem #maybe I should use the public ip
     except Exception as err :
         logger.error( "Error creating intance: %s" % str( err ) )
         try :
@@ -72,11 +72,14 @@ def start_instance( instance, resource_name, config ) :
             with open( pickled_file+"_"+resource_name, "a" ) as pf :
                 pickle.dump( instance, pf )
 
-def stop_instance( instance ):
+def stop_instance( instance, resource_name, config ):
     try :
+        private_ip = instance.int_ip #maybe I should use the public ip
         instance.delete()
     except Exception as err :
         logger.error( "Error destroying instance: %s" % str( err ) )
+    else:
+        del config[resource_name+'::'+private_ip]
 
 '''
 def main():
@@ -123,7 +126,7 @@ def main(args, resource_name, config):
             exit( 1 )
         threads = []
         for instance in instances :
-            th = threading.Thread( target = stop_instance, args = ( instance, ) )
+            th = threading.Thread( target = stop_instance, args = ( instance, resource_name, config, ) )
             th.start()
             threads.append( th )
         [ th.join() for th in threads ]

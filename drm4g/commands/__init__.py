@@ -278,7 +278,11 @@ class Resource( object ):
 
     def destroy_vms(self):
         self.check( )
-        fedcloud.main('stop', res_config)
+        for resname, resdict in self.config.resources.items():
+            #if 'vo' in resdict:
+            if resdict[ 'lrms' ] in ['fedcloud']:
+                fedcloud.main('stop', resname, resdict)
+
 
     def check_frontends( self ) :
         """
