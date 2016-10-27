@@ -268,21 +268,16 @@ class Resource( object ):
         self.config = config
 
     def create_vms(self):
-        #change names to cloud
         self.check( )
-        #res_config = {} #i could also add the resname and resdict in here and just have one argument for fedcloud.main()
         for resname, resdict in self.config.resources.items():
-            if resdict[ 'lrms' ] in ['fedcloud']:
-                #fedcloud.main('start', self.config.resources[resname], resname) #in case self.config's varaibles aren't modified by cloud_cli using the other way
+            if resdict[ 'lrms' ] in ['fedcloud']: # and resdict[ 'enable' ] == 'true':
                 fedcloud.main('start', resname, resdict)
 
     def destroy_vms(self):
         self.check( )
         for resname, resdict in self.config.resources.items():
-            #if 'vo' in resdict:
-            if resdict[ 'lrms' ] in ['fedcloud']:
+            if resdict[ 'lrms' ] in ['fedcloud']: # and resdict[ 'enable' ] == 'true':
                 fedcloud.main('stop', resname, resdict)
-
 
     def check_frontends( self ) :
         """
@@ -350,11 +345,11 @@ class Proxy( object ):
             self.prefix = "X509_USER_PROXY=%s MYPROXY_SERVER=%s %s" % (
                                                                  join( REMOTE_VOS_DIR , self.resource[ 'myproxy_server' ] ),
                                                                  self.resource[ 'myproxy_server' ],
-                                                                 "GT_PROXY_MODE=rfc" if self.resource[ "lrms" ] == "fedcloud" else ""
+                                                                 "GT_PROXY_MODE=rfc " if self.resource[ "lrms" ] == "fedcloud" else ""
                                                                  )
         else :
             self.prefix = "X509_USER_PROXY=%s/${MYPROXY_SERVER} %s" % ( REMOTE_VOS_DIR,
-                                                                        "GT_PROXY_MODE=rfc" if self.resource[ "lrms" ] == "fedcloud" else "" )
+                                                                        "GT_PROXY_MODE=rfc " if self.resource[ "lrms" ] == "fedcloud" else "" )
 
     def create( self , proxy_lifetime ):
         logger.info("--> Creating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR )

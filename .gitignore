@@ -17,3 +17,5 @@ Makefile
 drm4g/communicators/openssh.py
 drm4g/commands/help.py
 *.swp
+drm4g/managers/fedcloud/cloud_cli.py
+drm4g/conf/cluster.conf

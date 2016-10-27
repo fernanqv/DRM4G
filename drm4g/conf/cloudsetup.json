@@ -13,16 +13,12 @@
         }
       },
       "EGI FedCloud - BIFI" : {
-        "endpoint" : "http://server4-eupt.unizar.es:8787",
+        "endpoint" : "http://server4-eupt.unizar.es:8787/",
         "apps" : {
-          "EGI"          : "http://schemas.openstack.org/template/os#9558a90c-901b-4e02-bcb0-60d4a944eb00",
-          "Hadoop-2.7.1" : "http://schemas.openstack.org/template/os#86aa1a19-b7a2-4e8b-909c-d2aa3758413c"
+          "Ubuntu-14.04" : "os_tpl#d1bfa360-3f9d-47d6-8d0f-64971d293a24"
         },
         "flavours" : {
-          "Tiny"   : "http://schemas.openstack.org/template/resource_tpl#m1-tiny",
-          "Tiny1"  : "resource_tpl#m1-tiny",
-          "Small"  : "http://schemas.openstack.org/template/resource#m1-small",
-          "Medium" : "http://schemas.openstack.org/template/resource#m1-medium"
+          "Small"  : "resource_tpl#m1-small"
         }
       }
     }

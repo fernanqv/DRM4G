@@ -28,7 +28,6 @@ from drm4g                 import ( DRM4G_CONFIG_FILE,
                                     RESOURCE_MANAGERS,
                                     REMOTE_JOBS_DIR,
                                     SSH_PORT )
-
 try :
     import configparser
 except ImportError :
@@ -110,6 +109,10 @@ class Configuration(object):
                     output = "'%s' resource does not have '%s' key" % (resname, key)
                     logger.error( output )
                     errors.append( output )
+            if ( resdict[ 'lrms' ] == 'fedcloud' and not resdict.get( 'private_key' ) ) :
+                output = "'private_key' key has not been defined for '%s' resource" % resname
+                logger.error( output )
+                errors.append( output )
             if ( not 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 output = "'max_jobs_running' key is mandatory for '%s' resource" % resname
                 logger.error( output )

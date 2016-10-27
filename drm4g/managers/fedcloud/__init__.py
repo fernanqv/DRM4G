@@ -1,25 +1,114 @@
+import os
+import pickle
+import threading
 import logging
-import cloud_cli
-from utils import load_json
+#import cloud_cli
+import drm4g.managers
+import drm4g.managers.fork
+from utils                  import load_json
+from os.path                import exists, join
+from drm4g                  import DRM4G_DIR, RESOURCE_MANAGERS
+from drm4g.utils.importlib  import import_module
 try:
-    from configparser import SafeConfigParser
+    from configparser       import SafeConfigParser
 except ImportError:
-    from ConfigParser import SafeConfigParser  # ver. < 3.0
+    from ConfigParser       import SafeConfigParser  # ver. < 3.0
 
-logging.basicConfig( level = logging.DEBUG )
+logging.basicConfig( level = logging.DEBUG ) ######probably I'll have to change it to INFO
+logger = logging.getLogger(__name__)
 
 __version__  = '0.1.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-#I could bring cloud_cli's contents here, and I'd avoid having to do this
-def main(args, resource_name, config):
-    cloud_cli.main(args, resource_name, config)    
+pickled_file = join(DRM4G_DIR, "var", "fedcloud_pickled")
 
-#the rest of manager have this
-#I think it's needed because of this line "resource_object = getattr( manager , 'Resource' ) ()" in make_resources of configure.py
-#class Resource (drm4g.managers.Resource):
-#    pass
+lock = threading.RLock()
+
+def start_instance( instance, resource_name ) :
+    try:
+        instance.create()
+        instance.get_ip()
+        logger.error( "\n\ninstance.ext_ip = %s\n\n" % instance.ext_ip )
+    except Exception as err :
+        logger.error( "\nError creating instance: %s" % str( err ) )
+        logger.error( "\n"+str(err) )
+        try :
+            logger.info( "Trying to destroy the instance" )
+            instance.delete( )
+        except Exception as err :
+            logger.error( "Error destroying instance\n%s" % str( err ) )  
+    else :
+        with lock:     
+            try:
+                with open( pickled_file+"_"+resource_name, "a" ) as pf :
+                    pickle.dump( instance, pf )
+                with open( pickled_file+"_"+resource_name, "r" ) as pf :
+                    logger.error( "\n\ninstance.ext_ip = %s\n\n" % pickle.load( pf ).ext_ip)
+            except Exception as err:
+                try :
+                    logger.info( "Trying to destroy the instance\n%s" % str(err) )
+                    instance.delete( )
+                except Exception as err :
+                    logger.error( "Error destroying instance: %s" % str( err ) ) 
+        
+def stop_instance( instance ):
+    try :
+        instance.delete()
+    except Exception as err :
+        logger.error( "Error destroying instance\n%s" % str( err ) )
+        
+def main(args, resource_name, config):
+    if args == "start" :
+        #if exists( pickled_file+"_"+resource_name ) :
+        #    main('stop', resource_name, config)
+        try :
+            hdpackage = import_module( RESOURCE_MANAGERS[config['lrms']] + ".%s" % config['lrms'] )
+        except Exception as err :
+            raise Exception( "The infrastructure selected does not exist. "  + str( err ) )
+        threads = [] 
+        handlers = []
+        for number_of_th in range( int(config['nodes']) ):
+            instance = eval( "hdpackage.Instance( config )" )
+            th = threading.Thread( target = start_instance, args = ( instance, resource_name, ) ) 
+            th.start()
+            threads.append( th )
+        [ th.join() for th in threads ]
+    elif args == "stop" :
+        instances = []
+        if not exists( pickled_file+"_"+resource_name ):
+            logger.error( "There are no available VMs to be deleted for the resource %s" % resource_name )
+        else:
+            try:
+                with open( pickled_file+"_"+resource_name, "r" ) as pf :
+                    while True :
+                        try:
+                            instances.append( pickle.load( pf ) )
+                        except EOFError :
+                            break
+                if not instances :
+                    logger.error( "For shutdown --init must be absent and pickle file must be present" )
+                    exit( 1 )
+                threads = []
+                for instance in instances :
+                    th = threading.Thread( target = stop_instance, args = ( instance, ) )
+                    th.start()
+                    threads.append( th )
+                [ th.join() for th in threads ]
+            except Exception:
+                raise
+            else:
+                os.remove( pickled_file+"_"+resource_name )
+    else : 
+        logger.error( "Invalid option" )
+        exit( 1 )
+
+class Resource (drm4g.managers.Resource):
+    pass
+
+class Job (drm4g.managers.fork.Job):
+    pass
+
 #NOT USING THIS ONE
 class ClusterSetup(object):
     

@@ -78,9 +78,9 @@ def run( arg ) :
             raise Exception( "'%s' is not a configured resource." % ( arg['<resource_name>'] ) )
         lrms         = config.resources.get( arg['<resource_name>'] )[ 'lrms' ]
         communicator = config.resources.get( arg['<resource_name>'] )[ 'communicator' ]
-        if lrms != 'cream' and communicator != 'ssh' :
+        if lrms != 'cream' and lrms != 'fedcloud' and communicator != 'ssh' :
             raise Exception( "'%s' does not have an identity to configure." % ( arg['<resource_name>'] ) )
-        if lrms == 'cream' :
+        if lrms == 'cream' or lrms == 'fedcloud' :
             proxy = Proxy( config.resources[ arg['<resource_name>'] ] ,
                            config.make_communicators()[ arg['<resource_name>'] ]
                            )
@@ -91,18 +91,18 @@ def run( arg ) :
                 agent.start( )
                 agent.add_key( arg[ '--lifetime' ] )
                 agent.copy_key( )
-            if lrms == 'cream' :
+            if lrms == 'cream' or lrms == 'fedcloud' :
                 proxy.configure( )
                 proxy.create( arg[ '--lifetime' ] )
         elif arg[ 'delete' ] :
-            if lrms == 'cream' :
+            if lrms == 'cream' or lrms == 'fedcloud' :
                 proxy.destroy( )
             if communicator == 'ssh' :
                 agent.delete_key( )
         else :
             if communicator == 'ssh' :
                 agent.list_key( )
-            if lrms == 'cream' :
+            if lrms == 'cream' or lrms == 'fedcloud' :
                 proxy.check( )
     except Exception as err :
         logger.error( str( err ) )
