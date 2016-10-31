@@ -173,14 +173,14 @@ class Agent( object ):
     '''
 
     def copy_key( self ):
-        logger.info("--> Copy '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
+        logger.info("--> Copying '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
 
         private_key_path = expanduser(self.private_key)
         public_key_path = expanduser(self.public_key)
 
         error_message = "Could not find the %s in %s.\n" \
                 "Be sure to first generate the authentication keys with 'ssh_keygen'" \
-                " and then specify it's path.\n" \
+                " and then specify it's path when defining your resource.\n" \
                 "By default '~/.ssh/id_rsa' and '~/.ssh/id_rsa.pub' will be " \
                 "considered to be your private and public keys respectively"
 
@@ -193,8 +193,11 @@ class Agent( object ):
         if not exists(public_key_path):
             raise Exception(error_message % ('public key', public_key_path))
 
-        answer = subprocess.Popen('cat %s | ssh %s@%s "mkdir -p ~/.ssh; cat > ~/temp_pub_key && grep -q -f temp_pub_key ~/.ssh/authorized_keys || cat temp_pub_key >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh && rm temp_pub_key"' % (public_key_path, self.user, self.frontend),
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        cmd='cat %s | ssh %s@%s "mkdir -p ~/.ssh;' \
+        ' cat > ~/temp_pub_key && grep -q -f temp_pub_key ~/.ssh/authorized_keys || cat temp_pub_key >> ~/.ssh/authorized_keys &&' \
+        ' chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh && rm temp_pub_key"' % (public_key_path, self.user, self.frontend)
+
+        answer = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         #communicate closes each pipe after using them, so there's no need to clean up after it
         out,err = answer.communicate()
@@ -205,16 +208,6 @@ class Agent( object ):
             else:
                 logger.info( err )
                 raise Exception(err)
-
-        '''
-        #this comprobation is not really necessary since it's always going to be empty
-        #the reason is because none of the commands return anything, except for the grep, but i'm making it 
-        #run quietly with the -q option
-        if not out:
-            logger.debug( "The copy of the public key %s has been succesful" % public_key_path )
-
-        #and in the event that something were to be written, in out, it doesn't really matter
-        '''
         logger.debug( "The copy of the public key %s has been succesful" % public_key_path )
 
     def list_key( self ):
