@@ -44,7 +44,7 @@ from drm4g.communicators    import ComException, logger
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT
 from drm4g.utils.url        import urlparse
 
-__version__  = '2.5.0-0b3'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

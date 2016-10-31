@@ -36,7 +36,7 @@ from drm4g.core.configure    import Configuration
 from drm4g.utils.dynamic     import ThreadPool
 from drm4g.utils.message     import Send
 
-__version__  = '2.5.0-0b3'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -291,7 +291,7 @@ class GwEmMad (object):
                 job          = self._configure.make_resources()[ resname ]['Job']
                 communicator = self._communicators[ resname ]
                 communicator.configfile=join(DRM4G_DIR,'etc','openssh_em.conf')
-                communicator.parent_module='tm'
+                communicator.parent_module='em'
                 return job, communicator
 
 

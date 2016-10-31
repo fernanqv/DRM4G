@@ -30,7 +30,7 @@ import datetime
 from drm4g     import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
 from os.path   import expanduser, join, dirname, exists, basename, expandvars
 
-__version__  = '2.5.0-0b3'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

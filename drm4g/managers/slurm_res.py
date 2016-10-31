@@ -24,7 +24,7 @@ import xml.dom.minidom
 import re
 import time
 
-__version__  = '2.5.0-0b3'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

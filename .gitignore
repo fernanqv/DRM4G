@@ -16,3 +16,7 @@ gridway-5.8/src/drmaa/ruby/Makefile
 Makefile
 drm4g/commands/help.py
 *.swp
+drm4g/conf/cluster.conf
+drm4g/managers/fedcloud/
+config.status
+libtool

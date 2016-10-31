@@ -29,7 +29,7 @@ from drm4g.core.configure  import Configuration
 from drm4g.utils.message   import Send
 from drm4g                 import DRM4G_DIR
 
-__version__  = '2.5.0-0b3'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

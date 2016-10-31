@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -20,7 +20,7 @@
 
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
-__version__  = '2.5.0-0b3'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -69,7 +69,8 @@ SFTP_CONNECTIONS    = 3
 PROXY_THRESHOLD     = 178 # Proxy threshold in hours.
 
 COMMUNICATORS = {
-                 "ssh"   : "drm4g.communicators.openssh",
+                 "ssh"   : "drm4g.communicators.ssh",
+                 "op_ssh"   : "drm4g.communicators.openssh",
                  "local" : "drm4g.communicators.local",
                  }
 RESOURCE_MANAGERS = {
