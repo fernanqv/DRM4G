@@ -45,4 +45,4 @@ def run( arg ) :
     else :
         conf_file = DRM4G_SCHED
     logger.debug( "Editing '%s' file" % conf_file )
-    os.system( "%s %s" % ( os.environ.get('EDITOR', 'vi') , conf_file ) )
+    os.system( "%s %s" % ( os.environ.get('EDITOR', 'nano') , conf_file ) )
