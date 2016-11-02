@@ -20,3 +20,5 @@ drm4g/conf/cluster.conf
 drm4g/managers/fedcloud/
 config.status
 libtool
+drm4g/conf/openssh*
+

@@ -86,7 +86,7 @@ class GwEmMad (object):
 
     def __init__(self):
         self._callback_interval = 30 #seconds
-        self._max_thread        = 9
+        self._max_thread        = 10
         self._min_thread        = 3
         self._job_list          = List()
         self._configure         = None
@@ -290,8 +290,9 @@ class GwEmMad (object):
                     self._communicators[ resname ] = self._configure.make_communicators()[resname]
                 job          = self._configure.make_resources()[ resname ]['Job']
                 communicator = self._communicators[ resname ]
-                communicator.configfile=join(DRM4G_DIR,'etc','openssh_em.conf')
-                communicator.parent_module='em'
+                if redict[ 'communicator' ] == 'op_ssh' :
+                    communicator.configfile=join(DRM4G_DIR,'etc','openssh_em.conf')
+                    communicator.parent_module='em'
                 return job, communicator
 
 

@@ -83,7 +83,7 @@ class GwTmMad (object):
     message = Send()
 
     def __init__(self):
-        self._max_thread   = 9
+        self._max_thread   = 30
         self._min_thread   = 5
         self._lock         = threading.Lock()
         self._communicator = dict()
@@ -233,6 +233,7 @@ class GwTmMad (object):
                     continue
                 if resname not in self._communicator:
                     self._communicator[ resname ] = self._configure.make_communicators()[resname]
-                    self._communicator[ resname ].configfile=os.path.join(DRM4G_DIR,'etc','openssh_tm.conf')
-                    self._communicator[ resname ].parent_module='tm'
+                    if redict[ 'communicator' ] == 'op_ssh' :
+                        self._communicator[ resname ].configfile=os.path.join(DRM4G_DIR,'etc','openssh_tm.conf')
+                        self._communicator[ resname ].parent_module='tm'
                 return self._communicator[ resname ]
