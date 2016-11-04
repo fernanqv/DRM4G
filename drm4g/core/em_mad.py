@@ -290,7 +290,7 @@ class GwEmMad (object):
                     self._communicators[ resname ] = self._configure.make_communicators()[resname]
                 job          = self._configure.make_resources()[ resname ]['Job']
                 communicator = self._communicators[ resname ]
-                if redict[ 'communicator' ] == 'op_ssh' :
+                if resdict[ 'communicator' ] == 'op_ssh' :
                     communicator.configfile=join(DRM4G_DIR,'etc','openssh_em.conf')
                     communicator.parent_module='em'
                 return job, communicator

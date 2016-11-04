@@ -58,7 +58,6 @@ class Communicator(drm4g.communicators.Communicator):
         super(Communicator,self).__init__()
         self.conn=None
         self.parent_module=None
-        self.configfile=None
         with self._lock:
             self.agent=Agent()
             self.agent.start()
@@ -79,14 +78,15 @@ class Communicator(drm4g.communicators.Communicator):
         for manager in ['im', 'tm', 'em']:
             with io.FileIO(join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % manager), 'w') as file:
                 file.write(conf_text % (Communicator.socket_dir, manager, '%r@%h:%p'))
-        if not exists(Communicator.socket_dir):
-            logger.debug("\nCreating socket directory in "+Communicator.socket_dir+".\n")
-            try:
-                if not exists(Communicator.socket_dir):
-                    os.makedirs(Communicator.socket_dir)
-            except OSError:
-                pass
-            #subprocess.call('mkdir -p %s' % (Communicator.socket_dir), shell=True)
+        try:
+            if not exists(Communicator.socket_dir):
+                logger.debug("\nCreating socket directory in "+Communicator.socket_dir+".\n")
+                os.makedirs(Communicator.socket_dir)
+        except OSError as excep:
+            if "File exists" in str(excep):
+                logger.warning("The directory %s already exists" % Communicator.socket_dir)
+            else:
+                logger.error("An unexpected exception ocurred:\n"+str(excep))
         logger.debug("\nEnding createConfFiles function from "+self.parent_module+"\n")
 
     def connect(self):
@@ -100,7 +100,7 @@ class Communicator(drm4g.communicators.Communicator):
 
             if not self.configfile:
                 logger.debug("\nself.configfile is not defined\n")
-                logger.warning("\n\nOpenSHH configuration file's path is not defined\n\n")
+                logger.error("\n\nOpenSHH configuration file's path is not defined\n\n")
 
             if not exists(self.configfile):
                 self.createConfFiles()
@@ -117,7 +117,7 @@ class Communicator(drm4g.communicators.Communicator):
                     out,err = pipe.communicate()
 
                     if err:
-                        if "too long for Unix domain socket" in str(err):
+                        if "too long for Unix domain socket" in str(err) or "ControlPath too long" in str(err):
                             logger.debug("\nSocket path was too long for Unix domain socket.\nCreating sockets in ~/.ssh/dmr4g.\nException captured in first_ssh.\n")
                             Communicator.socket_dir = join(expanduser('~'), '.ssh/drm4g')
                             self.createConfFiles()
@@ -126,6 +126,10 @@ class Communicator(drm4g.communicators.Communicator):
                         elif "disabling multiplexing" in str(err):
                             logger.debug("\nMux isn't working from the connect function. Eliminating "+self.parent_module+"'s socket file.\n This shouldn't be appearing since it's supposedly the first time that it's being created.\n")
                             self._delete_socket()
+                            first_ssh()
+                        elif "bind: No such file or directory" in str(err) or "cannot bind to path" in str(err):
+                            logger.debug("\nThe connection through the socket %s-%s@%s:%s wasn't established since the socket directory %s hasn't been created yet.\n" % (self.parent_module ,self.username, self.frontend, self.port, Communicator.socket_dir))
+                            self.createConfFiles()
                             first_ssh()
                         else:
                             logger.debug("\nUnexpected error occured while running first_ssh:\n"+str(err))
@@ -242,8 +246,16 @@ class Communicator(drm4g.communicators.Communicator):
                 logger.warning(str(excep))
 
     def _delete_socket(self):
-        #subprocess.call("rm -r %s/%s-%s@%s:%s" % (Communicator.socket_dir,self.parent_module,self.username,self.frontend,str(self.port)),shell=True)
-        os.remove("rm -r %s/%s-%s@%s:%s" % (Communicator.socket_dir,self.parent_module,self.username,self.frontend,str(self.port)))
+        try:
+            logger.debug("\nRunning _delete_socket function from "+self.parent_module+"\n")
+            os.remove("%s/%s-%s@%s:%s" % (Communicator.socket_dir,self.parent_module,self.username,self.frontend,str(self.port)))
+            logger.debug("\nEnding _delete_socket function from "+self.parent_module+"\n")
+        except OSError as excep:
+            if "No such file or directory" in str(excep):
+                logger.debug("The socket %s does not exist" % (Communicator.socket_dir,self.parent_module,self.username,self.frontend,str(self.port)))
+                logger.debug("\nEnding _delete_socket function from "+self.parent_module+"\n")
+            else:
+                logger.warning(str(excep))
 
     #internal
     def _set_dir(self, path):
