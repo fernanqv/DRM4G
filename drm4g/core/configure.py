@@ -20,6 +20,7 @@
 
 import os
 import os.path
+import pickle
 import sys
 import logging
 from drm4g.utils.importlib import import_module
@@ -27,7 +28,7 @@ from drm4g                 import ( DRM4G_CONFIG_FILE,
                                     COMMUNICATORS,
                                     RESOURCE_MANAGERS,
                                     REMOTE_JOBS_DIR,
-                                    SSH_PORT )
+                                    SSH_PORT, DRM4G_DIR )
 try :
     import configparser
 except ImportError :
@@ -38,6 +39,7 @@ __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 logger = logging.getLogger(__name__)
+pickled_file = os.path.join(DRM4G_DIR, "var", "fedcloud_pickled")
 
 class ConfigureException(Exception):
     pass
@@ -86,6 +88,39 @@ class Configuration(object):
                     name                   = sectname
                     logger.debug(" Reading configuration for resource '%s'." % name )
                     self.resources[ name ] = dict( parser.items( sectname ) )
+
+                    if self.resources[ name ][ 'lrms' ] == "fedcloud" :
+                        if os.path.exists( os.path.join( pickled_file+"_"+name ) ):
+                            try:
+                                instances = []
+                                with open( pickled_file+"_"+name, "r" ) as pf :
+                                    while True :
+                                        try:
+                                            instances.append( pickle.load( pf ) )
+                                        except EOFError :
+                                            break
+                                if not instances :
+                                    pass
+                                if instances:
+                                    for instance in instances :
+                                        insdict = dict()
+                                        insdict['username'] = instance.vo_user
+                                        insdict['frontend'] = instance.ext_ip
+                                        if instance.comm == 'local':
+                                            # later on, add a new parameter with which the user can choose between ssh or op_ssh
+                                            insdict['communicator'] = 'ssh'
+                                        else:
+                                            insdict['communicator'] = instance.comm
+                                        insdict['private_key'] = instance.private_key
+                                        insdict['enable'] = 'true'
+                                        insdict['lrms'] = 'fork'
+                                        insdict['max_jobs_running'] = instance.max_jobs_running
+                                        self.resources[ name+"_"+instance.ext_ip ] = insdict
+                                        logger.debug("Resource '%s' defined by: %s.", 
+                                                name+"_"+instance.ext_ip, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name+"_"+instance.ext_ip].items())]))
+                            except Exception as err :
+                                raise Exception( "Could not create resource for the VMs of %s:\n%s" % (name,str(err)) )
+
                     logger.debug("Resource '%s' defined by: %s.",
                              sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name].items())]))
             except Exception as err:
@@ -205,6 +240,8 @@ class Configuration(object):
                 com_object.public_key     = resdict.get( 'public_key' )
                 com_object.work_directory = resdict.get( 'scratch', REMOTE_JOBS_DIR )
                 communicators[name]       = com_object
+                logger.debug("\n\nCommunicator of resource '%s' is defined by: %s.\n\n", 
+                    name, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(communicators[name].__dict__.items())]))
             except Exception as err:
                 output = "Failed creating communicator for resource '%s' : %s" % ( name, str( err ) )
                 logger.warning( output , exc_info=1 )

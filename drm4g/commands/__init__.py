@@ -29,6 +29,7 @@ import datetime
 
 from drm4g             import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
 from drm4g.managers    import fedcloud
+from drm4g.core.im_mad import GwImMad
 from os.path           import expanduser, join, dirname, exists, basename, expandvars
 
 __version__  = '2.5.0'
@@ -268,16 +269,33 @@ class Resource( object ):
         self.config = config
 
     def create_vms(self):
+        """
+        Creates a virtual machine with the information given though the resources.conf and cloudsetup.json files
+        """
         self.check( )
         for resname, resdict in self.config.resources.items():
-            if resdict[ 'lrms' ] in ['fedcloud']: # and resdict[ 'enable' ] == 'true':
+            if resdict[ 'lrms' ] in ['fedcloud']:
                 fedcloud.main('start', resname, resdict)
+        #self.update_hosts()
 
     def destroy_vms(self):
+        """
+        Destroy running virtual machines
+        """
         self.check( )
         for resname, resdict in self.config.resources.items():
-            if resdict[ 'lrms' ] in ['fedcloud']: # and resdict[ 'enable' ] == 'true':
+            if resdict[ 'lrms' ] in ['fedcloud']:
                 fedcloud.main('stop', resname, resdict)
+        #self.update_hosts()
+
+    def update_hosts(self):
+        """
+        Forces the host list to be updated
+        """
+        try:
+            GwImMad().do_DISCOVER("discover - - -")
+        except Exception as err:
+            logger.error( "Could not update hosts:\n%s" % str(err))
 
     def check_frontends( self ) :
         """
@@ -311,6 +329,11 @@ class Resource( object ):
         self.check( )
         logger.info( "\033[1;4m%-20.20s%-20.20s\033[0m" % ('RESOURCE', 'STATE' ) )
         for resname, resdict in sorted( self.config.resources.items() ) :
+            # To ignore VMs created by the DRM4G, since they should appear as hosts, not resources
+            if '_' in resname:
+                first_half, _ = resname.rsplit('_',1)
+                if first_half in self.config.resources.keys() :
+                    continue
             if resdict[ 'enable' ] == 'true' :
                 state = 'enabled'
             else :

@@ -96,6 +96,8 @@ class GwImMad (object):
             for resname in sorted( self._resources.keys() ) :
                 if  self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
                     continue
+                if  'cloud' in self._config.resources[ resname ].keys():
+                    continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
                     self._resources[ resname ][ 'Resource' ].Communicator.connect()
