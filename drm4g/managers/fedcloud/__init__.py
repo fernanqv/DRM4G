@@ -32,12 +32,12 @@ def start_instance( instance, resource_name ) :
             with open( pickled_file+"_"+resource_name, "a" ) as pf :
                 pickle.dump( instance, pf )
         except Exception as err :
-            logger.error( "\nError creating instance: %s" % str( err ) )
+            logger.error( "Error creating instance: %s" % str( err ) )
             try :
-                logger.debug( "\nTrying to destroy the instance" )
+                logger.debug( "Trying to destroy the instance" )
                 instance.delete( )
             except Exception as err :
-                logger.error( "\nError destroying instance\n%s" % str( err ) )  
+                logger.error( "Error destroying instance\n%s" % str( err ) )  
     
 def stop_instance( instance ):
     try :

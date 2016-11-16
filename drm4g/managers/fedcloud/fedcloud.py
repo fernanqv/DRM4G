@@ -116,7 +116,7 @@ class Instance(object):
     def _renew_voms_proxy(self, cont=0):
         try:
             logger.debug( "Running fedcloud's _renew_voms_proxy function" )
-            logger.debug( "_renew_voms_proxy count = %s" % str(cont 
+            logger.debug( "_renew_voms_proxy count = %s" % str( cont ) )
             logger.error( "The proxy '%s' has probably expired" %  self.proxy_file )
 
             cmd = "rm %s" % self.proxy_file
