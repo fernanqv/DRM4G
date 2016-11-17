@@ -1,8 +1,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -20,7 +20,7 @@
 
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
-__version__  = '2.5.0'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -30,7 +30,7 @@ import logging.config
 from os.path import dirname , join , expandvars , exists , abspath
 
 if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,3)):
-    exit( 'The version number of Python has to be > = 2.6 and < 3.3' )
+    exit( 'The version number of Python has to be > = 2.6 and < = 3.3' )
 
 ########################################
 # Default values used in DRM4G package.#
@@ -62,15 +62,16 @@ REMOTE_VOS_DIR  = "~/.drm4g/security"
 
 # ssh communicator
 SSH_PORT            = 22
-SSH_CONNECT_TIMEOUT = 30 # seconds
+SSH_CONNECT_TIMEOUT = 60 # seconds
 SFTP_CONNECTIONS    = 3
 
 # Proxy
 PROXY_THRESHOLD     = 178 # Proxy threshold in hours.
 
 COMMUNICATORS = {
-                 "ssh"   : "drm4g.communicators.ssh",
-                 "local" : "drm4g.communicators.local",
+                 "ssh"    : "drm4g.communicators.ssh",
+                 "op_ssh" : "drm4g.communicators.openssh",
+                 "local"  : "drm4g.communicators.local",
                  }
 RESOURCE_MANAGERS = {
                      "pbs"          : "drm4g.managers.pbs",

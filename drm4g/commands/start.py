@@ -27,7 +27,7 @@ Usage:
 Options:
    --dbg    Debug mode.
 """
-__version__  = '2.5.0'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -40,7 +40,7 @@ def run( arg ) :
         if arg[ '--dbg' ] :
             logger.setLevel(logging.DEBUG)
         Daemon().start()
-        Agent().start()
+        #Agent().start()
     except Exception as err :
         logger.error( str( err ) )
 

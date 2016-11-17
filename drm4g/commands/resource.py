@@ -34,7 +34,7 @@ Commands:
     create                  Create new resource
     destroy                 Delete a resource
 """
-__version__  = '2.5.0'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -48,20 +48,22 @@ def run( arg ) :
         logger.setLevel(logging.DEBUG)
     try :
         config = Configuration()
-        daemon = Daemon()
-        if not daemon.is_alive() :
-           raise Exception( 'DRM4G is stopped.' )
         resource = Resource( config )
         if arg[ 'edit' ] :
             resource.edit()
-        elif arg[ 'check' ] :
-            resource.check_frontends( )
-        elif arg[ 'create' ] :
-            resource.create_vms()
-        elif arg[ 'destroy' ] :
-            resource.destroy_vms( )
         else :
-            resource.list()
+            daemon = Daemon()
+            if not daemon.is_alive() :
+               raise Exception( 'DRM4G is stopped.' )
+            
+            elif arg[ 'check' ] :
+                resource.check_frontends( )
+            elif arg[ 'create' ] :
+                resource.create_vms()
+            elif arg[ 'destroy' ] :
+                resource.destroy_vms( )
+            else :
+                resource.list()
     except Exception as err :
         logger.error( str( err ) )
 

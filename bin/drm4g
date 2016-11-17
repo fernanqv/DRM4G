@@ -2,8 +2,8 @@
 #
 # Copyright 2016 Universidad de Cantabria
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -20,8 +20,8 @@
 #
 
 """
-DRM4G is an open platform, which is based on GridWay Metascheduler, to define, 
-submit, and manage computational jobs. For additional information, 
+DRM4G is an open platform, which is based on GridWay Metascheduler, to define,
+submit, and manage computational jobs. For additional information,
 see http://meteo.unican.es/trac/wiki/DRM4G .
 
 Usage: drm4g [ --version ] [ --help ]
@@ -31,7 +31,7 @@ Options:
     -h --help  Show help.
     --version  Show version.
     --dbg      Debug mode.
-    
+
 drm4g commands are:
    start       Start DRM4G daemon and ssh-agent
    stop        Stop DRM4G daemon and ssh-agent
@@ -43,22 +43,61 @@ drm4g commands are:
    id          Manage reosurce identities
    host        Print information about the hosts
    job         Submit, get status and history and cancel jobs
- 
+
 See 'drm4g <command> --help' for more information on a specific command.
 """
-__version__  = '2.5.0'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 from docopt import docopt
+from difflib import get_close_matches
+
+commands_list = [
+    'start',
+    'host',
+    'id',
+    'job',
+    'resource',
+    'restart',
+    'status',
+    'stop',
+    'clear',
+    'conf'
+]
+
+def get_similar_commands(name):
+    """Command name auto-correct."""
+
+    name = name.lower()
+
+    close_commands = get_close_matches(name, commands_list)
+
+    if close_commands:
+        return close_commands[0]
+    else:
+        return False
+
+class CommandError(Exception):
+    """Raised when there is an error in command-line arguments"""
+    pass
 
 if __name__ == "__main__":
     args = docopt( __doc__, version = __version__ , options_first = True )
     argv = [ args[ '<command>' ] ] + args[ '<args>' ]
-    if args['<command>'] in "start stop status restart clear conf id resource host job".split() :
+    #if args['<command>'] in "start stop status restart clear conf id resource host job".split() :
+    if args['<command>'] in commands_list :
         command = getattr( __import__( "drm4g.commands.%s" %  args['<command>'] ).commands, args['<command>'] )
         arg = docopt( command.__doc__ , argv = argv )
         command.run( arg )
     else:
-        exit( "%r is not a drm4g command. See 'drm4g --help'." % args[ '<command>' ] )
+        cmd_name=args['<command>']
+        guess = get_similar_commands(cmd_name)
 
+        msg = "%r is not a drm4g command" % cmd_name
+        if guess:
+            msg = msg+" - maybe you meant '%s'" % guess
+        else:
+            msg = msg+" - see 'drm4g --help'"
+
+        exit(msg)

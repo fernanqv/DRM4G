@@ -21,7 +21,7 @@
 import logging
 from drm4g import REMOTE_JOBS_DIR, SSH_PORT
 
-__version__  = '2.5.0'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -46,6 +46,7 @@ class Communicator(object):
         self.frontend       = None
         self.private_key    = None
         self.public_key     = None
+        self.configfile     = None
 
     def connect(self):
         """
@@ -112,7 +113,3 @@ class Communicator(object):
         @rtype: boolean
         """
         pass
-
-
-
-

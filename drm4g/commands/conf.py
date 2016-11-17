@@ -27,7 +27,7 @@ Usage:
 Options:
    --dbg    Debug mode
 """
-__version__  = '2.5.0'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -45,4 +45,4 @@ def run( arg ) :
     else :
         conf_file = DRM4G_SCHED
     logger.debug( "Editing '%s' file" % conf_file )
-    os.system( "%s %s" % ( os.environ.get('EDITOR', 'vi') , conf_file ) )
+    os.system( "%s %s" % ( os.environ.get('EDITOR', 'nano') , conf_file ) )

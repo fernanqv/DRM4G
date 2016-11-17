@@ -32,7 +32,7 @@ from drm4g.managers    import fedcloud
 from drm4g.core.im_mad import GwImMad
 from os.path           import expanduser, join, dirname, exists, basename, expandvars
 
-__version__  = '2.5.0'
+__version__  = '2.5.1'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
@@ -166,11 +166,51 @@ class Agent( object ):
         if err :
             logger.info( err )
 
+    '''
     def copy_key( self ):
         logger.info("--> Copy '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
         out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' % ( self.private_key, self.user, self.frontend ),
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         logger.debug( out )
+    '''
+
+    def copy_key( self ):
+        logger.info("--> Copying '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
+
+        private_key_path = expanduser(self.private_key)
+        public_key_path = expanduser(self.public_key)
+
+        error_message = "Could not find the %s in %s.\n" \
+                "Be sure to first generate the authentication keys with 'ssh_keygen'" \
+                " and then specify it's path when defining your resource.\n" \
+                "By default '~/.ssh/id_rsa' and '~/.ssh/id_rsa.pub' will be " \
+                "considered to be your private and public keys respectively"
+
+        if not exists(private_key_path):
+            raise Exception(error_message % ('private key', private_key_path))
+
+        if not public_key_path:
+            public_key_path = private_key_path+'.pub'
+
+        if not exists(public_key_path):
+            raise Exception(error_message % ('public key', public_key_path))
+
+        cmd='cat %s | ssh %s@%s "mkdir -p ~/.ssh;' \
+        ' cat > ~/temp_pub_key && grep -q -f temp_pub_key ~/.ssh/authorized_keys || cat temp_pub_key >> ~/.ssh/authorized_keys &&' \
+        ' chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh && rm temp_pub_key"' % (public_key_path, self.user, self.frontend)
+
+        answer = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        #communicate closes each pipe after using them, so there's no need to clean up after it
+        out,err = answer.communicate()
+
+        if err:
+            if "grep" in err:
+                pass
+            else:
+                logger.info( err )
+                raise Exception(err)
+        logger.debug( "The copy of the public key %s has been succesful" % public_key_path )
 
     def list_key( self ):
         logger.info("--> Display '%s' key" % self.private_key )
@@ -319,7 +359,7 @@ class Resource( object ):
         Edit resources file.
         """
         logger.debug( "Editing '%s' file" % DRM4G_CONFIG_FILE )
-        os.system( "%s %s" % ( os.environ.get('EDITOR', 'vi') , DRM4G_CONFIG_FILE ) )
+        os.system( "%s %s" % ( os.environ.get('EDITOR', 'nano') , DRM4G_CONFIG_FILE ) )
         self.check( )
 
     def list( self ) :

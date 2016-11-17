@@ -6,7 +6,7 @@ drm4g_autocomplete.sh bash script adds tab-completion features to drm4g.
 Checking 
 ========
 
-To check the DRM4G completion without any instalation:
+To check the DRM4G completion without any installation:
 
      source /path/to/extras/drm4g_autocomplete.sh
 
