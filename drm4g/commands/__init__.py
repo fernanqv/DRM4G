@@ -22,6 +22,7 @@ import cmd
 import os
 import sys
 import re
+import time
 import getpass
 import logging
 import subprocess
@@ -287,6 +288,8 @@ class Daemon( object ):
         if out :
             logger.info( out )
         if not err and not out :
+            while self.is_alive() :
+                time.sleep(1)
             logger.info( "  OK" )
 
     def clear( self ):
@@ -328,15 +331,15 @@ class Resource( object ):
         for resname, resdict in self.config.resources.items():
             if resdict[ 'lrms' ] in ['fedcloud']:
                 fedcloud.manage_instances('stop', resname, resdict)
-            self.update_hosts(resname)
+        self.update_hosts(resname)
 
     def update_hosts(self, resname):
         """
         Forces the host list to be updated
         """
         try:
-            #GwImMad().do_DISCOVER("discover - - -", False)            
-            GwImMad().do_MONITOR("monitor 2 %s -" % resname)#, False)            
+            GwImMad().do_DISCOVER("discover - - -", False)            
+            #GwImMad().do_MONITOR("monitor 2 %s -" % resname)#, False)            
         except Exception as err:
             logger.error( "Could not update hosts:\n%s" % str(err))
 
@@ -353,7 +356,9 @@ class Resource( object ):
             if 'username' in resdict.keys():
                 logger.info("        username:      "+str(resdict['username']))
             logger.info("        frontend:      "+str(resdict['frontend']))
-
+            if 'private_key' in resdict.keys():
+                logger.info("        private key:   "+str(resdict['private_key']))
+            logger.info("        lrms:          "+str(resdict['lrms']))
 
     def check_frontends( self ) :
         """

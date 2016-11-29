@@ -142,6 +142,11 @@ class Configuration(object):
         for resname, resdict in list(self.resources.items()) :
             logger.debug("Checking resource '%s' ..." % resname)
             reslist = list(resdict.keys( ))
+            for key in reslist:
+                if key not in ['enable', 'communicator', 'username', 'frontend', 'private_key', 'public_key', 'scratch', 'lrms', 'queue', 'max_jobs_in_queue', 'max_jobs_running', 'parallel_env', 'project', 'vo', 'host_filter', 'bdii', 'myproxy_server', 'vm_user', 'vm_communicator', 'cloud', 'flavour', 'virtual_image', 'nodes', 'volume'] :
+                    output = "'%s' resource has an invalid key : '%s'" % (resname, key)
+                    logger.error( output )
+                    errors.append( output )
             for key in [ 'enable' , 'frontend' , 'lrms' , 'communicator' ] :
                 if not key in reslist :
                     output = "'%s' resource does not have '%s' key" % (resname, key)
@@ -224,6 +229,9 @@ class Configuration(object):
                     errors.append( output )
                 else :
                     self.resources[resname]['grid_cert'] = abs_grid_cert
+        if errors:
+            output="Modify your configuration file before trying again."
+            logger.error( output )
         return errors
 
     def make_communicators(self):
