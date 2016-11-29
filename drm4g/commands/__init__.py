@@ -38,6 +38,7 @@ __revision__ = "$Id$"
 
 PY2 = sys.version_info[0] == 2
 
+logging.basicConfig( format='%(message)s', level = logging.INFO , stream = sys.stdout )
 logger = logging.getLogger(__name__)
 
 def process_is_runnig( pid ):
@@ -103,7 +104,7 @@ class Agent( object ):
             match = re.search( 'SSH_AUTH_SOCK=(?P<SSH_AUTH_SOCK>[^;]+);.*' \
                            + 'SSH_AGENT_PID=(?P<SSH_AGENT_PID>\d+);', out, re.DOTALL)
             if match :
-                logger.info( "  OK" )
+                logger.debug( "  OK" )
                 self.agent_env = match.groupdict()
                 logger.debug( '  Agent pid: %s'  % self.agent_env['SSH_AGENT_PID'])
             else:
@@ -111,11 +112,11 @@ class Agent( object ):
                 raise Exception( '  Cannot determine agent data from output: %s' % out )
             with open( self.agent_file , 'w') as f:
                 f.write( self.agent_env['SSH_AGENT_PID'] + '\n' + self.agent_env['SSH_AUTH_SOCK'] )
-        logger.info('Starting ssh-agent ...')
+        logger.debug('Starting ssh-agent ...')
         if not self.is_alive() :
             _start()
         elif self.is_alive() :
-            logger.warn( "  WARNING: ssh-agent is already running" )
+            logger.debug( "  ssh-agent is already running" )
         elif not self.agent_env:
             self.get_agent_env()
 
@@ -316,7 +317,7 @@ class Resource( object ):
         self.check( )
         for resname, resdict in self.config.resources.items():
             if resdict[ 'lrms' ] in ['fedcloud']:
-                fedcloud.main('start', resname, resdict)
+                fedcloud.manage_instances('start', resname, resdict)
         #self.update_hosts()
 
     def destroy_vms(self):
@@ -326,15 +327,16 @@ class Resource( object ):
         self.check( )
         for resname, resdict in self.config.resources.items():
             if resdict[ 'lrms' ] in ['fedcloud']:
-                fedcloud.main('stop', resname, resdict)
-        #self.update_hosts()
+                fedcloud.manage_instances('stop', resname, resdict)
+            self.update_hosts(resname)
 
-    def update_hosts(self):
+    def update_hosts(self, resname):
         """
         Forces the host list to be updated
         """
         try:
-            GwImMad().do_DISCOVER("discover - - -")
+            #GwImMad().do_DISCOVER("discover - - -", False)            
+            GwImMad().do_MONITOR("monitor 2 %s -" % resname)#, False)            
         except Exception as err:
             logger.error( "Could not update hosts:\n%s" % str(err))
 
@@ -344,13 +346,13 @@ class Resource( object ):
         For example, when creating cloud virtual machines
         """
         self.check( )
-        print "Resources:"
+        logger.info("Resources:")
         for resname, resdict in self.config.resources.items():
-            print "    "+str(resname)
-            print "        communicator:  "+str(resdict['communicator'])
+            logger.info("    "+str(resname))
+            logger.info("        communicator:  "+str(resdict['communicator']))
             if 'username' in resdict.keys():
-                print "        username:      "+str(resdict['username'])
-            print "        frontend:      "+str(resdict['frontend'])
+                logger.info("        username:      "+str(resdict['username']))
+            logger.info("        frontend:      "+str(resdict['frontend']))
 
 
     def check_frontends( self ) :

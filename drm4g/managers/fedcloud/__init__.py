@@ -26,7 +26,7 @@ pickled_file = join(DRM4G_DIR, "var", "fedcloud_pickled")
 
 lock = threading.RLock()
 
-def pickle_pop(inst, resource_name):
+def pickle_remove(inst, resource_name):
     with lock:
         try:
             instances=[]
@@ -37,15 +37,16 @@ def pickle_pop(inst, resource_name):
                     except EOFError :
                         break
             if not instances :
-                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % pickled_file+"_"+resource_name )
+                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % (pickled_file+"_"+resource_name) )
                 exit( 1 )
-
-            #os.remove( pickled_file+"_"+resource_name )
 
             with open( pickled_file+"_"+resource_name, "w" ) as pf :
                 for instance in instances:
                     if instance.ext_ip != inst.ext_ip :
                         pickle.dump( instance, pf )
+
+            if len(instances) == 1 :
+                os.remove( pickled_file+"_"+resource_name )
         except Exception as err:
             logger.error( "Error deleting instance from pickled file %s\n%s" % (pickled_file+"_"+resource_name, str( err )) ) 
 
@@ -67,11 +68,11 @@ def start_instance( instance, resource_name ) :
 def stop_instance( instance, resource_name ):
     try :
         instance.delete()
-        pickle_pop(instance, resource_name)
+        pickle_remove(instance, resource_name)
     except Exception as err :
         logger.error( "Error destroying instance\n%s" % str( err ) )
 
-def main(args, resource_name, config):
+def manage_instances(args, resource_name, config):
     if args == "start" :
         try :
             hdpackage = import_module( RESOURCE_MANAGERS[config['lrms']] + ".%s" % config['lrms'] )
@@ -104,7 +105,7 @@ def main(args, resource_name, config):
                     except EOFError :
                         break
             if not instances :
-                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % pickled_file+"_"+resource_name )
+                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % (pickled_file+"_"+resource_name) )
                 exit( 1 )
             threads = []
             for instance in instances :

@@ -50,7 +50,7 @@ __revision__ = "$Id$"
 
 #logging.basicConfig()
 #paramiko.util.log_to_file(join( DRM4G_DIR , 'var' , 'paramiko.log'))
-logging.raiseExceptions=False
+#logging.raiseExceptions=False
 
 class Communicator(drm4g.communicators.Communicator):
     """
@@ -133,7 +133,7 @@ class Communicator(drm4g.communicators.Communicator):
                         except Exception as  err :
                             logger.warning( "Error connecting '%s': %s" % ( self.frontend , str ( err ) ) )
                 if not self._trans :
-                    output = "Authentication failed to '%s'. Try to execute `ssh -vvv -p %d %s@%s` and see the response." % (
+                    output = "Authentication failed for '%s'. Try to execute `ssh -vvv -p %d %s@%s` and see the response." % (
                               self.frontend , self.port, self.username, self.frontend )
                     raise ComException( output  )
         except ComException:

@@ -229,6 +229,7 @@ class GwTmMad (object):
                     self.logger.error ( ' '.join( errors ) )
                     raise Exception ( ' '.join( errors ) )
             '''
+            #This needs to be optimized
             self._configure.load()
             errors = self._configure.check()
             if errors :

@@ -78,7 +78,7 @@ class GwImMad (object):
         self.message.stdout(out)
         self.logger.debug(out)
 
-    def do_DISCOVER(self, args):
+    def do_DISCOVER(self, args, output=True):
         """
         Discovers hosts (i.e. DISCOVER - - -)
         @param args : arguments of operation
@@ -112,10 +112,11 @@ class GwImMad (object):
             out = 'DISCOVER %s SUCCESS %s' % ( HID , hosts  )
         except Exception as err :
             out = 'DISCOVER - FAILURE %s' % str( err )
-        self.message.stdout( out )
+        if output:
+            self.message.stdout( out )
         self.logger.debug( out , exc_info=1 )
 
-    def do_MONITOR(self, args):
+    def do_MONITOR(self, args, output=True):
         """
         Monitors a host (i.e. MONITOR HID HOST -)
         @param args : arguments of operation
@@ -134,8 +135,11 @@ class GwImMad (object):
             assert info, "Host '%s' is not available" % HOST
             out = 'MONITOR %s SUCCESS %s' % (HID , info )
         except Exception as err :
-            out = 'MONITOR %s FAILURE %s' % (HID , str( err ) )
-        self.message.stdout(out)
+            host_info = HostInformation()
+            host_info.info()
+            out = 'MONITOR %s FAILURE %s' % (HID , host_info.info() )
+        if output:
+            self.message.stdout(out)
         self.logger.debug( out , exc_info=1 )
 
     def do_FINALIZE(self, args):
