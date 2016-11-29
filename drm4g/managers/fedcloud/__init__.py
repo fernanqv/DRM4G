@@ -1,4 +1,5 @@
 import os
+import time
 import pickle
 import threading
 import logging
@@ -6,14 +7,15 @@ import drm4g.managers
 import drm4g.managers.fork
 from utils                  import load_json
 from os.path                import exists, join
-from drm4g                  import DRM4G_DIR, RESOURCE_MANAGERS
+from drm4g                  import DRM4G_DIR, DRM4G_LOGGER, RESOURCE_MANAGERS
 from drm4g.utils.importlib  import import_module
 try:
     from configparser       import SafeConfigParser
 except ImportError:
     from ConfigParser       import SafeConfigParser  # ver. < 3.0
 
-logging.basicConfig( level = logging.DEBUG ) ######probably I'll have to change it to INFO
+#logging.basicConfig( level = logging.DEBUG ) # probably change it to INFO
+#logging.config.fileConfig(DRM4G_LOGGER, {"DRM4G_DIR": DRM4G_DIR})
 logger = logging.getLogger(__name__)
 
 __version__  = '0.1.0'
@@ -23,6 +25,29 @@ __revision__ = "$Id$"
 pickled_file = join(DRM4G_DIR, "var", "fedcloud_pickled")
 
 lock = threading.RLock()
+
+def pickle_pop(inst, resource_name):
+    with lock:
+        try:
+            instances=[]
+            with open( pickled_file+"_"+resource_name, "r" ) as pf :
+                while True :
+                    try:
+                        instances.append( pickle.load( pf ) )
+                    except EOFError :
+                        break
+            if not instances :
+                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % pickled_file+"_"+resource_name )
+                exit( 1 )
+
+            #os.remove( pickled_file+"_"+resource_name )
+
+            with open( pickled_file+"_"+resource_name, "w" ) as pf :
+                for instance in instances:
+                    if instance.ext_ip != inst.ext_ip :
+                        pickle.dump( instance, pf )
+        except Exception as err:
+            logger.error( "Error deleting instance from pickled file %s\n%s" % (pickled_file+"_"+resource_name, str( err )) ) 
 
 def start_instance( instance, resource_name ) :
     with lock:
@@ -39,9 +64,10 @@ def start_instance( instance, resource_name ) :
             except Exception as err :
                 logger.error( "Error destroying instance\n%s" % str( err ) )  
     
-def stop_instance( instance ):
+def stop_instance( instance, resource_name ):
     try :
         instance.delete()
+        pickle_pop(instance, resource_name)
     except Exception as err :
         logger.error( "Error destroying instance\n%s" % str( err ) )
 
@@ -58,6 +84,9 @@ def main(args, resource_name, config):
         except KeyError as err:
             logger.error( "You have defined an incorrect value in your configuration file 'resources.conf':" )
             raise
+        except Exception as err:
+            logger.error( "An error ocurred while trying to create a VM instance." )
+            raise
         for number_of_th in range( int(config['nodes']) ):
             th = threading.Thread( target = start_instance, args = ( instance, resource_name, ) ) 
             th.start()
@@ -68,26 +97,21 @@ def main(args, resource_name, config):
         if not exists( pickled_file+"_"+resource_name ):
             logger.error( "There are no available VMs to be deleted for the resource %s" % resource_name )
         else:
-            try:
-                with open( pickled_file+"_"+resource_name, "r" ) as pf :
-                    while True :
-                        try:
-                            instances.append( pickle.load( pf ) )
-                        except EOFError :
-                            break
-                if not instances :
-                    logger.error( "There are no VMs defined in '%s' or the file is not well formed." % pickled_file+"_"+resource_name )
-                    exit( 1 )
-                threads = []
-                for instance in instances :
-                    th = threading.Thread( target = stop_instance, args = ( instance, ) )
-                    th.start()
-                    threads.append( th )
-                [ th.join() for th in threads ]
-            except Exception:
-                raise
-            else:
-                os.remove( pickled_file+"_"+resource_name )
+            with open( pickled_file+"_"+resource_name, "r" ) as pf :
+                while True :
+                    try:
+                        instances.append( pickle.load( pf ) )
+                    except EOFError :
+                        break
+            if not instances :
+                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % pickled_file+"_"+resource_name )
+                exit( 1 )
+            threads = []
+            for instance in instances :
+                th = threading.Thread( target = stop_instance, args = ( instance, resource_name ) )
+                th.start()
+                threads.append( th )
+            [ th.join() for th in threads ]
     else : 
         logger.error( "Invalid option" )
         exit( 1 )

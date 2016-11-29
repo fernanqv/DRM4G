@@ -12,6 +12,7 @@ from drm4g                      import ( COMMUNICATORS,
                                          REMOTE_JOBS_DIR,
                                          REMOTE_VOS_DIR,
                                          DRM4G_DIR )
+#from drm4g.managers.fedcloud    import logger
 
 __version__  = '0.1.0'
 __author__   = 'Carlos Blanco'
@@ -45,9 +46,12 @@ class Instance(object):
         self.myproxy_server = basic_data.get('myproxy_server', '')
         self.private_key = expanduser(basic_data['private_key'])
         self.context_file = basename(self.private_key)+".login"
-        self.vo_user = basic_data.get('vo_user', 'drm4g_admin')
+        self.vm_user = basic_data.get('vm_user', 'drm4g_admin')
         self.comm = basic_data[ 'communicator' ]
         self.max_jobs_running = basic_data['max_jobs_running']
+        self.vm_comm = basic_data.get('vm_communicator', self.comm)
+        if self.vm_comm == 'local':
+            self.vm_comm = 'ssh'
         pub = read_key( self.private_key + ".pub" )
 
         try :
@@ -55,7 +59,7 @@ class Instance(object):
             for name, features in load_json( cloud_setup_file ).items() :
                 cloud_setup[ name ] =  CloudSetup(name, features)
         except Exception as err :
-            logging.error( "Error reading the cloud setup file: " + str( err ) )
+            logger.error( "Error reading the cloud setup file: " + str( err ) )
 
         infra_cfg = cloud_setup[ basic_data['lrms'] ]
         cloud_cfg = infra_cfg.clouds[ basic_data['cloud'] ]
@@ -72,6 +76,9 @@ class Instance(object):
         com_obj.private_key    = self.private_key
         com_obj.public_key     = basic_data.get('public_key', self.private_key+'.pub')
         com_obj.work_directory = basic_data.get('scratch', REMOTE_JOBS_DIR)
+        if self.comm == "op_ssh":
+            com_obj.parent_module = "fedcloud"
+            com_obj.configfile = join(DRM4G_DIR,'etc','openssh_fedcloud.conf')
         self.com_object=com_obj
 
         self.proxy_file = join( REMOTE_VOS_DIR , "x509up.%s" ) % self.vo
@@ -79,7 +86,7 @@ class Instance(object):
         cmd = "ls %s" % self.context_file #to check if it exists
         out,err = self.com_object.execCommand( cmd )
         if err:
-            content= generic_cloud_cfg % (self.vo_user, self.vo_user, pub)
+            content= generic_cloud_cfg % (self.vm_user, self.vm_user, pub)
             cmd = "echo '%s' > %s" % (content, self.context_file)
             out,err=self.com_object.execCommand( cmd )
             if err:
@@ -105,6 +112,9 @@ class Instance(object):
         com_obj.private_key    = self.private_key
         com_obj.public_key     = self.data.get('public_key', self.private_key+'.pub')
         com_obj.work_directory = self.data.get('scratch', REMOTE_JOBS_DIR)
+        if self.comm == "op_ssh":
+            com_obj.parent_module = "fedcloud"
+            com_obj.configfile = join(DRM4G_DIR,'etc','openssh_fedcloud.conf')
         self.com_object=com_obj
 
     def _exec_remote_cmd(self, command):
@@ -118,6 +128,7 @@ class Instance(object):
             logger.debug( "Running fedcloud's _renew_voms_proxy function" )
             logger.debug( "_renew_voms_proxy count = %s" % str( cont ) )
             logger.error( "The proxy '%s' has probably expired" %  self.proxy_file )
+            logger.info( "Renewing proxy certificate" )
 
             cmd = "rm %s" % self.proxy_file
             self.com_object.execCommand( cmd )
@@ -137,8 +148,9 @@ class Instance(object):
             if err:
                 logger.debug( "Ending  fedcloud's _renew_voms_proxy function with an error" )
                 logger.error( "Error renewing the proxy(%s): %s" % ( cmd , err ) )
-                raise Exception("Most probably the proxy certificate hasn't been created. Be sure to run the the following command before trying again:" \
+                raise Exception("Probably the proxy certificate hasn't been created. Be sure to run the the following command before trying again:" \
                     "\n    \033[93mdrm4g id <resource_name> init\033[0m")
+            logger.info( "The proxy certificate will be operational for 24 hours" )
             logger.debug( "Ending  fedcloud's _renew_voms_proxy" )
         except socket.timeout:
             logger.debug("Captured a socket.time exception")
@@ -153,6 +165,7 @@ class Instance(object):
             self._create_volume()
             self._wait_storage()
         self._create_resource()
+        logger.info( "Waiting until resource is active" )
         self._wait_compute()
         if self.volume :
             self._create_link()
@@ -193,6 +206,7 @@ class Instance(object):
 
     def _create_link(self):
         logger.debug( "Running fedcloud's _create_link function" )
+        logger.info( "Linking volume %s to resource %s" % (self.id_volume, self.id) )
         cmd = 'occi --endpoint %s --auth x509 --user-cred %s --voms --action link ' \
               '--resource %s -j %s' % (self.endpoint, self.proxy_file, self.id, self.id_volume )
         out, err = self._exec_remote_cmd( cmd )
@@ -211,6 +225,7 @@ class Instance(object):
     def _create_resource(self):
         try:
             logger.debug( "Running fedcloud's _create_resource function" )
+            logger.info( "Creating new resource" )
             cmd = 'occi --endpoint %s --auth x509 --user-cred %s --voms --action create --attribute occi.core.title="%s_DRM4G_VM_%s" ' \
                       '--resource compute --mixin %s --mixin %s --context user_data="file://$PWD/%s"' % (
                              self.endpoint, self.proxy_file, str(self.app_name).lower(), uuid.uuid4().hex, self.app, self.flavour, self.context_file )
@@ -226,6 +241,7 @@ class Instance(object):
                 logger.error( "Ending  fedcloud's  _create_resource function with an error" )
                 raise Exception( "Error creating VM : %s" % out )
             self.id = out.rstrip('\n')
+            logger.info( "    Resource '%s' has been successfully created" % self.id )
             logger.debug( "Ending  fedcloud's  _create_resource function" )
         except Exception as err:
             ####################################al probarlo con el IFCA por ejemplo, aparece el mensaje, pero no aparece ninguna exception############################################
@@ -233,10 +249,11 @@ class Instance(object):
             haciendolo manualmente aparece este error:
                 F, [2016-11-10T15:25:31.150145 #7314] FATAL -- : [rOCCI-cli] Connection to "https://cloud.ifca.es:8787/occi1.1" timed out!
             '''
-            logger.error("It's probably a timeout error:\n"+str(err))
+            raise Exception("Most likely the issue is being caused by a timeout error:\n"+str(err))
 
     def _create_volume(self):
         logger.debug( "Running fedcloud's _create_volume function" )
+        logger.info( "Creating volume for resource %s" % self.id )
         cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action create --resource storage --attribute " \
               "occi.storage.size='num(%s)' --attribute occi.core.title=%s_DRM4G_Workspace_%s" % (
                      self.endpoint, self.proxy_file, str( self.volume ), str(self.app_name).lower(), uuid.uuid4().hex )
@@ -255,6 +272,7 @@ class Instance(object):
 
     def delete(self):
         logger.debug( "Running fedcloud's  delete function" )
+        logger.info( "Deleting resource %s" % self.id )
         if self.volume :
             #cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action unlink --resource /compute/%s" % (
             #                 self.endpoint, self.proxy_file, basename(self.id_link) )
@@ -270,7 +288,7 @@ class Instance(object):
                 out, err = self._exec_remote_cmd( cmd )
                 self.log_output("delete (unlink) 2", out, err)
             elif err :
-                logging.error( "Error unlinking volume '%s': %s" % ( self.id_volume, out ) )
+                logger.error( "Error unlinking volume '%s': %s" % ( self.id_volume, out ) )
             time.sleep( 20 )
             cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action delete --resource %s" % (
                              self.endpoint, self.proxy_file, self.id_volume )
@@ -283,7 +301,7 @@ class Instance(object):
                 out, err = self._exec_remote_cmd( cmd )
                 self.log_output("delete (volume) 2", out, err)
             elif err :
-                logging.error( "Error deleting volume '%s': %s" % ( self.id_volume, out ) )
+                logger.error( "Error deleting volume '%s': %s" % ( self.id_volume, out ) )
         cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action delete --resource %s" % (
                              self.endpoint, self.proxy_file, self.id )
         out, err = self._exec_remote_cmd( cmd )        
@@ -295,7 +313,8 @@ class Instance(object):
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("delete (resource) 2", out, err)
         elif err :
-            logging.error( "Error deleting node '%s': %s" % ( self.id, out ) )
+            logger.error( "Error deleting node '%s': %s" % ( self.id, out ) )
+        logger.info( "    Resource '%s' has been successfully deleted" % self.id )
         logger.debug( "Ending  fedcloud's delete function" )
 
     def get_description(self, id):
@@ -425,6 +444,7 @@ class Instance(object):
 
     def get_ip(self):
         logger.debug( "Running fedcloud's  get_ip function" )
+        logger.info( "Getting resource's IP direction" )
         out = self.get_description(self.id)
         pattern = re.compile( "occi.networkinterface.address\s*=\s*(.*)" )
         mo = pattern.findall( out )
@@ -437,6 +457,7 @@ class Instance(object):
             else :
                 self.get_public_ip()
             #logger.error ("\n\n\nIdentification: "+str(self.id)+"\n    ext_ip: "+str(self.ext_ip)+"\n\n\n")
+            logger.info( "    Public IP: %s" % self.ext_ip )
         else :
             logger.error( "Ending  fedcloud's get_ip function with an error" )
             raise Exception( "Error getting IP" )

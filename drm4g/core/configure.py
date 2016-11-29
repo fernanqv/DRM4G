@@ -104,13 +104,16 @@ class Configuration(object):
                                 if instances:
                                     for instance in instances :
                                         insdict = dict()
-                                        insdict['username'] = instance.vo_user
+                                        insdict['username'] = instance.vm_user
                                         insdict['frontend'] = instance.ext_ip
+                                        insdict['communicator'] = instance.vm_comm
+                                        '''
                                         if instance.comm == 'local':
                                             # later on, add a new parameter with which the user can choose between ssh or op_ssh
                                             insdict['communicator'] = 'ssh'
                                         else:
                                             insdict['communicator'] = instance.comm
+                                        '''
                                         insdict['private_key'] = instance.private_key
                                         insdict['enable'] = 'true'
                                         insdict['lrms'] = 'fork'
@@ -179,15 +182,15 @@ class Configuration(object):
                 output = "'%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
                 logger.error( output )
                 errors.append( output )
-            if resdict[ 'communicator' ] == 'ssh' and 'username' not in resdict :
-                output = "'username' key is mandatory for 'ssh' communicator, '%s' resource" % resname
+            if resdict[ 'communicator' ] != 'local' and 'username' not in resdict :
+                output = "'username' key is mandatory for '%s' communicator, '%s' resource" % (resdict[ 'communicator' ], resname)
                 logger.error( output )
                 errors.append( output )
             if resdict[ 'lrms' ] not in RESOURCE_MANAGERS :
                 output = "'%s' has a wrong lrms: '%s'" % ( resname , resdict[ 'lrms' ] )
                 logger.error( output )
                 errors.append( output )
-            if resdict[ 'communicator' ] == 'ssh' :
+            if resdict[ 'communicator' ] != 'local' :
                 private_key = resdict.get( 'private_key' )
                 if not private_key :
                     output = "'private_key' key is mandatory for '%s' resource" % resname
@@ -240,7 +243,7 @@ class Configuration(object):
                 com_object.public_key     = resdict.get( 'public_key' )
                 com_object.work_directory = resdict.get( 'scratch', REMOTE_JOBS_DIR )
                 communicators[name]       = com_object
-                logger.debug("\n\nCommunicator of resource '%s' is defined by: %s.\n\n", 
+                logger.debug("Communicator of resource '%s' is defined by: %s.", 
                     name, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(communicators[name].__dict__.items())]))
             except Exception as err:
                 output = "Failed creating communicator for resource '%s' : %s" % ( name, str( err ) )

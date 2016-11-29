@@ -198,9 +198,10 @@ class Agent( object ):
         cmd='cat %s | ssh %s@%s "mkdir -p ~/.ssh;' \
         ' cat > ~/temp_pub_key && grep -q -f temp_pub_key ~/.ssh/authorized_keys || cat temp_pub_key >> ~/.ssh/authorized_keys &&' \
         ' chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh && rm temp_pub_key"' % (public_key_path, self.user, self.frontend)
+        #' chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 644 ~/.globus/usercert.pem && chmod 400 ~/.globus/userkey.pem && rm temp_pub_key"' % (public_key_path, self.user, self.frontend)
 
-        answer = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+        #answer = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) #does not work
+        answer = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         #communicate closes each pipe after using them, so there's no need to clean up after it
         out,err = answer.communicate()
 
@@ -210,7 +211,7 @@ class Agent( object ):
             else:
                 logger.info( err )
                 raise Exception(err)
-        logger.debug( "The copy of the public key %s has been succesful" % public_key_path )
+        logger.info( "The copy of the public key %s has been succesful" % public_key_path )
 
     def list_key( self ):
         logger.info("--> Display '%s' key" % self.private_key )
@@ -310,7 +311,7 @@ class Resource( object ):
 
     def create_vms(self):
         """
-        Creates a virtual machine with the information given though the resources.conf and cloudsetup.json files
+        Creates a virtual machine with the information given through the resources.conf and cloudsetup.json files
         """
         self.check( )
         for resname, resdict in self.config.resources.items():
@@ -337,6 +338,21 @@ class Resource( object ):
         except Exception as err:
             logger.error( "Could not update hosts:\n%s" % str(err))
 
+    def list_resources(self):
+        """
+        List all resources, the ones configured by the user and the ones configured internally
+        For example, when creating cloud virtual machines
+        """
+        self.check( )
+        print "Resources:"
+        for resname, resdict in self.config.resources.items():
+            print "    "+str(resname)
+            print "        communicator:  "+str(resdict['communicator'])
+            if 'username' in resdict.keys():
+                print "        username:      "+str(resdict['username'])
+            print "        frontend:      "+str(resdict['frontend'])
+
+
     def check_frontends( self ) :
         """
         Check if the frontend of a given resource is reachable.
@@ -347,6 +363,10 @@ class Resource( object ):
             if resdict[ 'enable' ] == 'true' :
                 communicator = communicators.get( resname )
                 try :
+                    if resdict[ 'communicator' ] == 'op_ssh' :
+                        #it will use im's socket instead of creating a new one
+                        communicator.parent_module = 'im'
+                        communicator.configfile = join(DRM4G_DIR, 'etc', 'openssh_im.conf')
                     communicator.connect()
                     logger.info( "Resource '%s' :" % ( resname ) )
                     logger.info( "--> The front-end '%s' is accessible\n" % communicator.frontend )
@@ -474,7 +494,7 @@ class Proxy( object ):
             if err :
                 raise Exception( err )
             logger.info( "--> Modifying usercert.pem permissions ... " )
-            cmd = "chmod 600 $HOME/.globus/usercert.pem"
+            cmd = "chmod 644 $HOME/.globus/usercert.pem"
             logger.debug( "Executing command ... " + cmd )
             out, err = self.communicator.execCommand( cmd )
             if err :

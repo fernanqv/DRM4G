@@ -58,10 +58,10 @@ __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
 import logging
-from os.path              import expanduser, exists, expandvars
+from os.path              import expanduser, exists, expandvars, join
 from drm4g.core.configure import Configuration
 from drm4g.commands       import exec_cmd, Daemon, Agent, Proxy
-from drm4g                import logger
+from drm4g                import logger, DRM4G_DIR
 
 def run( arg ) :
     if arg[ '--dbg' ] :
@@ -78,16 +78,28 @@ def run( arg ) :
             raise Exception( "'%s' is not a configured resource." % ( arg['<resource_name>'] ) )
         lrms         = config.resources.get( arg['<resource_name>'] )[ 'lrms' ]
         communicator = config.resources.get( arg['<resource_name>'] )[ 'communicator' ]
-        if lrms != 'cream' and lrms != 'fedcloud' and communicator != 'ssh' :
+        if lrms != 'cream' and lrms != 'fedcloud' and ( communicator != 'ssh' or communicator != 'op_ssh' ) :
             raise Exception( "'%s' does not have an identity to configure." % ( arg['<resource_name>'] ) )
         if lrms == 'cream' or lrms == 'fedcloud' :
+            comm = config.make_communicators()[ arg['<resource_name>'] ]
+            if communicator == 'op_ssh' :
+                #comm.parent_module = 'id'
+                #comm.configfile = join(DRM4G_DIR,'etc','openssh_id.conf')
+                #paramiko will always be used to renew the grid certificate
+                communicator = 'ssh'
+                config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'ssh'
+                comm = config.make_communicators()[ arg['<resource_name>'] ]
+                #~logger.debug( "COMMUNICATOR IS %s" % comm.communicator )
+                #config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'op_ssh'
             proxy = Proxy( config.resources[ arg['<resource_name>'] ] ,
-                           config.make_communicators()[ arg['<resource_name>'] ]
+                           comm
                            )
-        if communicator == 'ssh' :
+            config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'op_ssh'
+            config.make_communicators()
+        if communicator != 'local' :
             agent = Agent( config.resources[ arg['<resource_name>'] ] )
         if arg[ 'init' ] :
-            if communicator == 'ssh' :
+            if communicator != 'local' :
                 agent.start( )
                 agent.add_key( arg[ '--lifetime' ] )
                 agent.copy_key( )
@@ -97,10 +109,10 @@ def run( arg ) :
         elif arg[ 'delete' ] :
             if lrms == 'cream' or lrms == 'fedcloud' :
                 proxy.destroy( )
-            if communicator == 'ssh' :
+            if communicator != 'local' :
                 agent.delete_key( )
         else :
-            if communicator == 'ssh' :
+            if communicator != 'local' :
                 agent.list_key( )
             if lrms == 'cream' or lrms == 'fedcloud' :
                 proxy.check( )

@@ -22,7 +22,7 @@
 Manage computing resources on DRM4G.
 
 Usage:
-    drm4g resource [ list | edit | check | create | destroy ] [ options ]
+    drm4g resource [ list | list_all | edit | check | create | destroy ] [ options ]
 
  Options:
     --dbg                   Debug mode.
@@ -62,6 +62,8 @@ def run( arg ) :
                 resource.create_vms()
             elif arg[ 'destroy' ] :
                 resource.destroy_vms( )
+            elif arg[ 'list_all' ] :
+                resource.list_resources( )
             else :
                 resource.list()
     except Exception as err :
