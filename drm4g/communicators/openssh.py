@@ -40,8 +40,8 @@ from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT, DRM4G_
 from drm4g.utils.url        import urlparse
 from openssh_wrapper import SSHConnection
 
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 class Communicator(drm4g.communicators.Communicator):
@@ -113,7 +113,7 @@ class Communicator(drm4g.communicators.Communicator):
                 def first_ssh():
                     try:
                         logger.debug("Running first_ssh function\n    - Creating first connection for %s" % self.parent_module)
-                        #this is here because the threads are created at the same time, so the moment one creates the conection, the rest are going to cause an UnboundLocalError exception 
+                        #this is here because the threads are created at the same time, so the moment one creates the conection, the rest are going to cause an UnboundLocalError exception
                         #(which probably shouldn't be ocurring since ControlMaster is set to auto - only if they execute this at the same time)
                         if not exists(join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))):
                             command = 'ssh -F %s -i %s -p %s -T %s@%s' % (self.configfile, self.private_key, str(self.port), self.username, self.frontend)
@@ -147,12 +147,6 @@ class Communicator(drm4g.communicators.Communicator):
                 logger.debug("Starting thread with first_ssh")
                 t.start()
                 time.sleep(5) #so that there's time to make the first connection in case there was an error
-                #cont=0
-                # while not exists(join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))) and cont < 130:
-                #     cont+=1
-                #     time.sleep(1)
-                # if not cont < 130:
-                #     logger.debug("\n**Tried to wait for first connection to be established, but after 2 minutes still nothing\n")
 
             if self.conn==None:
                 logger.debug("No conn exists (conn == "+str(self.conn)+") for "+self.parent_module+" so a new one will be created.")
@@ -205,7 +199,6 @@ class Communicator(drm4g.communicators.Communicator):
                 self._delete_socket()
                 self.mkDirectory(url)
             else:
-                #raise ComException("Error connecting to remote machine %s@%s while trying to create a folder : " % (self.username,self.frontend) + str(excep))
                 logger.warning(str(excep))
 
     def rmDirectory(self, url):
@@ -222,7 +215,6 @@ class Communicator(drm4g.communicators.Communicator):
                 self._delete_socket()
                 self.rmDirectory(url)
             else:
-                #raise ComException("Error connecting to remote machine %s@%s while trying to remove a folder : " % (self.username,self.frontend) + str(excep))
                 logger.warning(str(excep))
 
     def copy( self , source_url , destination_url , execution_mode = '' ) :
@@ -250,7 +242,6 @@ class Communicator(drm4g.communicators.Communicator):
                 self._delete_socket()
                 self.copy(source_url , destination_url)
             else:
-                #raise ComException("Error connecting to remote machine %s@%s while trying to copy a file : " % (self.username,self.frontend) + str(excep))
                 logger.warning(str(excep))
 
     def _delete_socket(self):
@@ -314,10 +305,8 @@ class Communicator(drm4g.communicators.Communicator):
             cmd += ['-P', str(self.port)]
 
         if not isinstance(files, list):
-            #raise ValueError('"files" argument have to be iterable (list or tuple)')
-            logger.warning('"files" argument have to be iterable (list or tuple)')
+            logger.warning('"files" argument has to be an iterable (list or tuple)')
         if len(files) < 1:
-            #raise ValueError('You should name at least one file to copy')
             logger.warning('You should name at least one file to copy')
 
         for f in files:

@@ -1,3 +1,23 @@
+#
+# Copyright 2016 Universidad de Cantabria
+#
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
+# You may not use this work except in compliance with the
+# Licence.
+# You may obtain a copy of the Licence at:
+#
+# http://ec.europa.eu/idabc/eupl
+#
+# Unless required by applicable law or agreed to in
+# writing, software distributed under the Licence is
+# distributed on an "AS IS" basis,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied.
+# See the Licence for the specific language governing
+# permissions and limitations under the Licence.
+#
+
 import re
 import time
 import uuid
@@ -12,10 +32,9 @@ from drm4g                      import ( COMMUNICATORS,
                                          REMOTE_JOBS_DIR,
                                          REMOTE_VOS_DIR,
                                          DRM4G_DIR )
-#from drm4g.managers.fedcloud    import logger
 
-__version__  = '0.1.0'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 logger = logging.getLogger(__name__)
@@ -211,7 +230,7 @@ class Instance(object):
               '--resource %s -j %s' % (self.endpoint, self.proxy_file, self.id, self.id_volume )
         out, err = self._exec_remote_cmd( cmd )
         self.log_output("_create_link", out, err)
-        
+
         if 'certificate expired' in err :
             self._renew_voms_proxy()
             out, err = self._exec_remote_cmd( cmd )
@@ -231,7 +250,7 @@ class Instance(object):
                              self.endpoint, self.proxy_file, str(self.app_name).lower(), uuid.uuid4().hex, self.app, self.flavour, self.context_file )
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("_create_resource", out, err)
-            
+
             if 'certificate expired' in err :
                 self._renew_voms_proxy()
                 logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
@@ -244,11 +263,6 @@ class Instance(object):
             logger.info( "    Resource '%s' has been successfully created" % self.id )
             logger.debug( "Ending  fedcloud's  _create_resource function" )
         except Exception as err:
-            ####################################al probarlo con el IFCA por ejemplo, aparece el mensaje, pero no aparece ninguna exception############################################
-            '''
-            haciendolo manualmente aparece este error:
-                F, [2016-11-10T15:25:31.150145 #7314] FATAL -- : [rOCCI-cli] Connection to "https://cloud.ifca.es:8787/occi1.1" timed out!
-            '''
             raise Exception("Most likely the issue is being caused by a timeout error:\n"+str(err))
 
     def _create_volume(self):
@@ -274,14 +288,11 @@ class Instance(object):
         logger.debug( "Running fedcloud's  delete function" )
         logger.info( "Deleting resource %s" % self.id )
         if self.volume :
-            #cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action unlink --resource /compute/%s" % (
-            #                 self.endpoint, self.proxy_file, basename(self.id_link) )
             cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action unlink --resource %s" % (
                              self.endpoint, self.proxy_file, self.id_link )
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("delete (unlink)", out, err)
-        
-            #if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
+
             if 'certificate expired' in err :
                 self._renew_voms_proxy()
                 logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
@@ -304,7 +315,7 @@ class Instance(object):
                 logger.error( "Error deleting volume '%s': %s" % ( self.id_volume, out ) )
         cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action delete --resource %s" % (
                              self.endpoint, self.proxy_file, self.id )
-        out, err = self._exec_remote_cmd( cmd )        
+        out, err = self._exec_remote_cmd( cmd )
         self.log_output("delete (resource)", out, err)
 
         if 'certificate expired' in err :
@@ -363,7 +374,7 @@ class Instance(object):
                       self.endpoint, self.proxy_file, self.id, network_interface )
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("get_public_ip", out, err)
-        
+
             if 'certificate expired' in err :
                 self._renew_voms_proxy()
                 out, err = self._exec_remote_cmd( cmd )
@@ -409,7 +420,7 @@ class Instance(object):
                         logger.debug("There wasn't either an output or an error for the execution of the 'get_public_ip' function")
             else:
                 raise Exception("Error trying to get a public IP")
-         
+
         time.sleep( 10 )
         out = self.get_description(self.id)
         pattern = re.compile( "occi.networkinterface.address\s*=\s*(.*)" )
@@ -431,7 +442,7 @@ class Instance(object):
                              self.endpoint, self.proxy_file )
         out, err = self._exec_remote_cmd( cmd )
         self.log_output("get_network_interfaces", out, err)
-        
+
         if 'certificate expired' in err :
             self._renew_voms_proxy()
             out, err = self._exec_remote_cmd( cmd )
@@ -451,12 +462,10 @@ class Instance(object):
         if mo :
             ip = mo[ 0 ]
             if not is_ip_private( ip ) :
-                #logger.error ("\n\n\nIdentification: "+str(self.id)+"\n    ip: "+str(ip)+"\n\n\n")
                 self.ext_ip = ip
                 self.int_ip = ip
             else :
                 self.get_public_ip()
-            #logger.error ("\n\n\nIdentification: "+str(self.id)+"\n    ext_ip: "+str(self.ext_ip)+"\n\n\n")
             logger.info( "    Public IP: %s" % self.ext_ip )
         else :
             logger.error( "Ending  fedcloud's get_ip function with an error" )
@@ -471,7 +480,7 @@ class Instance(object):
         logger.debug( "*********** get_ip -- end ***********" )
         logger.debug( "Ending  fedcloud's get_ip function" )
 
-    def log_output(self, msg, out, err, extra=None):        
+    def log_output(self, msg, out, err, extra=None):
         logger.debug( "Command return:" )
         logger.debug( "*********** %s -- out ***********" % msg )
         logger.debug( str(out) )

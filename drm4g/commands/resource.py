@@ -35,8 +35,8 @@ Commands:
     create                  Create new resource
     destroy                 Delete a resource
 """
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 import logging
@@ -56,7 +56,7 @@ def run( arg ) :
             daemon = Daemon()
             if not daemon.is_alive() :
                raise Exception( 'DRM4G is stopped.' )
-            
+
             elif arg[ 'check' ] :
                 resource.check_frontends( )
             elif arg[ 'create' ] :

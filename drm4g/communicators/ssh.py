@@ -41,16 +41,11 @@ import drm4g.commands
 from drm4g.communicators    import ComException, logger
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT
 from drm4g.utils.url        import urlparse
-#from drm4g                  import DRM4G_DIR
-#import paramiko
 
-__version__  = '2.5.1'
+__version__  = '2.6.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 
-#logging.basicConfig()
-#paramiko.util.log_to_file(join( DRM4G_DIR , 'var' , 'paramiko.log'))
-#logging.raiseExceptions=False
 
 class Communicator(drm4g.communicators.Communicator):
     """
@@ -74,8 +69,8 @@ class Communicator(drm4g.communicators.Communicator):
                     agent = Agent()
                     keys  = agent.get_keys()
                     if not keys :
-                        logger.warning( "Error trying to connect to '%s'" % self.frontend )
-                        logger.warning( "Impossible to load '%s' key from the ssh-agent"  % self.private_key )
+                        logger.debug( "Error trying to connect to '%s'" % self.frontend )
+                        logger.debug( "Impossible to load '%s' key from the ssh-agent"  % self.private_key )
                         try:
                             status_ssh_agent = agent._conn
                         except Exception as err :

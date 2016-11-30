@@ -26,8 +26,8 @@ import logging
 import pickle
 from drm4g                 import DRM4G_DIR
 
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 logger = logging.getLogger(__name__)
@@ -123,7 +123,7 @@ class Resource (object):
         else :
             self.host_list = [ self.name ]
             return self.name
-            
+
     def host_properties(self, host ):
         """
         Obtain the features of each host

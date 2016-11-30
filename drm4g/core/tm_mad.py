@@ -29,8 +29,8 @@ from drm4g.core.configure  import Configuration
 from drm4g.utils.message   import Send
 from drm4g                 import DRM4G_DIR
 
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 class GwTmMad (object):
@@ -235,10 +235,6 @@ class GwTmMad (object):
             if errors :
                 self.logger.error ( ' '.join( errors ) )
                 raise Exception ( ' '.join( errors ) )
-            #self.logger.debug( "Resources:" )
-            #for resname, resdict in self._configure.resources.items():
-            #    self.logger.debug("    "+str(resname))
-            #    self.logger.debug("        communicator: "+str(resdict['communicator']))
             for resname, resdict in list(self._configure.resources.items()) :
                 self.logger.debug( "    The current resource to which it's being compared is %s" % resname )
                 if 'cloud' in self._configure.resources[ resname ].keys():

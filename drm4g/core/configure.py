@@ -34,8 +34,8 @@ try :
 except ImportError :
     import ConfigParser as configparser
 
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 logger = logging.getLogger(__name__)
@@ -107,19 +107,12 @@ class Configuration(object):
                                         insdict['username'] = instance.vm_user
                                         insdict['frontend'] = instance.ext_ip
                                         insdict['communicator'] = instance.vm_comm
-                                        '''
-                                        if instance.comm == 'local':
-                                            # later on, add a new parameter with which the user can choose between ssh or op_ssh
-                                            insdict['communicator'] = 'ssh'
-                                        else:
-                                            insdict['communicator'] = instance.comm
-                                        '''
                                         insdict['private_key'] = instance.private_key
                                         insdict['enable'] = 'true'
                                         insdict['lrms'] = 'fork'
                                         insdict['max_jobs_running'] = instance.max_jobs_running
                                         self.resources[ name+"_"+instance.ext_ip ] = insdict
-                                        logger.debug("Resource '%s' defined by: %s.", 
+                                        logger.debug("Resource '%s' defined by: %s.",
                                                 name+"_"+instance.ext_ip, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name+"_"+instance.ext_ip].items())]))
                             except Exception as err :
                                 raise Exception( "Could not create resource for the VMs of %s:\n%s" % (name,str(err)) )
@@ -251,7 +244,7 @@ class Configuration(object):
                 com_object.public_key     = resdict.get( 'public_key' )
                 com_object.work_directory = resdict.get( 'scratch', REMOTE_JOBS_DIR )
                 communicators[name]       = com_object
-                logger.debug("Communicator of resource '%s' is defined by: %s.", 
+                logger.debug("Communicator of resource '%s' is defined by: %s.",
                     name, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(communicators[name].__dict__.items())]))
             except Exception as err:
                 output = "Failed creating communicator for resource '%s' : %s" % ( name, str( err ) )

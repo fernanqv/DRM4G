@@ -27,8 +27,8 @@ from drm4g.core.configure  import Configuration
 from drm4g.managers        import HostInformation
 from drm4g.utils.message   import Send
 
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 class GwImMad (object):
@@ -135,9 +135,10 @@ class GwImMad (object):
             assert info, "Host '%s' is not available" % HOST
             out = 'MONITOR %s SUCCESS %s' % (HID , info )
         except Exception as err :
-            host_info = HostInformation()
-            host_info.info()
-            out = 'MONITOR %s FAILURE %s' % (HID , host_info.info() )
+            #host_info = HostInformation()
+            #host_info.info()
+            #out = 'MONITOR %s SUCCESS %s' % (HID , host_info.info() )
+            out = 'MONITOR %s FAILURE %s' % (HID , str(err) )
         if output:
             self.message.stdout(out)
         self.logger.debug( out , exc_info=1 )

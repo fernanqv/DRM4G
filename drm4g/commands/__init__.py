@@ -33,8 +33,8 @@ from drm4g.managers    import fedcloud
 from drm4g.core.im_mad import GwImMad
 from os.path           import expanduser, join, dirname, exists, basename, expandvars
 
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 PY2 = sys.version_info[0] == 2
@@ -168,14 +168,6 @@ class Agent( object ):
         if err :
             logger.info( err )
 
-    '''
-    def copy_key( self ):
-        logger.info("--> Copy '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
-        out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' % ( self.private_key, self.user, self.frontend ),
-                              stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
-        logger.debug( out )
-    '''
-
     def copy_key( self ):
         logger.info("--> Copying '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
 
@@ -200,11 +192,9 @@ class Agent( object ):
         cmd='cat %s | ssh %s@%s "mkdir -p ~/.ssh;' \
         ' cat > ~/temp_pub_key && grep -q -f temp_pub_key ~/.ssh/authorized_keys || cat temp_pub_key >> ~/.ssh/authorized_keys &&' \
         ' chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh && rm temp_pub_key"' % (public_key_path, self.user, self.frontend)
-        #' chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 644 ~/.globus/usercert.pem && chmod 400 ~/.globus/userkey.pem && rm temp_pub_key"' % (public_key_path, self.user, self.frontend)
 
         #answer = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) #does not work
         answer = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        #communicate closes each pipe after using them, so there's no need to clean up after it
         out,err = answer.communicate()
 
         if err:
@@ -321,7 +311,6 @@ class Resource( object ):
         for resname, resdict in self.config.resources.items():
             if resdict[ 'lrms' ] in ['fedcloud']:
                 fedcloud.manage_instances('start', resname, resdict)
-        #self.update_hosts()
 
     def destroy_vms(self):
         """
@@ -331,15 +320,14 @@ class Resource( object ):
         for resname, resdict in self.config.resources.items():
             if resdict[ 'lrms' ] in ['fedcloud']:
                 fedcloud.manage_instances('stop', resname, resdict)
-        self.update_hosts(resname)
 
-    def update_hosts(self, resname):
+    def update_hosts(self):
         """
         Forces the host list to be updated
         """
         try:
-            GwImMad().do_DISCOVER("discover - - -", False)            
-            #GwImMad().do_MONITOR("monitor 2 %s -" % resname)#, False)            
+            GwImMad().do_DISCOVER("discover - - -", False)
+            #GwImMad().do_MONITOR("monitor 2 %s -" % resname)#, False)
         except Exception as err:
             logger.error( "Could not update hosts:\n%s" % str(err))
 

@@ -1,3 +1,23 @@
+#
+# Copyright 2016 Universidad de Cantabria
+#
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
+# You may not use this work except in compliance with the
+# Licence.
+# You may obtain a copy of the Licence at:
+#
+# http://ec.europa.eu/idabc/eupl
+#
+# Unless required by applicable law or agreed to in
+# writing, software distributed under the Licence is
+# distributed on an "AS IS" basis,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied.
+# See the Licence for the specific language governing
+# permissions and limitations under the Licence.
+#
+
 import os
 import time
 import pickle
@@ -14,12 +34,10 @@ try:
 except ImportError:
     from ConfigParser       import SafeConfigParser  # ver. < 3.0
 
-#logging.basicConfig( level = logging.DEBUG ) # probably change it to INFO
-#logging.config.fileConfig(DRM4G_LOGGER, {"DRM4G_DIR": DRM4G_DIR})
 logger = logging.getLogger(__name__)
 
-__version__  = '0.1.0'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 pickled_file = join(DRM4G_DIR, "var", "fedcloud_pickled")
@@ -48,7 +66,7 @@ def pickle_remove(inst, resource_name):
             if len(instances) == 1 :
                 os.remove( pickled_file+"_"+resource_name )
         except Exception as err:
-            logger.error( "Error deleting instance from pickled file %s\n%s" % (pickled_file+"_"+resource_name, str( err )) ) 
+            logger.error( "Error deleting instance from pickled file %s\n%s" % (pickled_file+"_"+resource_name, str( err )) )
 
 def start_instance( instance, resource_name ) :
     with lock:
@@ -63,8 +81,8 @@ def start_instance( instance, resource_name ) :
                 logger.debug( "Trying to destroy the instance" )
                 instance.delete( )
             except Exception as err :
-                logger.error( "Error destroying instance\n%s" % str( err ) )  
-    
+                logger.error( "Error destroying instance\n%s" % str( err ) )
+
 def stop_instance( instance, resource_name ):
     try :
         instance.delete()
@@ -78,7 +96,7 @@ def manage_instances(args, resource_name, config):
             hdpackage = import_module( RESOURCE_MANAGERS[config['lrms']] + ".%s" % config['lrms'] )
         except Exception as err :
             raise Exception( "The infrastructure selected does not exist. "  + str( err ) )
-        threads = [] 
+        threads = []
         handlers = []
         try:
             instance = eval( "hdpackage.Instance( config )" )
@@ -89,7 +107,7 @@ def manage_instances(args, resource_name, config):
             logger.error( "An error ocurred while trying to create a VM instance." )
             raise
         for number_of_th in range( int(config['nodes']) ):
-            th = threading.Thread( target = start_instance, args = ( instance, resource_name, ) ) 
+            th = threading.Thread( target = start_instance, args = ( instance, resource_name, ) )
             th.start()
             threads.append( th )
         [ th.join() for th in threads ]
@@ -113,7 +131,7 @@ def manage_instances(args, resource_name, config):
                 th.start()
                 threads.append( th )
             [ th.join() for th in threads ]
-    else : 
+    else :
         logger.error( "Invalid option" )
         exit( 1 )
 
@@ -123,9 +141,9 @@ class Resource (drm4g.managers.Resource):
 class Job (drm4g.managers.fork.Job):
     pass
 
-#NOT USING THIS ONE
+#NOT USING THIS CLASS
 class ClusterSetup(object):
-    
+
     def __init__(self, infrastructure, cloud, app, flavour, nodes = 1, volume = None, credentials = {} ):
         self.infrastructure = infrastructure
         self.cloud          = cloud
@@ -141,9 +159,9 @@ class CloudSetup(object):
         self.name     = name
         self.vo       = features.get( "vo" )
         self.url      = features.get( "url" )
-        self.clouds   = features.get( "clouds" ) 
+        self.clouds   = features.get( "clouds" )
 
-#NOT USING THIS ONE
+#NOT USING THIS CLASS
 class ClusterBasicData(object):
 
     def __init__(self, pickle_file, cluster_file, setup_file ):
@@ -160,7 +178,7 @@ class ClusterBasicData(object):
                                                cluster_dict.get( 'volume' ),
                                                dict( cluster_cfg.items( 'credentials' ) ) )
         except KeyError as err :
-            logging.error( "Please review your hadoop cluster configuration: " + str( err ) ) 
+            logging.error( "Please review your hadoop cluster configuration: " + str( err ) )
         except Exception as err :
             logging.error( "Error reading hadoop cluster configuration: " + str( err ) )
 
