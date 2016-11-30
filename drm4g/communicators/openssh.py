@@ -40,8 +40,8 @@ from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT, DRM4G_
 from drm4g.utils.url        import urlparse
 from openssh_wrapper import SSHConnection
 
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 class Communicator(drm4g.communicators.Communicator):
@@ -58,6 +58,7 @@ class Communicator(drm4g.communicators.Communicator):
         super(Communicator,self).__init__()
         self.conn=None
         self.parent_module=None
+        self.configfile=None
         with self._lock:
             self.agent=Agent()
             self.agent.start()
@@ -68,26 +69,27 @@ class Communicator(drm4g.communicators.Communicator):
 
 
     def createConfFiles(self):
-        logger.debug("\nRunning createConfFiles function from "+self.parent_module+"\n")
+        logger.debug("Running createConfFiles function from %s" % self.parent_module)
         #the maximum length of the path of a unix domain socket is 108 on Linux, 104 on Mac OS X
         conf_text = ("Host *\n"
             "    ControlMaster auto\n"
             "    ControlPath %s/%s-%s\n"
-            "    ControlPersist 10m")
+            "    ControlPersist 10m\n"
+            "    StrictHostKeyChecking no")
 
-        for manager in ['im', 'tm', 'em']:
+        for manager in ['im', 'tm', 'em', 'fedcloud']:
             with io.FileIO(join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % manager), 'w') as file:
                 file.write(conf_text % (Communicator.socket_dir, manager, '%r@%h:%p'))
         try:
             if not exists(Communicator.socket_dir):
-                logger.debug("\nCreating socket directory in "+Communicator.socket_dir+".\n")
+                logger.debug("Creating socket directory in %s" % Communicator.socket_dir)
                 os.makedirs(Communicator.socket_dir)
         except OSError as excep:
             if "File exists" in str(excep):
                 logger.warning("The directory %s already exists" % Communicator.socket_dir)
             else:
                 logger.error("An unexpected exception ocurred:\n"+str(excep))
-        logger.debug("\nEnding createConfFiles function from "+self.parent_module+"\n")
+        logger.debug("Ending createConfFiles function from %s" % self.parent_module)
 
     def connect(self):
         """
@@ -96,88 +98,88 @@ class Communicator(drm4g.communicators.Communicator):
         try:
             p_module=sys._getframe().f_back.f_code.co_filename
             p_function=sys._getframe().f_back.f_code.co_name
-            logger.debug("\nRunning connect function\n - called from "+p_module+"\n - by function "+p_function+"\n")
+            logger.debug("Running connect function\n    - called from "+p_module+"\n    - by function "+p_function)
 
             if not self.configfile:
-                logger.debug("\nself.configfile is not defined\n")
-                logger.error("\n\nOpenSHH configuration file's path is not defined\n\n")
+                logger.debug("Variable 'self.configfile' is not defined")
+                logger.error("OpenSHH configuration file's path is not defined")
 
             if not exists(self.configfile):
                 self.createConfFiles()
-            logger.debug("\nThe socket "+join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))+" existance is "+str(exists(join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))))+".\n")
+            logger.debug("The socket "+join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))+" existance is "+str(exists(join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port)))))
 
             if not exists(join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))):
-                logger.debug("\nNo master conncection exists for "+self.parent_module+" so a new one will be created.\n")
+                logger.debug("No master conncection exists for %s so a new one will be created" % self.parent_module)
                 def first_ssh():
-                    logger.debug("\nRunning first_ssh function\n - Creating first connection for "+self.parent_module+"\n")
-                    #this is here because the threads are created at the same time, so the moment one creates the conection, the rest are going to cause an exception (which probably shouldn't be ocurring since ControlMaster is set to auto)
-                    if not exists(join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))):
-                        command = 'ssh -F %s -i %s -p %s -T %s@%s' % (self.configfile, self.private_key, str(self.port), self.username, self.frontend)
-                    pipe = subprocess.Popen(command.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    out,err = pipe.communicate()
+                    try:
+                        logger.debug("Running first_ssh function\n    - Creating first connection for %s" % self.parent_module)
+                        #this is here because the threads are created at the same time, so the moment one creates the conection, the rest are going to cause an UnboundLocalError exception
+                        #(which probably shouldn't be ocurring since ControlMaster is set to auto - only if they execute this at the same time)
+                        if not exists(join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))):
+                            command = 'ssh -F %s -i %s -p %s -T %s@%s' % (self.configfile, self.private_key, str(self.port), self.username, self.frontend)
+                        pipe = subprocess.Popen(command.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        out,err = pipe.communicate()
 
-                    if err:
-                        if "too long for Unix domain socket" in str(err) or "ControlPath too long" in str(err):
-                            logger.debug("\nSocket path was too long for Unix domain socket.\nCreating sockets in ~/.ssh/dmr4g.\nException captured in first_ssh.\n")
-                            Communicator.socket_dir = join(expanduser('~'), '.ssh/drm4g')
-                            self.createConfFiles()
-                            logger.debug("\nCalling first_ssh once again, but with a new socket_dir\n")
-                            first_ssh()
-                        elif "disabling multiplexing" in str(err):
-                            logger.debug("\nMux isn't working from the connect function. Eliminating "+self.parent_module+"'s socket file.\n This shouldn't be appearing since it's supposedly the first time that it's being created.\n")
-                            self._delete_socket()
-                            first_ssh()
-                        elif "bind: No such file or directory" in str(err) or "cannot bind to path" in str(err):
-                            logger.debug("\nThe connection through the socket %s-%s@%s:%s wasn't established since the socket directory %s hasn't been created yet.\n" % (self.parent_module ,self.username, self.frontend, self.port, Communicator.socket_dir))
-                            self.createConfFiles()
-                            first_ssh()
-                        else:
-                            logger.debug("\nUnexpected error occured while running first_ssh:\n"+str(err))
-                            logger.warning(str(err))
+                        if err:
+                            if "too long for Unix domain socket" in str(err) or "ControlPath too long" in str(err):
+                                logger.debug("Socket path was too long for Unix domain socket.\n    Creating sockets in ~/.ssh/dmr4g.\n    Exception captured in first_ssh.")
+                                Communicator.socket_dir = join(expanduser('~'), '.ssh/drm4g')
+                                self.createConfFiles()
+                                logger.debug("Calling first_ssh once again, but with a new socket_dir")
+                                first_ssh()
+                            elif "disabling multiplexing" in str(err):
+                                logger.debug("connect function: The multiplexing of connections isn't working. Eliminating "+self.parent_module+"'s socket file.")
+                                self._delete_socket()
+                                first_ssh()
+                            elif "bind: No such file or directory" in str(err) or "cannot bind to path" in str(err):
+                                logger.debug("The connection through the socket %s-%s@%s:%s wasn't established since the socket directory %s hasn't been created yet." % (self.parent_module ,self.username, self.frontend, self.port, Communicator.socket_dir))
+                                self.createConfFiles()
+                                first_ssh()
+                            else:
+                                logger.debug("Unexpected error occured while running first_ssh:\n"+str(err))
+                                logger.warning(str(err))
+                    except UnboundLocalError as err:
+                        logger.warning( "Local variable referenced before assignment" )
+                        logger.debug( str(err) )
 
                 t = threading.Thread(target=first_ssh, args = ())
                 t.daemon = True
-                logger.debug("\nStarting thread with first_ssh\n")
+                logger.debug("Starting thread with first_ssh")
                 t.start()
                 time.sleep(5) #so that there's time to make the first connection in case there was an error
-                #cont=0
-                # while not exists(join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))) and cont < 130:
-                #     cont+=1
-                #     time.sleep(1)
-                # if not cont < 130:
-                #     logger.debug("\n**Tried to wait for first connection to be established, but after 2 minutes still nothing\n")
 
             if self.conn==None:
-                logger.debug("\nNo conn exists (conn == "+str(self.conn)+") for "+self.parent_module+" so a new one will be created.\n")
+                logger.debug("No conn exists (conn == "+str(self.conn)+") for "+self.parent_module+" so a new one will be created.")
                 self.conn = SSHConnection(self.frontend, login=self.username, port=str(self.port),
                     configfile=self.configfile, identity_file=self.private_key,
                     ssh_agent_socket=self.agent_socket, timeout=SSH_CONNECT_TIMEOUT)
 
-            logger.debug("\nEnding connect function from "+self.parent_module+"\n")
+            logger.debug("Ending connect function from %s" % self.parent_module)
 
         except Exception as excep :
             if "too long for Unix domain socket" in str(excep):
-                logger.debug("\nSocket path was too long for Unix domain socket.\nCreating sockets in ~/.ssh/dmr4g.\nException captured in connect's except.\n")
+                logger.debug("Socket path was too long for Unix domain socket.\n    Creating sockets in ~/.ssh/dmr4g.\n    Exception captured in connect's except.")
                 Communicator.socket_dir = join(expanduser('~'), '.ssh/drm4g')
                 self.createConfFiles()
                 self.connect()
             else:
-                logger.warning(str(excep))
+                logger.error(str(excep))
+                raise
 
     def execCommand(self , command , input = None ):
         try:
-            logger.debug("\nRunning execCommand function from "+self.parent_module+"\n    - Trying to execute command "+str(command)+"\n")
+            logger.debug("Running execCommand function from "+self.parent_module+"\n    - Trying to execute command "+str(command))
 
             if not self.conn:
-                logger.debug("\nGoing to run connect function.\n - That should already have been done, so it shouldn't do anything.\n")
+                logger.debug("Going to run connect function.\n    - That should already have been done, so it shouldn't do anything.")
                 self.connect()
 
             ret = self.conn.run(command)
-            logger.debug("\nEnding execCommand function.\n")
+            logger.debug("Ending execCommand function.")
             return ret.stdout , ret.stderr
         except Exception as excep:
             if "disabling multiplexing" in str(excep):
-                logger.debug("\nMux isn't working from the execCommand function. Eliminating "+self.parent_module+"'s socket file.\n")
+                logger.debug("Mux isn't working from the execCommand function. Eliminating "+self.parent_module+"'s socket file.")
                 self._delete_socket()
                 self.execCommand(command, input)
             else:
@@ -185,41 +187,39 @@ class Communicator(drm4g.communicators.Communicator):
 
     def mkDirectory(self, url):
         try:
-            logger.debug("\nRunning mkDirectory function from "+self.parent_module+"\n")
+            logger.debug("Running mkDirectory function from %s" % self.parent_module)
             to_dir         = self._set_dir(urlparse(url).path)
             stdout, stderr = self.execCommand( "mkdir -p %s" % to_dir )
             if stderr :
                 logger.warning( "Could not create %s directory: %s" % ( to_dir , stderr ) )
-            logger.debug("\nEnding mkDirectory function from "+self.parent_module+"\n")
+            logger.debug("Ending mkDirectory function from %s" % self.parent_module)
         except Exception as excep:
             if "disabling multiplexing" in str(excep):
-                logger.debug("\nMux isn't working from the mkDirectory function. Eliminating "+self.parent_module+"'s socket file.\n")
+                logger.debug("Mux isn't working from the mkDirectory function. Eliminating "+self.parent_module+"'s socket file.")
                 self._delete_socket()
                 self.mkDirectory(url)
             else:
-                #raise ComException("Error connecting to remote machine %s@%s while trying to create a folder : " % (self.username,self.frontend) + str(excep))
                 logger.warning(str(excep))
 
     def rmDirectory(self, url):
         try:
-            logger.debug("\nRunning rmDirectory function from "+self.parent_module+"\n")
+            logger.debug("Running rmDirectory function from %s" % self.parent_module)
             to_dir         = self._set_dir(urlparse(url).path)
             stdout, stderr = self.execCommand( "rm -rf %s" % to_dir )
             if stderr:
                 logger.warning( "Could not remove %s directory: %s" % ( to_dir , stderr ) )
-            logger.debug("\nEnding rmDirectory function from "+self.parent_module+"\n")
+            logger.debug("Ending rmDirectory function from %s" % self.parent_module)
         except Exception as excep:
             if "disabling multiplexing" in str(excep):
-                logger.debug("\nMux isn't working from the rmDirectory function. Eliminating "+self.parent_module+"'s socket file.\n")
+                logger.debug("Mux isn't working from the rmDirectory function. Eliminating "+self.parent_module+"'s socket file.")
                 self._delete_socket()
                 self.rmDirectory(url)
             else:
-                #raise ComException("Error connecting to remote machine %s@%s while trying to remove a folder : " % (self.username,self.frontend) + str(excep))
                 logger.warning(str(excep))
 
     def copy( self , source_url , destination_url , execution_mode = '' ) :
         try:
-            logger.debug("\nRunning copy function from "+self.parent_module+"\n")
+            logger.debug("Running copy function from %s" % self.parent_module)
             if not self.conn:
                 self.connect()
             with self._sem :
@@ -235,37 +235,36 @@ class Communicator(drm4g.communicators.Communicator):
                     from_dir = self._set_dir( urlparse( source_url ).path )
                     to_dir   = urlparse(destination_url).path
                     self.remote_scp( [from_dir] , target=to_dir )
-            logger.debug("\nEnding copy function from "+self.parent_module+"\n")
+            logger.debug("Ending copy function from %s" % self.parent_module)
         except Exception as excep:
             if "disabling multiplexing" in str(excep):
-                logger.debug("\nMux isn't working from the copy function. Eliminating "+self.parent_module+"'s socket file.\n")
+                logger.debug("Mux isn't working from the copy function. Eliminating "+self.parent_module+"'s socket file.")
                 self._delete_socket()
                 self.copy(source_url , destination_url)
             else:
-                #raise ComException("Error connecting to remote machine %s@%s while trying to copy a file : " % (self.username,self.frontend) + str(excep))
                 logger.warning(str(excep))
 
     def _delete_socket(self):
         try:
-            logger.debug("\nRunning _delete_socket function from "+self.parent_module+"\n")
+            logger.debug("Running _delete_socket function from %s" % self.parent_module)
             os.remove("%s/%s-%s@%s:%s" % (Communicator.socket_dir,self.parent_module,self.username,self.frontend,str(self.port)))
-            logger.debug("\nEnding _delete_socket function from "+self.parent_module+"\n")
+            logger.debug("Ending _delete_socket function from %s" % self.parent_module)
         except OSError as excep:
             if "No such file or directory" in str(excep):
-                logger.debug("The socket %s does not exist" % (Communicator.socket_dir,self.parent_module,self.username,self.frontend,str(self.port)))
-                logger.debug("\nEnding _delete_socket function from "+self.parent_module+"\n")
+                logger.debug("The socket %s/%s-%s@%s:%s does not exist" % (Communicator.socket_dir,self.parent_module,self.username,self.frontend,str(self.port)))
+                logger.debug("Ending _delete_socket function from %s" % self.parent_module)
             else:
                 logger.warning(str(excep))
 
     #internal
     def _set_dir(self, path):
-        logger.debug("\nRunning _set_dir function from "+self.parent_module+"\n")
+        logger.debug("Running _set_dir function from %s" % self.parent_module)
         work_directory =  re.compile( r'^~' ).sub( self.work_directory , path )
-        logger.debug("\nEnding _set_dir function from "+self.parent_module+"\n")
+        logger.debug("Ending _set_dir function from %s" % self.parent_module)
         return  work_directory
 
     def remote_scp(self, files, target):
-        logger.debug("\nRunning remote_scp function from "+self.parent_module+"\n")
+        logger.debug("Running remote_scp function from %s" % self.parent_module)
         scp_command = self.scp_command(files, target)
         pipe = subprocess.Popen(scp_command,
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
@@ -284,14 +283,14 @@ class Communicator(drm4g.communicators.Communicator):
         returncode = pipe.returncode
         if returncode != 0:  # ssh client error
             logger.warning("%s (under %s): %s" % (' '.join(scp_command), self.username, err.strip()))
-        logger.debug("\nEnding remote_scp function from "+self.parent_module+"\n")
+        logger.debug("Ending remote_scp function from %s" % self.parent_module)
 
     def scp_command(self, files, target, debug=False):
         """
         Build the command string to transfer the files identified by filenames.
         Include target(s) if specified. Internal function
         """
-        logger.debug("\nRunning scp_command function from "+self.parent_module+"\n")
+        logger.debug("Running scp_command function from %s" % self.parent_module)
         cmd = ['scp', debug and '-vvvv' or '-q', '-r']
 
         if self.username:
@@ -306,17 +305,15 @@ class Communicator(drm4g.communicators.Communicator):
             cmd += ['-P', str(self.port)]
 
         if not isinstance(files, list):
-            #raise ValueError('"files" argument have to be iterable (list or tuple)')
-            logger.warning('"files" argument have to be iterable (list or tuple)')
+            logger.warning('"files" argument has to be an iterable (list or tuple)')
         if len(files) < 1:
-            #raise ValueError('You should name at least one file to copy')
             logger.warning('You should name at least one file to copy')
 
         for f in files:
             cmd.append('%s:%s' % (remotename, f))
         cmd.append(target)
-        logger.debug("\nThe command is "+str(cmd)+"\n")
-        logger.debug("\nEnding scp_command function from "+self.parent_module+"\n")
+        logger.debug("The command is "+str(cmd))
+        logger.debug("Ending scp_command function from %s" % self.parent_module)
         return cmd
 
     def get_env(self):
@@ -324,9 +321,9 @@ class Communicator(drm4g.communicators.Communicator):
         Retrieve environment variables and replace SSH_AUTH_SOCK
         if ssh_agent_socket was specified on object creation.
         """
-        logger.debug("\nRunning get_env function from "+self.parent_module+"\n")
+        logger.debug("Running get_env function from %s" % self.parent_module)
         env = os.environ.copy()
         if self.agent_socket:
             env['SSH_AUTH_SOCK'] = self.agent_socket
-        logger.debug("\nEnding get_env function from "+self.parent_module+"\n")
+        logger.debug("Ending get_env function from %s" % self.parent_module)
         return env

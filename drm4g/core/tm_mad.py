@@ -29,8 +29,8 @@ from drm4g.core.configure  import Configuration
 from drm4g.utils.message   import Send
 from drm4g                 import DRM4G_DIR
 
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 class GwTmMad (object):
@@ -218,22 +218,38 @@ class GwTmMad (object):
 
     def _update_com(self, host):
         with self._lock :
+            self.logger.debug( "_update_com function - It's looking for a communicator for the host: %s" % host )
+            if not self._configure:
+                self._configure = Configuration()
+            '''
             if self._configure.check_update() or not self._configure.resources :
                 self._configure.load()
                 errors = self._configure.check()
                 if errors :
                     self.logger.error ( ' '.join( errors ) )
                     raise Exception ( ' '.join( errors ) )
+            '''
+            #This needs to be optimized
+            self._configure.load()
+            errors = self._configure.check()
+            if errors :
+                self.logger.error ( ' '.join( errors ) )
+                raise Exception ( ' '.join( errors ) )
             for resname, resdict in list(self._configure.resources.items()) :
-                if '::' in host :
+                self.logger.debug( "    The current resource to which it's being compared is %s" % resname )
+                if 'cloud' in self._configure.resources[ resname ].keys():
+                    continue
+                elif '::' in host :
                     _resname , _ = host.split( '::' )
                     if resname != _resname :
                         continue
                 elif resname != host :
                     continue
-                if resname not in self._communicator:
+                elif resname not in self._communicator:
+                    self.logger.debug( "    Since they are the same, its Communicator() will be returned")
                     self._communicator[ resname ] = self._configure.make_communicators()[resname]
                     if resdict[ 'communicator' ] == 'op_ssh' :
                         self._communicator[ resname ].configfile=os.path.join(DRM4G_DIR,'etc','openssh_tm.conf')
                         self._communicator[ resname ].parent_module='tm'
+                self.logger.debug( "\nCommunicator for %s:\n    communicator: %s\n    username: %s\n    frontend: %s" % (resname, resdict[ 'communicator' ], self._communicator[ resname ].username, self._communicator[ resname ].frontend) )
                 return self._communicator[ resname ]

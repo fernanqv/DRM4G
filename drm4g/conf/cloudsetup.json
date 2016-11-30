@@ -1,0 +1,75 @@
+{ 
+  "fedcloud" : {
+    "vo" : "fedcloud.egi.eu",
+    "clouds" : {
+      "EGI FedCloud - CESNET-METACLOUD" : {
+        "endpoint" : "https://carach5.ics.muni.cz:11443",
+        "apps" : { 
+          "Ubuntu-14.04" : "http://occi.carach5.ics.muni.cz/occi/infrastructure/os_tpl#uuid_egi_ubuntu_server_14_04_lts_fedcloud_warg_131"
+        },
+        "flavours" : {   
+          "Small"  : "http://fedcloud.egi.eu/occi/compute/flavour/1.0#small",
+          "Medium" : "http://fedcloud.egi.eu/occi/compute/flavour/1.0#medium"
+        }
+      },
+      "EGI FedCloud - BIFI" : {
+        "endpoint" : "http://server4-eupt.unizar.es:8787/",
+        "apps" : {
+          "Ubuntu-14.04" : "os_tpl#d1bfa360-3f9d-47d6-8d0f-64971d293a24",
+          "EGI"          : "http://schemas.openstack.org/template/os#9558a90c-901b-4e02-bcb0-60d4a944eb00",
+          "Hadoop-2.7.1" : "http://schemas.openstack.org/template/os#86aa1a19-b7a2-4e8b-909c-d2aa3758413c"
+        },
+        "flavours" : {
+          "Tiny"   : "http://schemas.openstack.org/template/resource_tpl#m1-tiny",
+          "Small"  : "resource_tpl#m1-small",
+          "Medium" : "http://schemas.openstack.org/template/resource#m1-medium"
+        }
+      },
+      "EGI FedCloud - IFCA-LCG2" : {
+        "endpoint" : "https://cloud.ifca.es:8787/occi1.1",
+        "apps" : {
+          "Ubuntu-14.04" : "http://schemas.openstack.org/template/os#f66bd8be-cbce-4406-8505-0b1721b77390"
+        },
+        "flavours" : {
+          "Small"  : "http://schemas.openstack.org/template/resource#2"
+        }
+      },
+      "EGI FedCloud - RECAS-BARI" : {
+        "endpoint" : "http://cloud.recas.ba.infn.it:8787/occi/",
+        "apps" : {
+          "Ubuntu-14.04" : "http://schemas.openstack.org/template/os#d625cf77-557d-4436-a259-ad7bb2617c60"
+        },
+        "flavours" : {
+          "Small"  : "http://schemas.openstack.org/template/resource#7"
+        }
+      },
+      "EGI FedCloud - IN2P3-IRES" : {
+        "endpoint" : "https://sbgcloud.in2p3.fr:8787/occi1.1/",
+        "apps" : {
+          "Ubuntu-14.04" : "http://schemas.openstack.org/template/os#8240c934-176e-46fb-8a02-806f9a67e7a0"
+        },
+        "flavours" : {
+          "Small"  : "http://schemas.openstack.org/template/resource#2"
+        }
+      },
+      "EGI FedCloud - INDIGO-CATANIA-STACK" : {
+        "endpoint" : "http://stack-server-02.ct.infn.it:8787/",
+        "apps" : {
+          "Ubuntu-14.04" : "http://schemas.openstack.org/template/os#b02aad9f-ce4d-4120-b584-eeff93e1f492"
+        },
+        "flavours" : {
+          "Small"  : "http://schemas.openstack.org/template/resource#m1-small"
+        }
+      },
+      "EGI FedCloud - CYFRONET-CLOUD" : {
+        "endpoint" : "https://control.cloud.cyfronet.pl:8787/",
+        "apps" : {
+          "Ubuntu-14.04" : "http://schemas.openstack.org/template/os#afe11d3f-7a49-4d87-8570-bc478ff5343b"
+        },
+        "flavours" : {
+          "Small"  : "http://schemas.openstack.org/template/resource#cpu-1-ram-2gb-disk-10gb"
+        }
+      }
+    }
+  }
+}   
