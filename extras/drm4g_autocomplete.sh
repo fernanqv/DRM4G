@@ -59,7 +59,7 @@ _drm4g_resource()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -eq 2 ]; then
-        COMPREPLY=( $( compgen -W 'edit list check' -- $cur) )
+        COMPREPLY=( $( compgen -W 'edit list check create destroy' -- $cur) )
     else
         case ${COMP_WORDS[2]} in
             edit)
@@ -71,6 +71,12 @@ _drm4g_resource()
             check)
             _drm4g_resource_check
         ;;
+           create)
+            _drm4g_resource_create
+        ;;
+           destroy)
+            _drm4g_resource_destroy
+        ;;        
         esac
 
     fi
@@ -92,11 +98,31 @@ _drm4g_resource_list()
     cur="${COMP_WORDS[COMP_CWORD]}"
 
     if [ $COMP_CWORD -ge 3 ]; then
-        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
+        COMPREPLY=( $( compgen -W '--dbg --all' -- $cur) )
     fi
 }
 
 _drm4g_resource_check()
+{
+    local cur
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ $COMP_CWORD -ge 3 ]; then
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
+    fi
+}
+
+_drm4g_resource_destroy()
+{
+    local cur
+    cur="${COMP_WORDS[COMP_CWORD]}"
+
+    if [ $COMP_CWORD -ge 3 ]; then
+        COMPREPLY=( $( compgen -W '--dbg' -- $cur) )
+    fi
+}
+
+_drm4g_resource_create()
 {
     local cur
     cur="${COMP_WORDS[COMP_CWORD]}"
