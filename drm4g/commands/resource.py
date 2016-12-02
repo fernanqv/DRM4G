@@ -32,8 +32,8 @@ Commands:
     list                    Show resources available.
     edit                    Configure resouces.
     check                   Check if configured resources are accessible.
-    create                  Create new resource
-    destroy                 Delete a resource
+    create                  Create new virtual machines
+    destroy                 Delete all virtual machines
 """
 __version__  = '2.6.0'
 __author__   = 'Carlos Blanco and Antonio Minondo'

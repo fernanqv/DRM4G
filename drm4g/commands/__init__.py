@@ -203,7 +203,7 @@ class Agent( object ):
             else:
                 logger.info( err )
                 raise Exception(err)
-        logger.info( "The copy of the public key %s has been succesful" % public_key_path )
+        logger.info( "The copy of the public key %s has been successful" % public_key_path )
 
     def list_key( self ):
         logger.info("--> Display '%s' key" % self.private_key )
