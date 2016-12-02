@@ -27,8 +27,8 @@ from drm4g.core.configure  import Configuration
 from drm4g.managers        import HostInformation
 from drm4g.utils.message   import Send
 
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 class GwImMad (object):
@@ -78,7 +78,7 @@ class GwImMad (object):
         self.message.stdout(out)
         self.logger.debug(out)
 
-    def do_DISCOVER(self, args):
+    def do_DISCOVER(self, args, output=True):
         """
         Discovers hosts (i.e. DISCOVER - - -)
         @param args : arguments of operation
@@ -97,6 +97,8 @@ class GwImMad (object):
             for resname in sorted( self._resources.keys() ) :
                 if  self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
                     continue
+                if  'cloud' in self._config.resources[ resname ].keys():
+                    continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
                     if self._config.resources[ resname ][ 'communicator' ] == 'op_ssh' :
@@ -110,10 +112,11 @@ class GwImMad (object):
             out = 'DISCOVER %s SUCCESS %s' % ( HID , hosts  )
         except Exception as err :
             out = 'DISCOVER - FAILURE %s' % str( err )
-        self.message.stdout( out )
+        if output:
+            self.message.stdout( out )
         self.logger.debug( out , exc_info=1 )
 
-    def do_MONITOR(self, args):
+    def do_MONITOR(self, args, output=True):
         """
         Monitors a host (i.e. MONITOR HID HOST -)
         @param args : arguments of operation
@@ -132,8 +135,12 @@ class GwImMad (object):
             assert info, "Host '%s' is not available" % HOST
             out = 'MONITOR %s SUCCESS %s' % (HID , info )
         except Exception as err :
-            out = 'MONITOR %s FAILURE %s' % (HID , str( err ) )
-        self.message.stdout(out)
+            #host_info = HostInformation()
+            #host_info.info()
+            #out = 'MONITOR %s SUCCESS %s' % (HID , host_info.info() )
+            out = 'MONITOR %s FAILURE %s' % (HID , str(err) )
+        if output:
+            self.message.stdout(out)
         self.logger.debug( out , exc_info=1 )
 
     def do_FINALIZE(self, args):

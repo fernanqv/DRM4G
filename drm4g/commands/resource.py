@@ -22,20 +22,21 @@
 Manage computing resources on DRM4G.
 
 Usage:
-    drm4g resource [ list | edit | check | create | destroy ] [ options ]
+    drm4g resource [ list [ --all ] | edit | check | create | destroy ] [ options ]
 
  Options:
     --dbg                   Debug mode.
+    --all                   Lists all of the created resources.
 
 Commands:
     list                    Show resources available.
     edit                    Configure resouces.
     check                   Check if configured resources are accessible.
-    create                  Create new resource
-    destroy                 Delete a resource
+    create                  Create new virtual machines
+    destroy                 Delete all virtual machines
 """
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 import logging
@@ -55,13 +56,15 @@ def run( arg ) :
             daemon = Daemon()
             if not daemon.is_alive() :
                raise Exception( 'DRM4G is stopped.' )
-            
+
             elif arg[ 'check' ] :
                 resource.check_frontends( )
             elif arg[ 'create' ] :
                 resource.create_vms()
             elif arg[ 'destroy' ] :
                 resource.destroy_vms( )
+            elif arg[ '--all' ] :
+                resource.list_resources( )
             else :
                 resource.list()
     except Exception as err :

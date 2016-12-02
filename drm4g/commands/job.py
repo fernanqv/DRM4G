@@ -64,7 +64,7 @@ Job field information:
     REASON                 The reason why the job left this host.
     QUEUE                  Queue name.
 """
-__version__  = '2.5.1'
+__version__  = '2.6.0'
 __author__   = 'Carlos Blanco'
 __revision__ = "$Id$"
 

@@ -22,20 +22,24 @@ import cmd
 import os
 import sys
 import re
+import time
 import getpass
 import logging
 import subprocess
 import datetime
 
-from drm4g     import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
-from os.path   import expanduser, join, dirname, exists, basename, expandvars
+from drm4g             import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
+from drm4g.managers    import fedcloud
+from drm4g.core.im_mad import GwImMad
+from os.path           import expanduser, join, dirname, exists, basename, expandvars
 
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 PY2 = sys.version_info[0] == 2
 
+logging.basicConfig( format='%(message)s', level = logging.INFO , stream = sys.stdout )
 logger = logging.getLogger(__name__)
 
 def process_is_runnig( pid ):
@@ -101,7 +105,7 @@ class Agent( object ):
             match = re.search( 'SSH_AUTH_SOCK=(?P<SSH_AUTH_SOCK>[^;]+);.*' \
                            + 'SSH_AGENT_PID=(?P<SSH_AGENT_PID>\d+);', out, re.DOTALL)
             if match :
-                logger.info( "  OK" )
+                logger.debug( "  OK" )
                 self.agent_env = match.groupdict()
                 logger.debug( '  Agent pid: %s'  % self.agent_env['SSH_AGENT_PID'])
             else:
@@ -109,11 +113,11 @@ class Agent( object ):
                 raise Exception( '  Cannot determine agent data from output: %s' % out )
             with open( self.agent_file , 'w') as f:
                 f.write( self.agent_env['SSH_AGENT_PID'] + '\n' + self.agent_env['SSH_AUTH_SOCK'] )
-        logger.info('Starting ssh-agent ...')
+        logger.debug('Starting ssh-agent ...')
         if not self.is_alive() :
             _start()
         elif self.is_alive() :
-            logger.warn( "  WARNING: ssh-agent is already running" )
+            logger.debug( "  ssh-agent is already running" )
         elif not self.agent_env:
             self.get_agent_env()
 
@@ -164,14 +168,6 @@ class Agent( object ):
         if err :
             logger.info( err )
 
-    '''
-    def copy_key( self ):
-        logger.info("--> Copy '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
-        out , err = exec_cmd( 'ssh-copy-id -i %s %s@%s' % ( self.private_key, self.user, self.frontend ),
-                              stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
-        logger.debug( out )
-    '''
-
     def copy_key( self ):
         logger.info("--> Copying '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
 
@@ -197,9 +193,8 @@ class Agent( object ):
         ' cat > ~/temp_pub_key && grep -q -f temp_pub_key ~/.ssh/authorized_keys || cat temp_pub_key >> ~/.ssh/authorized_keys &&' \
         ' chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh && rm temp_pub_key"' % (public_key_path, self.user, self.frontend)
 
-        answer = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        #communicate closes each pipe after using them, so there's no need to clean up after it
+        #answer = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) #does not work
+        answer = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out,err = answer.communicate()
 
         if err:
@@ -208,7 +203,7 @@ class Agent( object ):
             else:
                 logger.info( err )
                 raise Exception(err)
-        logger.debug( "The copy of the public key %s has been succesful" % public_key_path )
+        logger.info( "The copy of the public key %s has been successful" % public_key_path )
 
     def list_key( self ):
         logger.info("--> Display '%s' key" % self.private_key )
@@ -283,6 +278,8 @@ class Daemon( object ):
         if out :
             logger.info( out )
         if not err and not out :
+            while self.is_alive() :
+                time.sleep(1)
             logger.info( "  OK" )
 
     def clear( self ):
@@ -306,6 +303,51 @@ class Resource( object ):
     def __init__( self , config ):
         self.config = config
 
+    def create_vms(self):
+        """
+        Creates a virtual machine with the information given through the resources.conf and cloudsetup.json files
+        """
+        self.check( )
+        for resname, resdict in self.config.resources.items():
+            if resdict[ 'lrms' ] in ['fedcloud']:
+                fedcloud.manage_instances('start', resname, resdict)
+
+    def destroy_vms(self):
+        """
+        Destroy running virtual machines
+        """
+        self.check( )
+        for resname, resdict in self.config.resources.items():
+            if resdict[ 'lrms' ] in ['fedcloud']:
+                fedcloud.manage_instances('stop', resname, resdict)
+
+    def update_hosts(self):
+        """
+        Forces the host list to be updated
+        """
+        try:
+            GwImMad().do_DISCOVER("discover - - -", False)
+            #GwImMad().do_MONITOR("monitor 2 %s -" % resname)#, False)
+        except Exception as err:
+            logger.error( "Could not update hosts:\n%s" % str(err))
+
+    def list_resources(self):
+        """
+        List all resources, the ones configured by the user and the ones configured internally
+        For example, when creating cloud virtual machines
+        """
+        self.check( )
+        logger.info("Resources:")
+        for resname, resdict in self.config.resources.items():
+            logger.info("    "+str(resname))
+            logger.info("        communicator:  "+str(resdict['communicator']))
+            if 'username' in resdict.keys():
+                logger.info("        username:      "+str(resdict['username']))
+            logger.info("        frontend:      "+str(resdict['frontend']))
+            if 'private_key' in resdict.keys():
+                logger.info("        private key:   "+str(resdict['private_key']))
+            logger.info("        lrms:          "+str(resdict['lrms']))
+
     def check_frontends( self ) :
         """
         Check if the frontend of a given resource is reachable.
@@ -316,6 +358,10 @@ class Resource( object ):
             if resdict[ 'enable' ] == 'true' :
                 communicator = communicators.get( resname )
                 try :
+                    if resdict[ 'communicator' ] == 'op_ssh' :
+                        #it will use im's socket instead of creating a new one
+                        communicator.parent_module = 'im'
+                        communicator.configfile = join(DRM4G_DIR, 'etc', 'openssh_im.conf')
                     communicator.connect()
                     logger.info( "Resource '%s' :" % ( resname ) )
                     logger.info( "--> The front-end '%s' is accessible\n" % communicator.frontend )
@@ -338,6 +384,11 @@ class Resource( object ):
         self.check( )
         logger.info( "\033[1;4m%-20.20s%-20.20s\033[0m" % ('RESOURCE', 'STATE' ) )
         for resname, resdict in sorted( self.config.resources.items() ) :
+            # To ignore VMs created by the DRM4G, since they should appear as hosts, not resources
+            if '_' in resname:
+                first_half, _ = resname.rsplit('_',1)
+                if first_half in self.config.resources.keys() :
+                    continue
             if resdict[ 'enable' ] == 'true' :
                 state = 'enabled'
             else :
@@ -372,11 +423,11 @@ class Proxy( object ):
             self.prefix = "X509_USER_PROXY=%s MYPROXY_SERVER=%s %s" % (
                                                                  join( REMOTE_VOS_DIR , self.resource[ 'myproxy_server' ] ),
                                                                  self.resource[ 'myproxy_server' ],
-                                                                 "GT_PROXY_MODE=rfc" if self.resource[ "lrms" ] == "fedcloud" else ""
+                                                                 "GT_PROXY_MODE=rfc " if self.resource[ "lrms" ] == "fedcloud" else ""
                                                                  )
         else :
             self.prefix = "X509_USER_PROXY=%s/${MYPROXY_SERVER} %s" % ( REMOTE_VOS_DIR,
-                                                                        "GT_PROXY_MODE=rfc" if self.resource[ "lrms" ] == "fedcloud" else "" )
+                                                                        "GT_PROXY_MODE=rfc " if self.resource[ "lrms" ] == "fedcloud" else "" )
 
     def create( self , proxy_lifetime ):
         logger.info("--> Creating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR )
@@ -438,7 +489,7 @@ class Proxy( object ):
             if err :
                 raise Exception( err )
             logger.info( "--> Modifying usercert.pem permissions ... " )
-            cmd = "chmod 600 $HOME/.globus/usercert.pem"
+            cmd = "chmod 644 $HOME/.globus/usercert.pem"
             logger.debug( "Executing command ... " + cmd )
             out, err = self.communicator.execCommand( cmd )
             if err :

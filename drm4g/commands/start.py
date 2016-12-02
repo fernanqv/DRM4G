@@ -27,8 +27,8 @@ Usage:
 Options:
    --dbg    Debug mode.
 """
-__version__  = '2.5.1'
-__author__   = 'Carlos Blanco'
+__version__  = '2.6.0'
+__author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 import logging
