@@ -40,6 +40,7 @@ __revision__ = "$Id$"
 logger = logging.getLogger(__name__)
 
 cloud_setup_file = join(DRM4G_DIR, "etc", "cloudsetup.json")
+cloud_contextualisation_file = join(DRM4G_DIR, "etc", "cloud_config")
 generic_cloud_cfg = """
 #cloud-config
 users:
@@ -98,18 +99,26 @@ class Instance(object):
         if self.comm == "op_ssh":
             com_obj.parent_module = "rocci"
             com_obj.configfile = join(DRM4G_DIR,'etc','openssh_rocci.conf')
-        self.com_object=com_obj
+        self.com_object = com_obj
 
         self.proxy_file = join( REMOTE_VOS_DIR , "x509up.%s" ) % self.vo
 
-        cmd = "ls %s" % self.context_file #to check if it exists
+        '''
+        commented so that the context file created everytime
+        just in case the user changed something in the contextualisation file
+        #cmd = "ls %s" % self.context_file #to check if it exists
         out,err = self.com_object.execCommand( cmd )
         if err:
-            content= generic_cloud_cfg % (self.vm_user, self.vm_user, pub)
+        '''
+        with open( cloud_contextualisation_file, "r" ) as contex_file :
+            cloud_config = contex_file.read()
+            content = cloud_config % (self.vm_user, self.vm_user, pub)
+            logger.debug("Your contextualisation file:\n%s\n" % content)
+            #content = generic_cloud_cfg % (self.vm_user, self.vm_user, pub)
             cmd = "echo '%s' > %s" % (content, self.context_file)
-            out,err=self.com_object.execCommand( cmd )
+            out,err = self.com_object.execCommand( cmd )
             if err:
-                raise Exception("Wasnt't able to create the context file %s." % self.context_file + err)
+                raise Exception("Wasn't able to create the context file %s." % self.context_file + err)
 
         cmd = "ls %s" % self.proxy_file #to check if it exists
         out,err = self.com_object.execCommand( cmd )
