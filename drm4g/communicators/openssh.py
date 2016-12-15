@@ -123,8 +123,7 @@ class Communicator(drm4g.communicators.Communicator):
                         if err:
                             if "too long for Unix domain socket" in str(err) or "ControlPath too long" in str(err):
                                 logger.debug("Socket path was too long for Unix domain socket.\n    Creating sockets in ~/.ssh/dmr4g.\n    Exception captured in first_ssh.")
-                                Communicator.socket_dir = join(expanduser('~'), '.ssh/drm4g')
-                                self.createConfFiles()
+                                self._change_socket_dir()
                                 logger.debug("Calling first_ssh once again, but with a new socket_dir")
                                 first_ssh()
                             elif "disabling multiplexing" in str(err):
@@ -159,8 +158,7 @@ class Communicator(drm4g.communicators.Communicator):
         except Exception as excep :
             if "too long for Unix domain socket" in str(excep):
                 logger.debug("Socket path was too long for Unix domain socket.\n    Creating sockets in ~/.ssh/dmr4g.\n    Exception captured in connect's except.")
-                Communicator.socket_dir = join(expanduser('~'), '.ssh/drm4g')
-                self.createConfFiles()
+                self._change_socket_dir()
                 self.connect()
             else:
                 logger.error(str(excep))
@@ -243,6 +241,20 @@ class Communicator(drm4g.communicators.Communicator):
                 self.copy(source_url , destination_url)
             else:
                 logger.warning(str(excep))
+
+    def _change_socket_dir(self):
+        logger.debug("Running _change_socket_dir function from %s" % self.parent_module)
+        try:
+            if exists(Communicator.socket_dir):
+                os.rmdir(Communicator.socket_dir)
+        except OSError as excep:
+            if "No such file or directory" in str(excep):
+                logger.debug("The old socket directory %s has already been deleted" % Communicator.socket_dir)
+            else:
+                logger.warning(str(excep))
+        Communicator.socket_dir = join(expanduser('~'), '.ssh/drm4g')
+        self.createConfFiles()
+        logger.debug("Ending _change_socket_dir function from %s" % self.parent_module)
 
     def _delete_socket(self):
         try:
