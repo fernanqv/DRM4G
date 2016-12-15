@@ -39,7 +39,7 @@ __author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
 logger = logging.getLogger(__name__)
-pickled_file = os.path.join(DRM4G_DIR, "var", "fedcloud_pickled")
+pickled_file = os.path.join(DRM4G_DIR, "var", "rocci_pickled")
 
 class ConfigureException(Exception):
     pass
@@ -89,7 +89,7 @@ class Configuration(object):
                     logger.debug(" Reading configuration for resource '%s'." % name )
                     self.resources[ name ] = dict( parser.items( sectname ) )
 
-                    if self.resources[ name ][ 'lrms' ] == "fedcloud" :
+                    if self.resources[ name ][ 'lrms' ] == "rocci" :
                         if os.path.exists( os.path.join( pickled_file+"_"+name ) ):
                             try:
                                 instances = []
@@ -134,6 +134,7 @@ class Configuration(object):
         errors = []
         for resname, resdict in list(self.resources.items()) :
             logger.debug("Checking resource '%s' ..." % resname)
+
             reslist = list(resdict.keys( ))
             for key in reslist:
                 if key not in ['enable', 'communicator', 'username', 'frontend', 'private_key', 'public_key', 'scratch', 'lrms', 'queue', 'max_jobs_in_queue', 'max_jobs_running', 'parallel_env', 'project', 'vo', 'host_filter', 'bdii', 'myproxy_server', 'vm_user', 'vm_communicator', 'cloud', 'flavour', 'virtual_image', 'nodes', 'volume'] :
@@ -145,7 +146,7 @@ class Configuration(object):
                     output = "'%s' resource does not have '%s' key" % (resname, key)
                     logger.error( output )
                     errors.append( output )
-            if ( resdict[ 'lrms' ] == 'fedcloud' and not resdict.get( 'private_key' ) ) :
+            if ( resdict[ 'lrms' ] == 'rocci' and not resdict.get( 'private_key' ) ) :
                 output = "'private_key' key has not been defined for '%s' resource" % resname
                 logger.error( output )
                 errors.append( output )
@@ -222,9 +223,14 @@ class Configuration(object):
                     errors.append( output )
                 else :
                     self.resources[resname]['grid_cert'] = abs_grid_cert
+        '''
+        #This is quite redundant
+        #When running "drm4g resource edit", an exception appears if you have an error saying
+        #"Please, review your configuration file", that is thrown by drm4g/commands
         if errors:
             output="Modify your configuration file before trying again."
             logger.error( output )
+        '''
         return errors
 
     def make_communicators(self):

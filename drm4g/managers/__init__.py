@@ -117,7 +117,7 @@ class Resource (object):
         if 'vo' in self.features and self.features[ 'lrms' ] == 'cream' :
             self.host_list = self._hosts_vo( )
             return ' '.join( self.host_list )
-        elif 'cloud' in self.features and self.features[ 'lrms' ] == 'fedcloud' :
+        elif 'cloud' in self.features and self.features[ 'lrms' ] == 'rocci' :
             self.host_list = [ "" ]
             return ""
         else :

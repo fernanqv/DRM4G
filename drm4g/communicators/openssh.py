@@ -77,7 +77,7 @@ class Communicator(drm4g.communicators.Communicator):
             "    ControlPersist 10m\n"
             "    StrictHostKeyChecking no")
 
-        for manager in ['im', 'tm', 'em', 'fedcloud']:
+        for manager in ['im', 'tm', 'em', 'rocci']:
             with io.FileIO(join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % manager), 'w') as file:
                 file.write(conf_text % (Communicator.socket_dir, manager, '%r@%h:%p'))
         try:

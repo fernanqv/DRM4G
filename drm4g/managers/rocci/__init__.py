@@ -40,7 +40,7 @@ __version__  = '2.6.0'
 __author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
-pickled_file = join(DRM4G_DIR, "var", "fedcloud_pickled")
+pickled_file = join(DRM4G_DIR, "var", "rocci_pickled")
 
 lock = threading.RLock()
 
@@ -101,7 +101,8 @@ def manage_instances(args, resource_name, config):
         try:
             instance = eval( "hdpackage.Instance( config )" )
         except KeyError as err:
-            logger.error( "You have defined an incorrect value in your configuration file 'resources.conf':" )
+            logger.error( "Either you have defined an incorrect value in your configuration file 'resources.conf'" \
+                " or there's a value that doesn't correspond with any of the keys in your cloud setup file 'cloudsetup.json':" )
             raise
         except Exception as err:
             logger.error( "An error ocurred while trying to create a VM instance." )

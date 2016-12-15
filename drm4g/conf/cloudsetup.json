@@ -1,5 +1,5 @@
 { 
-  "fedcloud" : {
+  "rocci" : {
     "vo" : "fedcloud.egi.eu",
     "clouds" : {
       "EGI FedCloud - CESNET-METACLOUD" : {

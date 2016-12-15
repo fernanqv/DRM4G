@@ -85,7 +85,7 @@ RESOURCE_MANAGERS = {
                      "mnslurm"      : "drm4g.managers.marenostrum",
                      "slurm_res"    : "drm4g.managers.slurm_res",
                      "neptuno"      : "drm4g.managers.neptuno",
-                     "fedcloud"     : "drm4g.managers.fedcloud",
+                     "rocci"        : "drm4g.managers.rocci",
                      }
 
 

@@ -78,9 +78,9 @@ def run( arg ) :
             raise Exception( "'%s' is not a configured resource." % ( arg['<resource_name>'] ) )
         lrms         = config.resources.get( arg['<resource_name>'] )[ 'lrms' ]
         communicator = config.resources.get( arg['<resource_name>'] )[ 'communicator' ]
-        if lrms != 'cream' and lrms != 'fedcloud' and ( communicator != 'ssh' or communicator != 'op_ssh' ) :
+        if lrms != 'cream' and lrms != 'rocci' and ( communicator != 'ssh' or communicator != 'op_ssh' ) :
             raise Exception( "'%s' does not have an identity to configure." % ( arg['<resource_name>'] ) )
-        if lrms == 'cream' or lrms == 'fedcloud' :
+        if lrms == 'cream' or lrms == 'rocci' :
             comm = config.make_communicators()[ arg['<resource_name>'] ]
             if communicator == 'op_ssh' :
                 #comm.parent_module = 'id'
@@ -103,18 +103,18 @@ def run( arg ) :
                 agent.start( )
                 agent.add_key( arg[ '--lifetime' ] )
                 agent.copy_key( )
-            if lrms == 'cream' or lrms == 'fedcloud' :
+            if lrms == 'cream' or lrms == 'rocci' :
                 proxy.configure( )
                 proxy.create( arg[ '--lifetime' ] )
         elif arg[ 'delete' ] :
-            if lrms == 'cream' or lrms == 'fedcloud' :
+            if lrms == 'cream' or lrms == 'rocci' :
                 proxy.destroy( )
             if communicator != 'local' :
                 agent.delete_key( )
         else :
             if communicator != 'local' :
                 agent.list_key( )
-            if lrms == 'cream' or lrms == 'fedcloud' :
+            if lrms == 'cream' or lrms == 'rocci' :
                 proxy.check( )
     except Exception as err :
         logger.error( str( err ) )
