@@ -82,7 +82,7 @@ class Instance(object):
             logger.error( "Error reading the cloud setup file: " + str( err ) )
 
         infra_cfg = cloud_setup[ basic_data['lrms'] ]
-        cloud_cfg = infra_cfg.clouds[ basic_data['cloud'] ]
+        cloud_cfg = infra_cfg.cloud_providers[ basic_data['cloud_provider'] ]
         self.vo = infra_cfg.vo
         self.endpoint = cloud_cfg[ "endpoint" ]
         self.flavour = cloud_cfg[ "flavours" ][ basic_data['flavour'] ]

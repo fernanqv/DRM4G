@@ -137,7 +137,7 @@ class Configuration(object):
 
             reslist = list(resdict.keys( ))
             for key in reslist:
-                if key not in ['enable', 'communicator', 'username', 'frontend', 'private_key', 'public_key', 'scratch', 'lrms', 'queue', 'max_jobs_in_queue', 'max_jobs_running', 'parallel_env', 'project', 'vo', 'host_filter', 'bdii', 'myproxy_server', 'vm_user', 'vm_communicator', 'cloud', 'flavour', 'virtual_image', 'nodes', 'volume'] :
+                if key not in ['enable', 'communicator', 'username', 'frontend', 'private_key', 'public_key', 'scratch', 'lrms', 'queue', 'max_jobs_in_queue', 'max_jobs_running', 'parallel_env', 'project', 'vo', 'host_filter', 'bdii', 'myproxy_server', 'vm_user', 'vm_communicator', 'cloud_provider', 'flavour', 'virtual_image', 'instances', 'volume'] :
                     output = "'%s' resource has an invalid key : '%s'" % (resname, key)
                     logger.error( output )
                     errors.append( output )

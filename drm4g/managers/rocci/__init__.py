@@ -107,7 +107,7 @@ def manage_instances(args, resource_name, config):
         except Exception as err:
             logger.error( "An error ocurred while trying to create a VM instance." )
             raise
-        for number_of_th in range( int(config['nodes']) ):
+        for number_of_th in range( int(config['instances']) ):
             th = threading.Thread( target = start_instance, args = ( instance, resource_name, ) )
             th.start()
             threads.append( th )
@@ -157,10 +157,10 @@ class ClusterSetup(object):
 class CloudSetup(object):
 
     def __init__(self, name, features = {}):
-        self.name     = name
-        self.vo       = features.get( "vo" )
-        self.url      = features.get( "url" )
-        self.clouds   = features.get( "clouds" )
+        self.name             = name
+        self.vo               = features.get( "vo" )
+        #self.url              = features.get( "url" )
+        self.cloud_providers  = features.get( "cloud_providers" )
 
 #NOT USING THIS CLASS
 class ClusterBasicData(object):
