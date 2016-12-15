@@ -28,7 +28,7 @@ Arguments:
     <hid>         Host identifier.
 
 Options:
-    --dbg         Debug mode.
+    -d --debug         Debug mode.
 
 Host field information:
     HID           Host identifier.
@@ -51,8 +51,8 @@ from drm4g                import logger
 from drm4g.commands       import exec_cmd, Daemon
 
 def run( arg ):
-    if arg[ '--dbg' ] :
-        logger.setLevel(logging.DEBUG)
+    #if arg[ '--dbg' ] :
+    #    logger.setLevel(logging.DEBUG)
     try :
         daemon = Daemon()
         if not daemon.is_alive() :

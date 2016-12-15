@@ -25,7 +25,7 @@ Usage:
     drm4g clear [ options ]
 
 Options:
-   --dbg    Debug mode.
+   -d --debug    Debug mode.
 """
 __version__  = '2.6.0'
 __author__   = 'Carlos Blanco'
@@ -38,8 +38,6 @@ from drm4g.commands       import Daemon
 
 def run( arg ) :
     try:
-        if arg[ '--dbg' ] :
-            logger.setLevel(logging.DEBUG)
         daemon = Daemon()
         daemon.stop()
         sleep( 2.0 )

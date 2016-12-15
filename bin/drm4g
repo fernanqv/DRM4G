@@ -28,9 +28,9 @@ Usage: drm4g [ --version ] [ --help ]
              <command> [ options ] [ <args>... ]
 
 Options:
-    -h --help  Show help.
-    --version  Show version.
-    --dbg      Debug mode.
+    -h --help     Show help.
+    -v --version  Show version.
+    -d --debug    Debug mode.
 
 drm4g commands are:
    start       Start DRM4G daemon and ssh-agent
@@ -52,6 +52,7 @@ __revision__ = "$Id$"
 
 from docopt import docopt
 from difflib import get_close_matches
+import logging
 
 commands_list = [
     'start',
@@ -89,6 +90,8 @@ if __name__ == "__main__":
     if args['<command>'] in commands_list :
         command = getattr( __import__( "drm4g.commands.%s" %  args['<command>'] ).commands, args['<command>'] )
         arg = docopt( command.__doc__ , argv = argv )
+        if arg[ '--debug' ] :
+            command.logger.setLevel(logging.DEBUG)
         command.run( arg )
     else:
         cmd_name=args['<command>']

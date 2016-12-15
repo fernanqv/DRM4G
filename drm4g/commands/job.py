@@ -36,7 +36,7 @@ Arguments:
 Options:
     --ntasks <total_tasks> Number of tasks to submit.
     --dep=<job_id> ...     Define the job dependency list of the job.
-    --dbg                  Debug mode.
+    -d --debug             Debug mode.
 
 Commands:
     submit                 Command for submitting jobs.
@@ -74,8 +74,6 @@ from drm4g                import DRM4G_DIR, logger
 from drm4g.commands       import exec_cmd, Daemon
 
 def run( arg ) :
-    if arg[ '--dbg' ] :
-        logger.setLevel(logging.DEBUG)
     try :
         daemon = Daemon( )
         if not daemon.is_alive() :

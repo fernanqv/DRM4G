@@ -29,7 +29,7 @@ Usage:
 
  Options:
     -l --lifetime=<hours>   Duration of the identity's lifetime [default: 168].
-    --dbg                   Debug mode.
+    -d --debug              Debug mode.
 
 Commands:
 
@@ -64,8 +64,6 @@ from drm4g.commands       import exec_cmd, Daemon, Agent, Proxy
 from drm4g                import logger, DRM4G_DIR
 
 def run( arg ) :
-    if arg[ '--dbg' ] :
-        logger.setLevel(logging.DEBUG)
     try :
         daemon = Daemon()
         if not daemon.is_alive() :
