@@ -280,7 +280,7 @@ class GwEmMad (object):
                     self.logger.error ( ' '.join( errors ) )
                     raise Exception ( ' '.join( errors ) )
             for resname, resdict in list( self._configure.resources.items() ) :
-                if  'cloud' in self._configure.resources[ resname ].keys():
+                if  'cloud_provider' in self._configure.resources[ resname ].keys():
                     continue
                 if '::' in host :
                     _resname , _ = host.split( '::' )

@@ -40,7 +40,7 @@ __revision__ = "$Id$"
 logger = logging.getLogger(__name__)
 
 cloud_setup_file = join(DRM4G_DIR, "etc", "cloudsetup.json")
-cloud_contextualisation_file = join(DRM4G_DIR, "etc", "cloud_config")
+cloud_contextualisation_file = join(DRM4G_DIR, "etc", "cloud_config.conf")
 generic_cloud_cfg = """
 #cloud-config
 users:

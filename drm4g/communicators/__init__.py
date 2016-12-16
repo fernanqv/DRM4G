@@ -103,12 +103,3 @@ class Communicator(object):
         Close the connection.
         """
         pass
-
-    def checkOutLock(self, destination_url):
-        """
-        @param destination_url: url of the folder to check out if .lock file exists
-        @type destination_url: string
-        @return: False, if .lock file do not exist or True, if It exists
-        @rtype: boolean
-        """
-        pass

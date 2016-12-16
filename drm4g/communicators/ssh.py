@@ -83,7 +83,7 @@ class Communicator(drm4g.communicators.Communicator):
                                 logger.warning( "ssh-agent is running but none of the keys have been accepted"
                                 "by remote frontend %s." % self.frontend )
                             else:
-                                logger.warning( "'ssh-agent' is running but without any keys" )
+                                logger.debug( "'ssh-agent' is running but without any keys" )
                     if self.private_key :
                         logger.debug("Trying '%s' key ... " % self.private_key )
                         private_key_path = expanduser( self.private_key )
@@ -183,12 +183,6 @@ class Communicator(drm4g.communicators.Communicator):
                 logger.warning( "%s , %s" %  (from_dir, to_dir  ))
                 scp.get( from_dir, to_dir )
 
-    def checkOutLock(self, url):
-        to_dir = self._set_dir( urlparse( url ).path )
-        stdout, stderr = self.execCommand( "ls %s/.lock" % to_dir )
-        if stderr:
-            return False
-        return True
 
     def close( self ) :
         try :
