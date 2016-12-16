@@ -71,7 +71,7 @@ class Instance(object):
         self.max_jobs_running = basic_data['max_jobs_running']
         self.vm_comm = basic_data.get('vm_communicator', self.comm)
         if self.vm_comm == 'local':
-            self.vm_comm = 'ssh'
+            self.vm_comm = 'pk_ssh'
         pub = read_key( self.private_key + ".pub" )
 
         try :

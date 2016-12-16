@@ -76,7 +76,7 @@ def run( arg ) :
             raise Exception( "'%s' is not a configured resource." % ( arg['<resource_name>'] ) )
         lrms         = config.resources.get( arg['<resource_name>'] )[ 'lrms' ]
         communicator = config.resources.get( arg['<resource_name>'] )[ 'communicator' ]
-        if lrms != 'cream' and lrms != 'rocci' and ( communicator != 'ssh' or communicator != 'op_ssh' ) :
+        if lrms != 'cream' and lrms != 'rocci' and ( communicator != 'pk_ssh' or communicator != 'op_ssh' ) :
             raise Exception( "'%s' does not have an identity to configure." % ( arg['<resource_name>'] ) )
         if lrms == 'cream' or lrms == 'rocci' :
             comm = config.make_communicators()[ arg['<resource_name>'] ]
@@ -84,8 +84,8 @@ def run( arg ) :
                 #comm.parent_module = 'id'
                 #comm.configfile = join(DRM4G_DIR,'etc','openssh_id.conf')
                 #paramiko will always be used to renew the grid certificate
-                communicator = 'ssh'
-                config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'ssh'
+                communicator = 'pk_ssh'
+                config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'pk_ssh'
                 comm = config.make_communicators()[ arg['<resource_name>'] ]
                 #~logger.debug( "COMMUNICATOR IS %s" % comm.communicator )
                 #config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'op_ssh'
