@@ -40,7 +40,7 @@ __revision__ = "$Id$"
 logger = logging.getLogger(__name__)
 
 cloud_setup_file = join(DRM4G_DIR, "etc", "cloudsetup.json")
-cloud_contextualisation_file = join(DRM4G_DIR, "etc", "cloud_config.conf")
+#cloud_contextualisation_file = join(DRM4G_DIR, "etc", "cloud_config.conf")
 generic_cloud_cfg = """
 #cloud-config
 users:
@@ -67,6 +67,7 @@ class Instance(object):
         self.private_key = expanduser(basic_data['private_key'])
         self.context_file = basename(self.private_key)+".login"
         self.vm_user = basic_data.get('vm_user', 'drm4g_admin')
+        self.cloud_contextualisation_file = basic_data.get('vm_config', join(DRM4G_DIR, "etc", "cloud_config.conf"))
         self.comm = basic_data[ 'communicator' ]
         self.max_jobs_running = basic_data['max_jobs_running']
         self.vm_comm = basic_data.get('vm_communicator', self.comm)
@@ -110,10 +111,13 @@ class Instance(object):
         out,err = self.com_object.execCommand( cmd )
         if err:
         '''
-        with open( cloud_contextualisation_file, "r" ) as contex_file :
+        with open( self.cloud_contextualisation_file, "r" ) as contex_file :
             cloud_config = contex_file.read()
-            content = cloud_config % (self.vm_user, self.vm_user, pub)
-            logger.debug("Your contextualisation file:\n%s\n" % content)
+            if 'vm_config' not in basic_data.keys():
+                content = cloud_config % (self.vm_user, self.vm_user, pub)
+            else:
+                content = cloud_config
+            logger.debug("Your contextualisation file %s :\n%s\n" % (self.cloud_contextualisation_file, content))
             #content = generic_cloud_cfg % (self.vm_user, self.vm_user, pub)
             cmd = "echo '%s' > %s" % (content, self.context_file)
             out,err = self.com_object.execCommand( cmd )
