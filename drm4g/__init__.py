@@ -20,7 +20,7 @@
 
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
-__version__  = '2.6.0'
+__version__  = '2.6.1'
 __author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
