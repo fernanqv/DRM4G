@@ -18,9 +18,6 @@
 # permissions and limitations under the Licence.
 #
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
 
 scheme   = None
 netloc   = None

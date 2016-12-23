@@ -21,9 +21,6 @@
 import logging
 from drm4g import REMOTE_JOBS_DIR, SSH_PORT
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
 
 logger  = logging.getLogger(__name__)
 
@@ -101,14 +98,5 @@ class Communicator(object):
     def close(self):
         """
         Close the connection.
-        """
-        pass
-
-    def checkOutLock(self, destination_url):
-        """
-        @param destination_url: url of the folder to check out if .lock file exists
-        @type destination_url: string
-        @return: False, if .lock file do not exist or True, if It exists
-        @rtype: boolean
         """
         pass

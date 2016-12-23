@@ -39,6 +39,8 @@ HOME              = os.environ.get( 'HOME' )
 DRM4G_DIR         = os.environ[ 'GW_LOCATION' ] = join ( os.environ.get( 'DRM4G_DIR' , HOME ), '.drm4g' )
 DRM4G_CONFIG_FILE = join( DRM4G_DIR , 'etc' , 'resources.conf' )
 DRM4G_LOGGER      = join( DRM4G_DIR , 'etc' , 'logger.conf')
+DRM4G_DAEMON      = join( DRM4G_DIR , 'etc' , 'gwd.conf')
+DRM4G_SCHED       = join( DRM4G_DIR , 'etc' , 'sched.conf')
 
 ##
 # Configure logger
@@ -69,7 +71,7 @@ SFTP_CONNECTIONS    = 3
 PROXY_THRESHOLD     = 178 # Proxy threshold in hours.
 
 COMMUNICATORS = {
-                 "ssh"    : "drm4g.communicators.ssh",
+                 "pk_ssh"    : "drm4g.communicators.ssh",
                  "op_ssh" : "drm4g.communicators.openssh",
                  "local"  : "drm4g.communicators.local",
                  }
@@ -85,7 +87,7 @@ RESOURCE_MANAGERS = {
                      "mnslurm"      : "drm4g.managers.marenostrum",
                      "slurm_res"    : "drm4g.managers.slurm_res",
                      "neptuno"      : "drm4g.managers.neptuno",
-                     "fedcloud"     : "drm4g.managers.fedcloud",
+                     "rocci"        : "drm4g.managers.rocci",
                      }
 
 

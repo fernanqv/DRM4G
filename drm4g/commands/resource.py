@@ -25,7 +25,7 @@ Usage:
     drm4g resource [ list [ --all ] | edit | check | create | destroy ] [ options ]
 
  Options:
-    --dbg                   Debug mode.
+    -d --debug              Debug mode.
     --all                   Lists all of the created resources.
 
 Commands:
@@ -35,9 +35,6 @@ Commands:
     create                  Create new virtual machines
     destroy                 Delete all virtual machines
 """
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 import logging
 from drm4g                import logger
@@ -45,8 +42,6 @@ from drm4g.core.configure import Configuration
 from drm4g.commands       import exec_cmd, Daemon, Resource
 
 def run( arg ) :
-    if arg[ '--dbg' ] :
-        logger.setLevel(logging.DEBUG)
     try :
         config = Configuration()
         resource = Resource( config )

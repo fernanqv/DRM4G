@@ -24,9 +24,6 @@ import logging
 import subprocess
 from distutils import spawn
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
 
 r = re.compile(r'[:,\s]') # match whitespac, coma or :
 

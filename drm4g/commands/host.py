@@ -28,7 +28,7 @@ Arguments:
     <hid>         Host identifier.
 
 Options:
-    --dbg         Debug mode.
+    -d --debug         Debug mode.
 
 Host field information:
     HID           Host identifier.
@@ -42,17 +42,14 @@ Host field information:
     MAXR          Max. running jobs.
     MAXQ          Max. queued jobs.
 """
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
 
 import logging
 from drm4g                import logger
 from drm4g.commands       import exec_cmd, Daemon
 
 def run( arg ):
-    if arg[ '--dbg' ] :
-        logger.setLevel(logging.DEBUG)
+    #if arg[ '--dbg' ] :
+    #    logger.setLevel(logging.DEBUG)
     try :
         daemon = Daemon()
         if not daemon.is_alive() :

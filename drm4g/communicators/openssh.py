@@ -40,9 +40,6 @@ from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT, DRM4G_
 from drm4g.utils.url        import urlparse
 from openssh_wrapper import SSHConnection
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 class Communicator(drm4g.communicators.Communicator):
     """
@@ -77,7 +74,7 @@ class Communicator(drm4g.communicators.Communicator):
             "    ControlPersist 10m\n"
             "    StrictHostKeyChecking no")
 
-        for manager in ['im', 'tm', 'em', 'fedcloud']:
+        for manager in ['im', 'tm', 'em', 'rocci']:
             with io.FileIO(join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % manager), 'w') as file:
                 file.write(conf_text % (Communicator.socket_dir, manager, '%r@%h:%p'))
         try:
@@ -123,8 +120,7 @@ class Communicator(drm4g.communicators.Communicator):
                         if err:
                             if "too long for Unix domain socket" in str(err) or "ControlPath too long" in str(err):
                                 logger.debug("Socket path was too long for Unix domain socket.\n    Creating sockets in ~/.ssh/dmr4g.\n    Exception captured in first_ssh.")
-                                Communicator.socket_dir = join(expanduser('~'), '.ssh/drm4g')
-                                self.createConfFiles()
+                                self._change_socket_dir()
                                 logger.debug("Calling first_ssh once again, but with a new socket_dir")
                                 first_ssh()
                             elif "disabling multiplexing" in str(err):
@@ -159,8 +155,7 @@ class Communicator(drm4g.communicators.Communicator):
         except Exception as excep :
             if "too long for Unix domain socket" in str(excep):
                 logger.debug("Socket path was too long for Unix domain socket.\n    Creating sockets in ~/.ssh/dmr4g.\n    Exception captured in connect's except.")
-                Communicator.socket_dir = join(expanduser('~'), '.ssh/drm4g')
-                self.createConfFiles()
+                self._change_socket_dir()
                 self.connect()
             else:
                 logger.error(str(excep))
@@ -243,6 +238,20 @@ class Communicator(drm4g.communicators.Communicator):
                 self.copy(source_url , destination_url)
             else:
                 logger.warning(str(excep))
+
+    def _change_socket_dir(self):
+        logger.debug("Running _change_socket_dir function from %s" % self.parent_module)
+        try:
+            if exists(Communicator.socket_dir):
+                os.rmdir(Communicator.socket_dir)
+        except OSError as excep:
+            if "No such file or directory" in str(excep):
+                logger.debug("The old socket directory %s has already been deleted" % Communicator.socket_dir)
+            else:
+                logger.warning(str(excep))
+        Communicator.socket_dir = join(expanduser('~'), '.ssh/drm4g')
+        self.createConfFiles()
+        logger.debug("Ending _change_socket_dir function from %s" % self.parent_module)
 
     def _delete_socket(self):
         try:
