@@ -1,7 +1,7 @@
 { 
-  "fedcloud" : {
+  "rocci" : {
     "vo" : "fedcloud.egi.eu",
-    "clouds" : {
+    "cloud_providers" : {
       "EGI FedCloud - CESNET-METACLOUD" : {
         "endpoint" : "https://carach5.ics.muni.cz:11443",
         "apps" : { 

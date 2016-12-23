@@ -20,9 +20,6 @@
 
 import threading
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
 
 class List (object):
     """

@@ -36,7 +36,7 @@ Arguments:
 Options:
     --ntasks <total_tasks> Number of tasks to submit.
     --dep=<job_id> ...     Define the job dependency list of the job.
-    --dbg                  Debug mode.
+    -d --debug             Debug mode.
 
 Commands:
     submit                 Command for submitting jobs.
@@ -64,9 +64,6 @@ Job field information:
     REASON                 The reason why the job left this host.
     QUEUE                  Queue name.
 """
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
 
 import logging
 from os.path              import join, exists
@@ -74,8 +71,6 @@ from drm4g                import DRM4G_DIR, logger
 from drm4g.commands       import exec_cmd, Daemon
 
 def run( arg ) :
-    if arg[ '--dbg' ] :
-        logger.setLevel(logging.DEBUG)
     try :
         daemon = Daemon( )
         if not daemon.is_alive() :

@@ -26,9 +26,6 @@ from os.path         import basename , dirname , exists, join
 from drm4g           import REMOTE_VOS_DIR
 from drm4g.managers  import JobException
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
 
 logger = logging.getLogger(__name__)
 

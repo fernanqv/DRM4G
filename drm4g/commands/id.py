@@ -29,7 +29,7 @@ Usage:
 
  Options:
     -l --lifetime=<hours>   Duration of the identity's lifetime [default: 168].
-    --dbg                   Debug mode.
+    -d --debug              Debug mode.
 
 Commands:
 
@@ -53,9 +53,6 @@ Commands:
     delete                  Remove the identity from the ssh-agent and the
                             myproxy server.
 """
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 import logging
 from os.path              import expanduser, exists, expandvars, join
@@ -64,8 +61,6 @@ from drm4g.commands       import exec_cmd, Daemon, Agent, Proxy
 from drm4g                import logger, DRM4G_DIR
 
 def run( arg ) :
-    if arg[ '--dbg' ] :
-        logger.setLevel(logging.DEBUG)
     try :
         daemon = Daemon()
         if not daemon.is_alive() :
@@ -78,16 +73,16 @@ def run( arg ) :
             raise Exception( "'%s' is not a configured resource." % ( arg['<resource_name>'] ) )
         lrms         = config.resources.get( arg['<resource_name>'] )[ 'lrms' ]
         communicator = config.resources.get( arg['<resource_name>'] )[ 'communicator' ]
-        if lrms != 'cream' and lrms != 'fedcloud' and ( communicator != 'ssh' or communicator != 'op_ssh' ) :
+        if lrms != 'cream' and lrms != 'rocci' and ( communicator != 'pk_ssh' or communicator != 'op_ssh' ) :
             raise Exception( "'%s' does not have an identity to configure." % ( arg['<resource_name>'] ) )
-        if lrms == 'cream' or lrms == 'fedcloud' :
+        if lrms == 'cream' or lrms == 'rocci' :
             comm = config.make_communicators()[ arg['<resource_name>'] ]
             if communicator == 'op_ssh' :
                 #comm.parent_module = 'id'
                 #comm.configfile = join(DRM4G_DIR,'etc','openssh_id.conf')
                 #paramiko will always be used to renew the grid certificate
-                communicator = 'ssh'
-                config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'ssh'
+                communicator = 'pk_ssh'
+                config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'pk_ssh'
                 comm = config.make_communicators()[ arg['<resource_name>'] ]
                 #~logger.debug( "COMMUNICATOR IS %s" % comm.communicator )
                 #config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'op_ssh'
@@ -103,18 +98,18 @@ def run( arg ) :
                 agent.start( )
                 agent.add_key( arg[ '--lifetime' ] )
                 agent.copy_key( )
-            if lrms == 'cream' or lrms == 'fedcloud' :
+            if lrms == 'cream' or lrms == 'rocci' :
                 proxy.configure( )
                 proxy.create( arg[ '--lifetime' ] )
         elif arg[ 'delete' ] :
-            if lrms == 'cream' or lrms == 'fedcloud' :
+            if lrms == 'cream' or lrms == 'rocci' :
                 proxy.destroy( )
             if communicator != 'local' :
                 agent.delete_key( )
         else :
             if communicator != 'local' :
                 agent.list_key( )
-            if lrms == 'cream' or lrms == 'fedcloud' :
+            if lrms == 'cream' or lrms == 'rocci' :
                 proxy.check( )
     except Exception as err :
         logger.error( str( err ) )

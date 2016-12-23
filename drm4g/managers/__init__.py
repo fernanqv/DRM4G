@@ -26,9 +26,6 @@ import logging
 import pickle
 from drm4g                 import DRM4G_DIR
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +114,7 @@ class Resource (object):
         if 'vo' in self.features and self.features[ 'lrms' ] == 'cream' :
             self.host_list = self._hosts_vo( )
             return ' '.join( self.host_list )
-        elif 'cloud' in self.features and self.features[ 'lrms' ] == 'fedcloud' :
+        elif 'cloud_provider' in self.features and self.features[ 'lrms' ] == 'rocci' :
             self.host_list = [ "" ]
             return ""
         else :
