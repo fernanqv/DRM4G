@@ -20,9 +20,6 @@
 
 import xml.dom.minidom
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
 
 class Rsl2Parser(object):
 

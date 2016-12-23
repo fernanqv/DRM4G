@@ -29,9 +29,6 @@ from drm4g.core.configure  import Configuration
 from drm4g.utils.message   import Send
 from drm4g                 import DRM4G_DIR
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 class GwTmMad (object):
     """

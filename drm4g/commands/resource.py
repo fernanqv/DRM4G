@@ -35,9 +35,6 @@ Commands:
     create                  Create new virtual machines
     destroy                 Delete all virtual machines
 """
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 import logging
 from drm4g                import logger

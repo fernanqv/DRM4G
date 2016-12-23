@@ -40,9 +40,6 @@ from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT, DRM4G_
 from drm4g.utils.url        import urlparse
 from openssh_wrapper import SSHConnection
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 class Communicator(drm4g.communicators.Communicator):
     """

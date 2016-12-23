@@ -26,9 +26,6 @@ import logging
 import pickle
 from drm4g                 import DRM4G_DIR
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 logger = logging.getLogger(__name__)
 

@@ -34,9 +34,6 @@ try :
 except ImportError :
     import ConfigParser as configparser
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 logger = logging.getLogger(__name__)
 pickled_file = os.path.join(DRM4G_DIR, "var", "rocci_pickled")

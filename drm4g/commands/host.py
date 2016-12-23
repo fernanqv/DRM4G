@@ -42,9 +42,6 @@ Host field information:
     MAXR          Max. running jobs.
     MAXQ          Max. queued jobs.
 """
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
 
 import logging
 from drm4g                import logger

@@ -27,9 +27,6 @@ Usage:
 Options:
    -d --debug    Debug mode.
 """
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 import logging
 from drm4g                import logger

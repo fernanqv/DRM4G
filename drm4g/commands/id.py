@@ -53,9 +53,6 @@ Commands:
     delete                  Remove the identity from the ssh-agent and the
                             myproxy server.
 """
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 import logging
 from os.path              import expanduser, exists, expandvars, join

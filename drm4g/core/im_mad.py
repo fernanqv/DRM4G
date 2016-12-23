@@ -27,9 +27,6 @@ from drm4g.core.configure  import Configuration
 from drm4g.managers        import HostInformation
 from drm4g.utils.message   import Send
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 class GwImMad (object):
     """

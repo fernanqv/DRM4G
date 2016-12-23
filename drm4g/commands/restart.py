@@ -27,9 +27,6 @@ Usage:
 Options:
    -d --debug    Debug mode.
 """
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
 
 import logging
 from time                 import sleep

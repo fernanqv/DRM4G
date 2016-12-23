@@ -33,9 +33,6 @@ from drm4g.managers    import rocci
 from drm4g.core.im_mad import GwImMad
 from os.path           import expanduser, join, dirname, exists, basename, expandvars
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 PY2 = sys.version_info[0] == 2
 
