@@ -73,7 +73,7 @@ def run( arg ) :
             raise Exception( "'%s' is not a configured resource." % ( arg['<resource_name>'] ) )
         lrms         = config.resources.get( arg['<resource_name>'] )[ 'lrms' ]
         communicator = config.resources.get( arg['<resource_name>'] )[ 'communicator' ]
-        if lrms != 'cream' and lrms != 'rocci' and ( communicator != 'pk_ssh' or communicator != 'op_ssh' ) :
+        if lrms != 'cream' and lrms != 'rocci' and communicator == 'local' :
             raise Exception( "'%s' does not have an identity to configure." % ( arg['<resource_name>'] ) )
         if lrms == 'cream' or lrms == 'rocci' :
             comm = config.make_communicators()[ arg['<resource_name>'] ]
