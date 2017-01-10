@@ -201,6 +201,8 @@ gw_return_code_t gw_client_array_submit(char *         template,
  *      - GW_RC_FAILED_BAD_JOB_ID job does not exist.
  */
 
+gw_return_code_t gw_client_job_status_fd(int fd,int job_id, gw_msg_job_t *job_status);
+
 gw_return_code_t gw_client_job_status(int job_id, gw_msg_job_t *job_status);
 
 /** Obtains the status of the whole pool. This function updates the job_pool of the 
@@ -237,6 +239,12 @@ gw_return_code_t gw_client_job_status_all( );
  *        printed on stderr.
  *      - GW_RC_FAILED_BAD_JOB_ID job does not exist.
  */
+
+gw_return_code_t gw_client_job_history_fd(
+                                       int		   fd,
+                                       int                 job_id,
+                                       gw_msg_history_t ** history_list,
+                                       int *               num_records);
 
 gw_return_code_t gw_client_job_history(int                 job_id, 
                                        gw_msg_history_t ** history_list, 

@@ -44,6 +44,7 @@
 #include <signal.h>
 #include <string.h>
 
+
 /* ------------------------------------------------------------------------- */
 /* GLOBAL VARIABLES & TYPES                                                  */
 /* ------------------------------------------------------------------------- */
@@ -84,39 +85,38 @@ int main(int argc, char **argv)
   	
 	setup_args(argv, &av, &ac);
 	
-    opterr = 0;
-    optind = 1;
+    	opterr = 0;
+   	optind = 1;
 	
-    while((opt = getopt(ac, av, "h:u:c:s:")) != -1)
-        switch(opt)
-        {
-            case 'h': params.host_max = atoi(optarg);
-                break;
+    	while((opt = getopt(ac, av, "h:u:c:s:")) != -1)
+        	switch(opt)
+        	{
+            	case 'h': params.host_max = atoi(optarg);
+                	break;
 
-            case 'u': params.user_max = atoi(optarg);
-                break;
+            	case 'u': params.user_max = atoi(optarg);
+                	break;
                 
-            case 'c': params.user_chunk = atoi(optarg);
-                break;                
+            	case 'c': params.user_chunk = atoi(optarg);
+                	break;                
                 
-            case 's': params.sched_max = atoi(optarg);
-                break;                
+            	case 's': params.sched_max = atoi(optarg);
+                	break;                
                 
-      	}
+      		}
      
-     free(av);
+     	free(av);
 
-     gw_scheduler_loop(flood_scheduler, (void *)&params);
+     	gw_scheduler_loop(flood_scheduler, (void *)&params);
      
-     return 0;
+     	return 0;
 }
 
 /* ------------------------------------------------------------------------- */
 /* ------------------------------------------------------------------------- */
 /* ------------------------------------------------------------------------- */
 
-static void flood_scheduler (gw_scheduler_t * sched,
-							 void *           user_arg)
+static void flood_scheduler (gw_scheduler_t * sched, void * user_arg)
 {
 	sched_param_t * params;	
 	int             i;
@@ -136,10 +136,7 @@ static void flood_scheduler (gw_scheduler_t * sched,
 		
 		for ( i=0; i<sched->num_users; i++)
 		{
-			scheds = schedule_user (sched,
-						  			params,
-						  			sched->users[i].uid,
-						  			GW_FALSE);
+			scheds = schedule_user (sched, params, sched->users[i].uid, GW_FALSE);
 			if ( scheds > 0 )
 				end = 0;
 		}
@@ -153,10 +150,7 @@ static void flood_scheduler (gw_scheduler_t * sched,
 		
 		for ( i=0; i<sched->num_users; i++)
 		{
-			scheds = schedule_user(sched,
-						  		   params,
-						  		   sched->users[i].uid,
-						  		   GW_TRUE);
+			scheds = schedule_user(sched, params, sched->users[i].uid, GW_TRUE);
 			if ( scheds > 0 )
 				end = 0;
 		}
@@ -209,8 +203,8 @@ static int schedule_user (gw_scheduler_t * sched,
 	int u_id;
 	int h_id;
 	int remaining;
-    int not_schedule;
-    gw_migration_reason_t reason;
+    	int not_schedule;
+	gw_migration_reason_t reason;
     	
 	udsp = user_get_dispatched(uid,sched,&uusd);
 	
@@ -227,14 +221,14 @@ static int schedule_user (gw_scheduler_t * sched,
 	if (max_round <= 0)
 		return 0;
 	else if ( remaining <= 0)
-	    return 0;
+		return 0;
 	else if	( max_round < params->user_chunk)
 		rchunk = max_round;
 	else
 		rchunk = params->user_chunk;
 	
 	if (remaining < rchunk)
-	    rchunk = remaining;
+		rchunk = remaining;
 			
 	for (i=0,dsp=0; i<sched->num_jobs && (dsp<rchunk) && (i>=0);i++)
 	{
@@ -270,7 +264,7 @@ static int schedule_user (gw_scheduler_t * sched,
 			fslots = sched->jobs[i].mhosts[j].slots - *hdsp;
 				
 #ifdef GWSCHEDDEBUG
-            gw_scheduler_print('D',"\tHost (%s-%s) FSLOTS: %i  DSP:%i  USD:%i\n",
+            		gw_scheduler_print('D',"\tHost (%s-%s) FSLOTS: %i  DSP:%i  USD:%i\n",
                                    sched->hosts[h_id].name,
                                    sched->jobs[i].mhosts[j].qname,
                                    fslots,
@@ -289,14 +283,14 @@ static int schedule_user (gw_scheduler_t * sched,
 							sched->jobs[i].mhosts[j].qname,
 							sched->jobs[i].mhosts[j].rank);
 
-                gw_scheduler_print('I',"Job %i scheduled, host: %-30s queue: %-15s\n",
+                		gw_scheduler_print('I',"Job %i scheduled, host: %-30s queue: %-15s\n",
 							sched->jobs[i].jid,
 							sched->hosts[h_id].name,
 							sched->jobs[i].mhosts[j].qname);
                                        							
-                gw_scheduler_job_del(sched,sched->jobs[i].jid,1);
+                		gw_scheduler_job_del(sched,sched->jobs[i].jid,1);
                         
-                i = i - 1; /* Next job will be i, not i+1 */
+                		i = i - 1; /* Next job will be i, not i+1 */
 																					
 				break;	
 			 }

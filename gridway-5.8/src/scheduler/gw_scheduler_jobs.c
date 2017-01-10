@@ -211,7 +211,8 @@ static inline gw_boolean_t isinhistory(int                hid,
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-static int gw_scheduler_filter_select_queues(gw_scheduler_t * sched,
+static int gw_scheduler_filter_select_queues(int     	      fd,
+                                             gw_scheduler_t * sched,
                                              gw_sch_job_t *   job,
                                              gw_msg_match_t * match,    
                                              int              num,
@@ -289,7 +290,7 @@ static int gw_scheduler_filter_select_queues(gw_scheduler_t * sched,
         {
    	        if ( hlist == NULL )
     	    {
-    	        rc = gw_client_job_history(jid, &hlist, &hnum);	
+    	        rc = gw_client_job_history_fd(fd, jid, &hlist, &hnum);	
     	            
     	        if ( rc != GW_RC_SUCCESS )
     	        {
@@ -313,7 +314,7 @@ static int gw_scheduler_filter_select_queues(gw_scheduler_t * sched,
         {
    	        if ( hlist == NULL )
     	    {
-    	        rc = gw_client_job_history(jid, &hlist, &hnum);	
+    	        rc = gw_client_job_history_fd(fd, jid, &hlist, &hnum);	
     	            
     	        if ( rc != GW_RC_SUCCESS )
     	        {
@@ -422,7 +423,7 @@ static int gw_scheduler_filter_select_queues(gw_scheduler_t * sched,
 /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
 
-void gw_scheduler_matching_arrays(gw_scheduler_t * sched)
+void gw_scheduler_matching_arrays(int fd, gw_scheduler_t * sched)
 {    
     int              i,j,k,l,idx,tqs,jid,aid;
     int              last_array;
@@ -468,7 +469,7 @@ void gw_scheduler_matching_arrays(gw_scheduler_t * sched)
     			match = NULL;
     		}
     		
-		    rc = gw_client_match_job(jid,aid,&match,&num);
+		    rc = gw_client_match_job_fd(fd,jid,aid,&match,&num);
 
 			if ((rc != GW_RC_SUCCESS)||(num == 0))
 			{	    	
@@ -480,15 +481,15 @@ void gw_scheduler_matching_arrays(gw_scheduler_t * sched)
 			hosts = (int *) malloc (sizeof(int) * num);
 			memset((void *)hosts,0,sizeof(int) * num);
 
-		    /* ------------------------------- */
-		    /* Queue Filtering & Selection     */
+		   	/* ------------------------------- */
+		    	/* Queue Filtering & Selection     */
 			/* ------------------------------- */
 	            
-		    tqs = gw_scheduler_filter_select_queues(sched,
-        	                                    &(sched->jobs[i]),
-            	                                match,
-                	                            num,
-                    	                        hosts);
+		   	 tqs = gw_scheduler_filter_select_queues( fd,sched,
+        	                                	&(sched->jobs[i]),
+            	        	                        match,
+                	        	                num,
+                    	                	        hosts);
 
             /* ------------------------------- */
             /* Build the Matching Hosts Array  */
@@ -741,159 +742,153 @@ static inline int gw_scheduler_user_past_jobs(gw_sch_user_t *user, int depth)
 
 void gw_scheduler_job_policies (gw_scheduler_t * sched)
 {
-    int i;
-    int max_fixed    = 0;
-    int max_waiting  = 0;
-    int max_deadline = 0;
-    int max_share    = 0;
+	int i;
+	int max_fixed    = 0;
+    	int max_waiting  = 0;
+	int max_deadline = 0;
+    	int max_share    = 0;
     
-    int    total_jobs;
-    int    ujid;
-    int    share;
-    int    past_jobs;
-    div_t  q;
+    	int    total_jobs;
+    	int    ujid;
+    	int    share;
+    	int    past_jobs;
+    	div_t  q;
     
-    time_t the_time;
-    time_t Dt_w;
-    time_t Dt_d;
+    	time_t the_time;
+    	time_t Dt_w;
+    	time_t Dt_d;
 
-    float wfixed;
-    float wwaiting;
-    float wdeadline;    
-    float wshare;
-    float C_half;
+    	float wfixed;
+    	float wwaiting;
+    	float wdeadline;    
+    	float wshare;
+    	float C_half;
 
-    gw_msg_job_t   job_status;
-    gw_return_code_t      gwrc;  
-  
-    the_time  = time(NULL);
-    C_half    = -1.5 * sched->sch_conf.dl_half * 86400;
+    	the_time  = time(NULL);
+    	C_half    = -1.5 * sched->sch_conf.dl_half * 86400;
 
-    wfixed    = sched->sch_conf.wfixed;
-    wwaiting  = sched->sch_conf.wwaiting;
-    wdeadline = sched->sch_conf.wdeadline;
-    wshare    = sched->sch_conf.wshare;
+    	wfixed    = sched->sch_conf.wfixed;
+    	wwaiting  = sched->sch_conf.wwaiting;
+    	wdeadline = sched->sch_conf.wdeadline;
+    	wshare    = sched->sch_conf.wshare;
     
-    for (i=0; i<sched->num_jobs; i++)
-    {    	
-    	Dt_w = the_time - sched->jobs[i].schedule_time;
-		sched->jobs[i].waiting  = (int) Dt_w;
+    	for (i=0; i<sched->num_jobs; i++)
+    	{    	
+    		Dt_w = the_time - sched->jobs[i].schedule_time;
+			sched->jobs[i].waiting  = (int) Dt_w;
         
-        if ( sched->jobs[i].deadline_time != 0 )
-        {
-            Dt_d = sched->jobs[i].deadline_time - the_time;
+        	if ( sched->jobs[i].deadline_time != 0 )
+        	{
+            		Dt_d = sched->jobs[i].deadline_time - the_time;
         
-            if (Dt_d <= 0)
-                sched->jobs[i].deadline = 100;
-            else
-                sched->jobs[i].deadline = (int) 100 * exp(Dt_d/C_half);
-        }
-        else
-            sched->jobs[i].deadline = 0;
+            		if (Dt_d <= 0)
+                		sched->jobs[i].deadline = 100;
+            		else
+                		sched->jobs[i].deadline = (int) 100 * exp(Dt_d/C_half);
+        	}
+        	else
+            		sched->jobs[i].deadline = 0;
 	
-        //new_code
-        gwrc = gw_client_job_status(sched->jobs[i].jid, &job_status);
-        if ( gwrc == GW_RC_SUCCESS )
-             sched->jobs[i].fixed  = job_status.fixed_priority;
-
-    	if (sched->jobs[i].fixed > max_fixed)
-	    	max_fixed = sched->jobs[i].fixed;
+    		if (sched->jobs[i].fixed > max_fixed)
+	    		max_fixed = sched->jobs[i].fixed;
 	    	
-    	if (sched->jobs[i].waiting > max_waiting)
-	    	max_waiting = sched->jobs[i].waiting;
+    		if (sched->jobs[i].waiting > max_waiting)
+	    		max_waiting = sched->jobs[i].waiting;
 	    	
-    	if (sched->jobs[i].deadline > max_deadline)
-	    	max_deadline = sched->jobs[i].deadline;
-    }
+    		if (sched->jobs[i].deadline > max_deadline)
+	    		max_deadline = sched->jobs[i].deadline;
+    	}
     
-    for (i=0; i<sched->num_jobs; i++)
-    {   	
-    	if (max_fixed == 0)
-    		sched->jobs[i].nfixed = 0.0;
-    	else
-    		sched->jobs[i].nfixed = (float) sched->jobs[i].fixed /(float) max_fixed;
+    	for (i=0; i<sched->num_jobs; i++)
+    	{   	
+    		if (max_fixed == 0)
+    			sched->jobs[i].nfixed = 0.0;
+    		else
+    			sched->jobs[i].nfixed = (float) sched->jobs[i].fixed /(float) max_fixed;
     	
-    	if (max_waiting == 0)
-    		sched->jobs[i].nwaiting = 0.0;
-    	else
-    		sched->jobs[i].nwaiting = (float)sched->jobs[i].waiting/(float)max_waiting;
+    		if (max_waiting == 0)
+    			sched->jobs[i].nwaiting = 0.0;
+    		else
+    			sched->jobs[i].nwaiting = (float)sched->jobs[i].waiting/(float)max_waiting;
 
 		if (max_deadline == 0)
-    		sched->jobs[i].ndeadline = 0.0;
-    	else
-    		sched->jobs[i].ndeadline= (float)sched->jobs[i].deadline/(float)max_deadline;
+    			sched->jobs[i].ndeadline = 0.0;
+    		else
+    			sched->jobs[i].ndeadline= (float)sched->jobs[i].deadline/(float)max_deadline;
 
-    	sched->jobs[i].priority = (wfixed    * sched->jobs[i].nfixed)   +
-                                  (wwaiting  * sched->jobs[i].nwaiting) +
-                                  (wdeadline * sched->jobs[i].ndeadline);
-    }
+    		sched->jobs[i].priority = (wfixed    * sched->jobs[i].nfixed)   +
+                	                  (wwaiting  * sched->jobs[i].nwaiting) +
+                        	          (wdeadline * sched->jobs[i].ndeadline);
+    	}
 	
 	/* Pre-sort jobs according fixed, waiting and deadline policies */
 	
 	qsort(sched->jobs, sched->num_jobs, sizeof(gw_sch_job_t), job_cmp);
 
-    if ( wshare > 0 )
-    {
-        for (i=0; i<sched->num_users; i++)
-        {
-        	sched->users[i].share     = gw_sch_get_user_share(&(sched->sch_conf), 
-           	                                  sched->users[i].name);
+    	if ( wshare > 0 )
+    	{
+        	for (i=0; i<sched->num_users; i++)
+        	{
+        		sched->users[i].share     = gw_sch_get_user_share(&(sched->sch_conf), 
+           	        	                          sched->users[i].name);
 			past_jobs                 = gw_scheduler_user_past_jobs(&(sched->users[i]),
-		                                      sched->sch_conf.window_depth);
+		                	                  sched->sch_conf.window_depth);
 
-        	sched->users[i].next_ujid = past_jobs;
-        	total_jobs                = sched->users[i].total_jobs + past_jobs;
+        		sched->users[i].next_ujid = past_jobs;
+        		total_jobs                = sched->users[i].total_jobs + past_jobs;
 
-        	q = div(total_jobs - 1, sched->users[i].share);
+        		q = div(total_jobs - 1, sched->users[i].share);
         	
-        	if (q.quot > max_share )
-        		max_share = q.quot;
+	        	if (q.quot > max_share )
+        			max_share = q.quot;
         		
 #ifdef GWSCHEDDEBUG
 			gw_scheduler_print('D',"USER:%s, SHARE:%i, TJOBS:%i, MAX_SHARE:%i\n",
-			    sched->users[i].name,sched->users[i].share,total_jobs,max_share);
+			    	sched->users[i].name,sched->users[i].share,total_jobs,max_share);
 #endif 			
-        }
+        	}
         
 	 	if (max_share == 0)
-    		max_share = 1; 
+    			max_share = 1; 
                
-	    for (i=0; i<sched->num_jobs; i++)
-	    {
-	    	ujid  = sched->users[sched->jobs[i].ua_id].next_ujid++;
-	    	share = sched->users[sched->jobs[i].ua_id].share;
-	    	q     = div(ujid, share);
-	    	
-	    	sched->jobs[i].share  = max_share - q.quot;
+	    	for (i=0; i<sched->num_jobs; i++)
+	    	{
+	    		ujid  = sched->users[sched->jobs[i].ua_id].next_ujid++;
+	    		share = sched->users[sched->jobs[i].ua_id].share;
+	    		q     = div(ujid, share);
+
+	    		sched->jobs[i].share  = max_share - q.quot;
 	   		sched->jobs[i].nshare = (float)sched->jobs[i].share/(float)max_share;
    		    	
-	    	sched->jobs[i].priority = sched->jobs[i].priority + ( wshare * sched->jobs[i].nshare);
-	    }
+	    		sched->jobs[i].priority = sched->jobs[i].priority + ( wshare * sched->jobs[i].nshare);
+	    	}
 
 		qsort(sched->jobs, sched->num_jobs, sizeof(gw_sch_job_t), job_cmp);    
-    }
+    	}
 
+#ifdef GWSCHEDDEBUG
 	gw_scheduler_print('I',"-----------------------------------------------------------------\n");
 	gw_scheduler_print('I',"                     SCHEDULER JOB LIST\n");
 	gw_scheduler_print('I',"-----------------------------------------------------------------\n");
-    gw_scheduler_print('I',"%-3s %-9s %-6s %-5s %-6s %-5s %-6s %-5s %-6s %-5s\n",
-    	"JID","TOTAL    ","FP    ","NFP  ","SH    ","NSH  ","WT    ","NWT  ","DL    ","NDL  ");
+    	gw_scheduler_print('I',"%-3s %-9s %-6s %-5s %-6s %-5s %-6s %-5s %-6s %-5s\n",
+    		"JID","TOTAL    ","FP    ","NFP  ","SH    ","NSH  ","WT    ","NWT  ","DL    ","NDL  ");
 
-    gw_scheduler_print('I',"%-3s-%-9s-%-6s-%-5s-%-6s-%-5s-%-6s-%-5s-%-6s-%-5s\n",
-    	"---","---------","------","-----","------","-----","------","-----","------","-----");
+    	gw_scheduler_print('I',"%-3s-%-9s-%-6s-%-5s-%-6s-%-5s-%-6s-%-5s-%-6s-%-5s\n",
+    		"---","---------","------","-----","------","-----","------","-----","------","-----");
     
 	for (i=0; i<sched->num_jobs;i++)
 	{
-	    gw_scheduler_print('I',"%-3i %-9.2f %-6i %.3f %-6i %.3f %-6i %.3f %-6i %.3f\n",
-    	    sched->jobs[i].jid,
-    	    sched->jobs[i].priority,
-    	    sched->jobs[i].fixed,
-    	    sched->jobs[i].nfixed,
-    	    sched->jobs[i].share,
-    	    sched->jobs[i].nshare,
-    	    sched->jobs[i].waiting,
-    	    sched->jobs[i].nwaiting,
-    	    sched->jobs[i].deadline,
-    	    sched->jobs[i].ndeadline);
+		gw_scheduler_print('I',"%-3i %-9.2f %-6i %.3f %-6i %.3f %-6i %.3f %-6i %.3f\n",
+    	    	sched->jobs[i].jid,
+    	    	sched->jobs[i].priority,
+    	    	sched->jobs[i].fixed,
+    	    	sched->jobs[i].nfixed,
+    	    	sched->jobs[i].share,
+    	    	sched->jobs[i].nshare,
+    	    	sched->jobs[i].waiting,
+    	    	sched->jobs[i].nwaiting,
+    	    	sched->jobs[i].deadline,
+    	    	sched->jobs[i].ndeadline);
 	}
+#endif
 }
