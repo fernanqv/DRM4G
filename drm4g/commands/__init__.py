@@ -23,6 +23,7 @@ import os
 import sys
 import re
 import time
+import signal
 import getpass
 import logging
 import subprocess
@@ -222,7 +223,7 @@ class Agent( object ):
             else :
                 logger.info( "  OK" )
         else:
-            logger.warn( ' WARNING: ssh-agent is already stopped' )
+            logger.warn( '  WARNING: ssh-agent is already stopped' )
         try:
             os.remove( self.agent_file )
         except :
@@ -264,20 +265,21 @@ class Daemon( object ):
             if not err and not out :
                 logger.info( "  OK" )
         else :
-            logger.info( "  WARNING: DRM4G is already running." )
+            logger.info( "  WARNING: DRM4G is already running" )
 
     def stop( self ):
         logger.info( "Stopping DRM4G .... " )
         logger.debug( "Stopping gwd .... " )
-        out , err = exec_cmd( "%s -k" % ( "gwd" ) )
-        if err :
-            logger.info( err )
-        if out :
-            logger.info( out )
-        if not err and not out :
+        if self.is_alive():
+            with open(self.gwd_pid) as pid_file:
+                pid = next(pid_file)
+                os.kill( int(pid), signal.SIGTERM )
             while self.is_alive() :
                 time.sleep(1)
+            os.remove(self.gwd_pid)
             logger.info( "  OK" )
+        else:
+            logger.info("  WARNING: daemon is already stopped")
 
     def clear( self ):
         yes_choise = yes_no_choice( "Do you want to continue clearing DRM4G? " )
