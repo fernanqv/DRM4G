@@ -33,10 +33,6 @@ from drm4g                      import ( COMMUNICATORS,
                                          REMOTE_VOS_DIR,
                                          DRM4G_DIR )
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
-
 logger = logging.getLogger(__name__)
 
 cloud_setup_file = join(DRM4G_DIR, "etc", "cloudsetup.json")

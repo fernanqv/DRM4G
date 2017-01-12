@@ -24,10 +24,6 @@ import json
 import logging
 import subprocess
 
-__version__  = '2.6.0'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
-
 def exec_cmd( cmd, stdin = subprocess.PIPE, stdout = subprocess.PIPE,
               stderr = subprocess.PIPE, env = os.environ ):
     """
