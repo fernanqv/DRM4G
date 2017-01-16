@@ -57,64 +57,11 @@ class Resource (object):
         self.Communicator   = None
         self.host_list      = []
 
-    def ldapsearch(self, filt = '', attr = '*', bdii = 'lcg-bdii.cern.ch:2170', base = 'Mds-Vo-name=local,o=grid'):
-        """
-        Wrapper for ldapserch.
-        Input parameters:
-        filt:    Filter used to search ldap, default = '', means select all
-        attr:    Attributes returned by ldapsearch, default = '*', means return all
-        host:    Host used for ldapsearch, default = 'lcg-bdii.cern.ch:2170', can be changed by $LCG_GFAL_INFOSYS
-
-        Return each element of list is dictionary with keys:
-        'dn':                 Distinguished name of ldapsearch response
-        'objectClass':        List of classes in response
-        'attr':               Dictionary of attributes
-        """
-        cmd = 'ldapsearch -x -LLL -l 5 -h %s -b %s "%s" "%s"' % ( bdii, base, filt, attr )
-        out, err = self.Communicator.execCommand( cmd )
-        assert not err, err
-
-        response = []
-        lines = []
-        for line in out.split( "\n" ):
-            if line.find( " " ) == 0:
-                lines[-1] += line.strip()
-            else:
-                lines.append( line.strip() )
-        record = None
-        for line in lines:
-            if line.find( 'dn:' ) == 0:
-                record = {'dn':line.replace( 'dn:', '' ).strip(),
-                          'objectClass':[],
-                          'attr':{'dn':line.replace( 'dn:', '' ).strip()}}
-                response.append( record )
-                continue
-            if record:
-                if line.find( 'objectClass:' ) == 0:
-                    record['objectClass'].append( line.replace( 'objectClass:', '' ).strip() )
-                    continue
-                if line.find( 'Glue' ) == 0:
-                    index = line.find( ':' )
-                    if index > 0:
-                        attr = line[:index]
-                        value = line[index + 1:].strip()
-                        if attr in record['attr']:
-                            if type( record['attr'][attr] ) == type( [] ):
-                                record['attr'][attr].append( value )
-                            else:
-                                record['attr'][attr] = [record['attr'][attr], value]
-                        else:
-                            record['attr'][attr] = value
-        return response
-
     def hosts(self):
         """
         It will return a string with the host available in the resource.
         """
-        if 'vo' in self.features and self.features[ 'lrms' ] == 'cream' :
-            self.host_list = self._hosts_vo( )
-            return ' '.join( self.host_list )
-        elif 'cloud_provider' in self.features and self.features[ 'lrms' ] == 'rocci' :
+        if 'cloud_provider' in self.features and self.features[ 'lrms' ] == 'rocci' :
             self.host_list = [ "" ]
             return ""
         else :
@@ -125,79 +72,7 @@ class Resource (object):
         """
         Obtain the features of each host
         """
-        if 'vo' in self.features and self.features[ 'lrms' ] == 'cream' :
-            return self._host_vo_properties( host )
-        else :
-            return self._host_properties( host )
-
-    def _hosts_vo(self):
-        """
-        It will return a list with the sites available in the VO.
-        """
-        filt      =   '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM)' % (
-                                                                                                       self.features[ 'vo' ] ,
-                                                                                                       )
-        attr      = 'GlueCEHostingCluster'
-        bdii      = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )
-        result    = []
-        if 'host_filter' in self.features :
-            for host in self.features[ 'host_filter' ].split( ',' ) :
-                ce_filter = '(GlueCEHostingCluster=%s))' % host.strip()
-                result.append( self.ldapsearch( filt + ce_filter , attr , bdii ) )
-        else :
-            result.append( self.ldapsearch( filt + ')' , attr , bdii ) )
-        hosts = []
-        for value in result :
-            for each_host in value :
-                host = "%s::%s" % ( self.name , each_host['attr'][attr] )
-                hosts.append(host)
-        return hosts
-
-    def _host_vo_properties(self , host ):
-        """
-        It will return a string with the features of hosts on Grid environment
-        """
-        _ , host       = host.split( '::' )
-        host_info      = HostInformation()
-        host_info.Name = host
-
-        # First search
-        filt   =  '(&(objectclass=GlueCE)(GlueCEAccessControlBaseRule=VO:%s)(GlueCEImplementationName=CREAM)(GlueCEInfoHostName=%s))' % ( self.features[ 'vo' ] , host )
-        attr   = '*'
-        bdii   = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )
-        result = self.ldapsearch( filt , attr , bdii )
-
-        for value in result :
-            queue                = Queue()
-            queue.Name           = value['attr']["GlueCEName"]
-            queue.Nodes          = value['attr']["GlueCEInfoTotalCPUs"]
-            queue.FreeNodes      = value['attr']["GlueCEStateFreeCPUs"]
-            queue.MaxTime        = value['attr']["GlueCEPolicyMaxWallClockTime"]
-            queue.MaxCpuTime     = value['attr']["GlueCEPolicyMaxCPUTime"]
-            queue.MaxJobsInQueue = value['attr']["GlueCEPolicyMaxTotalJobs"]
-            queue.MaxRunningJobs = value['attr']["GlueCEPolicyMaxRunningJobs"]
-            queue.Status         = value['attr']["GlueCEStateStatus"]
-            queue.Priority       = value['attr']["GlueCEPolicyPriority"]
-            host_info.addQueue(queue)
-            host_info.Nodes      = value['attr']["GlueCEInfoTotalCPUs"]
-            host_info.LrmsName   = value['attr']["GlueCEUniqueID"].split('/')[1].rsplit('-',1)[0]
-            host_info.LrmsType   = value['attr']["GlueCEInfoLRMSType"]
-        host_info.addQueue( Queue() )
-        # Second search
-        filt   = "(&(objectclass=GlueHostOperatingSystem)(GlueSubClusterName=%s))"  % ( host )
-        attr   = '*'
-        bdii   = self.features.get( 'bdii', '$LCG_GFAL_INFOSYS' )
-        result = self.ldapsearch( filt , attr , bdii )
-
-        try :
-            host_info.Os         = result[0]['attr'][ "GlueHostOperatingSystemName" ]
-            host_info.OsVersion  = result[0]['attr'][ "GlueHostOperatingSystemVersion" ]
-            host_info.Arch       = result[0]['attr'][ "GlueHostArchitecturePlatformType" ]
-            host_info.CpuSmp     = result[0]['attr'][ "GlueHostArchitectureSMPSize" ]
-        except Exception as err:
-            logger.error("The result of '%s' is wrong: %s " % ( filt , str( result ) ) )
-
-        return host_info.info()
+        return self._host_properties( host )
 
     def _host_properties(self , host ):
         """
