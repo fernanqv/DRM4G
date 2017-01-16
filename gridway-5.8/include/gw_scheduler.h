@@ -222,12 +222,14 @@ void gw_scheduler_job_add(gw_scheduler_t *      sched,
                           int                   fixed_priority,
                           int                   uid,
                           time_t                deadline);
+
+void *gw_scheduler_dispacher();
                      
 void gw_scheduler_job_del(gw_scheduler_t *      sched,
                           int                   jid,
                           int                   dispatched);
 
-void gw_scheduler_matching_arrays(gw_scheduler_t * sched);
+void gw_scheduler_matching_arrays(int fd, gw_scheduler_t * sched);
 
 /* -------------------------------------------------------------------- */
 

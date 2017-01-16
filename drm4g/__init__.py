@@ -20,7 +20,7 @@
 
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
-__version__  = '2.6.1'
+__version__  = '2.6.2'
 __author__   = 'Carlos Blanco and Antonio Minondo'
 __revision__ = "$Id$"
 
@@ -71,7 +71,8 @@ SFTP_CONNECTIONS    = 3
 PROXY_THRESHOLD     = 178 # Proxy threshold in hours.
 
 COMMUNICATORS = {
-                 "pk_ssh"    : "drm4g.communicators.ssh",
+                 "ssh"    : "drm4g.communicators.ssh",
+                 "pk_ssh" : "drm4g.communicators.ssh",
                  "op_ssh" : "drm4g.communicators.openssh",
                  "local"  : "drm4g.communicators.local",
                  }

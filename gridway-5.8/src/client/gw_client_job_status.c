@@ -115,6 +115,78 @@ gw_return_code_t gw_client_job_status(int job_id, gw_msg_job_t *job_status)
     return job_status->rc;  
 }
 
+
+
+
+gw_return_code_t gw_client_job_status_fd(int fd, int job_id, gw_msg_job_t *job_status)
+{
+        int      length;
+        int      rc;
+        gw_msg_t msg;
+        if ( gw_client.initialize == GW_FALSE )
+                return GW_RC_FAILED_INIT;
+
+    /* ----------------------------------------------------------------- */
+    /* 1.- Format msg                                                        */
+    /* ----------------------------------------------------------------- */
+
+        msg.msg_type   = GW_MSG_JOB_STATUS;
+        msg.job_id     = job_id;
+
+        pthread_mutex_lock(&(gw_client.mutex));
+
+        strncpy(msg.owner, gw_client.owner, GW_MSG_STRING_SHORT);
+        strncpy(msg.group, gw_client.group, GW_MSG_STRING_SHORT);
+        strncpy(msg.proxy_path, gw_client.proxy_path, GW_MSG_STRING_LONG);
+
+        pthread_mutex_unlock(&(gw_client.mutex));
+
+    length = sizeof(gw_msg_t);
+
+    /* ----------------------------------------------------------------- */
+    /* 2.- Send job status request                                       */
+    /* ----------------------------------------------------------------- */
+
+
+        rc = send(fd,(void *) &msg,length,0);
+
+        if ( rc == -1 )
+        {
+                perror("send()");
+                return GW_RC_FAILED_CONNECTION;
+        }
+        else if ( rc != length )
+        {
+                fprintf(stderr,"Error sending message\n");
+                return GW_RC_FAILED_CONNECTION;
+        }
+
+    /* ----------------------------------------------------------------- */
+    /* 3.- Receive response                                                  */
+    /* ----------------------------------------------------------------- */
+
+        length  = sizeof(gw_msg_job_t);
+
+        rc = recv(fd,(void *) job_status, length, MSG_WAITALL);
+
+    if ( rc == -1)
+    {
+        perror("recv()");
+        return GW_RC_FAILED_CONNECTION;
+    }
+    else if ( rc != length)
+        {
+                fprintf(stderr,"Error reading message\n");
+                return GW_RC_FAILED_CONNECTION;
+        }
+
+    return job_status->rc;
+}
+
+
+
+
+
 /* ------------------------------------------------------------------------- */
 /* ------------------------------------------------------------------------- */
 /* ------------------------------------------------------------------------- */
@@ -436,6 +508,163 @@ gw_return_code_t gw_client_job_history(int                 job_id,
     gw_client_disconnect(fd);
     
     return gw_rc;
+}
+
+/*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------*/
+
+gw_return_code_t gw_client_job_history_fd( int                 fd,
+                                           int                 job_id,
+                                           gw_msg_history_t ** history_list,
+                                           int *               num_records)
+{
+	gw_msg_t          msg;
+        gw_return_code_t  gw_rc;
+        int               length;
+        int               rc;
+
+        if ( gw_client.initialize == GW_FALSE )
+        {
+                *num_records  = 0;
+                *history_list = NULL;
+
+                return GW_RC_FAILED_INIT;
+        }
+
+	/* ----------------------------------------------------------------- */
+	/* 1.- Format message                                                */
+    	/* ----------------------------------------------------------------- */
+
+	msg.msg_type = GW_MSG_JOB_HISTORY;
+	msg.job_id   = job_id;
+
+	pthread_mutex_lock(&(gw_client.mutex));
+
+	strncpy(msg.owner,gw_client.owner,GW_MSG_STRING_SHORT);
+    	strncpy(msg.group,gw_client.group,GW_MSG_STRING_SHORT);
+	strncpy(msg.proxy_path, gw_client.proxy_path, GW_MSG_STRING_LONG);
+
+	pthread_mutex_unlock(&(gw_client.mutex));
+
+        length       = sizeof(gw_msg_t);
+
+	/* ----------------------------------------------------------------- */
+	/* 2.- Send pool status request                                      */
+	/* ----------------------------------------------------------------- */
+
+
+        rc = send(fd,(void *) &msg,length,0);
+
+        if ( rc == -1 )
+        {
+                perror("send()");
+                return GW_RC_FAILED_CONNECTION;
+        }
+        else if ( rc != length )
+        {
+                fprintf(stderr,"Error sending message\n");
+                return GW_RC_FAILED_CONNECTION;
+        }
+
+    	/* ----------------------------------------------------------------- */
+    	/* 3.- Receive response & update job history                         */
+   	/* ----------------------------------------------------------------- */
+
+    	*num_records  = 0;
+    	*history_list = NULL;
+        length        = sizeof(gw_msg_history_t);
+    	*history_list = (gw_msg_history_t *) malloc(sizeof(gw_msg_history_t));
+
+        rc = recv(fd,(void *) *history_list, length, MSG_WAITALL);
+
+	if ( rc == -1)
+    	{
+		perror("recv()");
+
+        	free(*history_list);
+
+        	*num_records  = 0;
+        	*history_list = NULL;
+        	return GW_RC_FAILED_CONNECTION;
+    	}
+    	else if ( rc != length)
+        {
+                fprintf(stderr,"Error reading message\n");
+
+        	free(*history_list);
+
+        	*num_records  = 0;
+        	*history_list = NULL;
+
+                return GW_RC_FAILED_CONNECTION;
+        }
+        else if ( (*history_list)[0].rc != GW_RC_SUCCESS )
+        {
+                gw_rc = (*history_list)[0].rc;
+
+	        free(*history_list);
+
+        	*num_records  = 0;
+	        *history_list = NULL;
+
+        	return gw_rc;
+        }
+
+    	while((*history_list)[(*num_records)].msg_type != GW_MSG_END )
+    	{
+        	*num_records  = *num_records +1;
+        	*history_list = realloc((*history_list),((*num_records)+1)*length);
+
+        	if(*history_list==NULL)
+        	{
+                	return GW_RC_FAILED_NO_MEMORY;
+        	}
+
+                rc = recv(fd,(void *) &((*history_list)[(*num_records)]),
+                                  length,
+                                  MSG_WAITALL);
+
+            	if ( rc == -1)
+            	{
+                	perror("recv()");
+
+                	free(*history_list);
+
+                	*num_records  = 0;
+                	*history_list = NULL;
+
+                	return GW_RC_FAILED_CONNECTION;
+            	}
+            	else if ( rc != length)
+                {
+                        fprintf(stderr,"Error reading message\n");
+
+                	free(*history_list);
+
+                	*num_records  = 0;
+                	*history_list = NULL;
+
+                        return GW_RC_FAILED_CONNECTION;
+                }
+    	}
+
+    	if ( *num_records == 0 )
+    	{
+        	gw_rc = GW_RC_SUCCESS;
+
+        	free(*history_list);
+	
+        	*history_list = NULL;
+    	}
+    	else
+        	gw_rc = (*history_list)[(*num_records)].rc;
+
+	return gw_rc;
 }
 
 /*---------------------------------------------------------------------------*/
