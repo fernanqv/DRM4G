@@ -81,7 +81,6 @@ def run( arg ) :
                 #comm.parent_module = 'id'
                 #comm.configfile = join(DRM4G_DIR,'etc','openssh_id.conf')
                 #paramiko will always be used to renew the grid certificate
-                communicator = 'pk_ssh'
                 config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'pk_ssh'
                 comm = config.make_communicators()[ arg['<resource_name>'] ]
                 #~logger.debug( "COMMUNICATOR IS %s" % comm.communicator )
@@ -89,7 +88,7 @@ def run( arg ) :
             proxy = Proxy( config.resources[ arg['<resource_name>'] ] ,
                            comm
                            )
-            config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'op_ssh'
+            config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = communicator
             config.make_communicators()
         if communicator != 'local' :
             agent = Agent( config.resources[ arg['<resource_name>'] ] )
