@@ -205,7 +205,7 @@ class GwEmMad (object):
                     oldStatus = job.getStatus( )
                     job.refreshJobStatus( )
                     newStatus = job.getStatus( )
-                    if oldStatus != newStatus:
+                    if oldStatus != newStatus or newStatus == 'DONE' or newStatus == 'FAILED':
                         if newStatus == 'DONE' or newStatus == 'FAILED':
                             self._job_list.delete(JID)
                             time.sleep ( 0.1 )
