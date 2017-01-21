@@ -33,7 +33,7 @@ void gw_dm_kill (void *_job_id)
     gw_array_t * array;
 	char   		 conf_filename[GW_MSG_STRING_LONG];
 	    
-	/* ----------------------------------------------------------- */  
+    /* ----------------------------------------------------------- */  
     /* 0.- Get job pointer                                         */
     /* ----------------------------------------------------------- */  
     
@@ -54,7 +54,7 @@ void gw_dm_kill (void *_job_id)
 	else
 		return;
 
-	/* ----------------------------------------------------------- */  
+    /* ----------------------------------------------------------- */  
     /* 1.- Kill the job                                            */
     /* ----------------------------------------------------------- */  
 	
@@ -147,9 +147,9 @@ void gw_dm_kill_hard (void *_job_id)
     int          array_id;
     int          task_id;
     gw_array_t * array;
-	char   		 conf_filename[GW_MSG_STRING_LONG];
+    char   	 conf_filename[GW_MSG_STRING_LONG];
 	    
-	/* ----------------------------------------------------------- */  
+    /* ----------------------------------------------------------- */  
     /* 0.- Get job pointer                                         */
     /* ----------------------------------------------------------- */  
     
@@ -163,127 +163,133 @@ void gw_dm_kill_hard (void *_job_id)
 		{
 			gw_log_print("DM",'E',"Job %i does not exist (KILL_HARD).\n",job_id);
 
-            gw_am_trigger(gw_dm.rm_am,"GW_RM_KILL_FAILED",_job_id);
+    		        gw_am_trigger(gw_dm.rm_am,"GW_RM_KILL_FAILED",_job_id);
 			return;
 		}
 	}
 	else
 		return;
    
-	/* ----------------------------------------------------------- */  
+    /* ----------------------------------------------------------- */  
     /* 1.- Hard Kill the job                                       */
     /* ----------------------------------------------------------- */  
 	
     switch (job->job_state)
     {
     	
-		case GW_JOB_STATE_MIGR_PROLOG:
-		case GW_JOB_STATE_MIGR_EPILOG:				
+	case GW_JOB_STATE_MIGR_PROLOG:
+	case GW_JOB_STATE_MIGR_EPILOG:				
                         
-            gw_host_dec_rjobs(job->history->next->host,job->history->queue );
+		gw_host_dec_rjobs(job->history->next->host,job->history->queue );
                         			
-			job->history->next->stats[EXIT_TIME] = time(NULL);
+		job->history->next->stats[EXIT_TIME] = time(NULL);
 						    	
     	case GW_JOB_STATE_PROLOG:
             
-            gw_host_dec_uslots(job->history->host, job->template.np, job->history->queue);
+            	gw_host_dec_uslots(job->history->host, job->template.np, job->history->queue);
             			      
-		case GW_JOB_STATE_EPILOG:
-		case GW_JOB_STATE_EPILOG_STD:
-		case GW_JOB_STATE_EPILOG_RESTART:
-		case GW_JOB_STATE_EPILOG_FAIL:
+	case GW_JOB_STATE_EPILOG:
+	case GW_JOB_STATE_EPILOG_STD:
+	case GW_JOB_STATE_EPILOG_RESTART:
+	case GW_JOB_STATE_EPILOG_FAIL:
 		
-			job->history->reason = GW_REASON_KILL;
+		job->history->reason = GW_REASON_KILL;
 			
-		case GW_JOB_STATE_STOP_EPILOG:
-		case GW_JOB_STATE_KILL_EPILOG:		
+	case GW_JOB_STATE_STOP_EPILOG:
+	case GW_JOB_STATE_KILL_EPILOG:		
             
-            gw_host_dec_rjobs(job->history->host,job->history->queue);
+            	gw_host_dec_rjobs(job->history->host,job->history->queue);
                         						
-			job->exit_time = time(NULL);
-			job->history->stats[EXIT_TIME] = time(NULL);
+		job->exit_time = time(NULL);
+		job->history->stats[EXIT_TIME] = time(NULL);
 						
 	    	job->tm_state = GW_TM_STATE_HARD_KILL;
 
-			if (job->history != NULL) 
-			{
-            	gw_log_print("DM",'I',"Cancelling prolog/epilog transfers of job %i.\n", job_id);
+		if (job->history != NULL) 
+		{
+            		gw_log_print("DM",'I',"Cancelling prolog/epilog transfers of job %i.\n", job_id);
             	
-				gw_tm_mad_end(job->history->tm_mad, job->id);
-			}				    	
-	    break;
+			gw_tm_mad_end(job->history->tm_mad, job->id);
+		}				    	
+	    	break;
     	
-		case GW_JOB_STATE_PRE_WRAPPER:
-		case GW_JOB_STATE_WRAPPER:
+	case GW_JOB_STATE_PRE_WRAPPER:
+	case GW_JOB_STATE_WRAPPER:
 
-			job->history->reason = GW_REASON_KILL;
+		job->history->reason = GW_REASON_KILL;
 			
-			gw_host_dec_slots(job->history->host, job->template.np,job->history->queue );
+		gw_host_dec_slots(job->history->host, job->template.np,job->history->queue );
+
+                if ( job->em_state == GW_EM_STATE_ACTIVE )
+                {
+                	gw_host_dec_ajobs_nb(job->history->host, job->history->queue);
+                }
+
 			            
-			job->exit_time = time(NULL);		
-			job->history->stats[EXIT_TIME] = time(NULL);
+		job->exit_time = time(NULL);		
+		job->history->stats[EXIT_TIME] = time(NULL);
 						
-			job->em_state = GW_EM_STATE_HARD_KILL;
+		job->em_state = GW_EM_STATE_HARD_KILL;
 		
-			if (job->history != NULL) 
-			{
-            	gw_log_print("DM",'I',"Cancelling execution of job %i.\n", job_id);
+		if (job->history != NULL) 
+		{
+        	    	gw_log_print("DM",'I',"Cancelling execution of job %i.\n", job_id);
             	
-				gw_em_mad_cancel(job->history->em_mad, job_id);
-			}			
+			gw_em_mad_cancel(job->history->em_mad, job_id);
+		}			
 		break;
 
-		case GW_JOB_STATE_MIGR_CANCEL:
+	case GW_JOB_STATE_MIGR_CANCEL:
 		
      		gw_host_dec_slots(job->history->next->host, job->template.np,job->history->queue);
             
-			job->history->next->stats[EXIT_TIME] = time(NULL);
+		job->history->next->stats[EXIT_TIME] = time(NULL);
 			
-			job->history->reason = GW_REASON_KILL;
+		job->history->reason = GW_REASON_KILL;
 			
-   		case GW_JOB_STATE_STOP_CANCEL:
-		case GW_JOB_STATE_KILL_CANCEL:
+   	case GW_JOB_STATE_STOP_CANCEL:
+	case GW_JOB_STATE_KILL_CANCEL:
 		
     		gw_host_dec_slots(job->history->host, job->template.np,job->history->queue);
 		            
-			job->exit_time = time(NULL);		
-			job->history->stats[EXIT_TIME] = time(NULL);
+		job->exit_time = time(NULL);		
+		job->history->stats[EXIT_TIME] = time(NULL);
 						
-			job->em_state = GW_EM_STATE_HARD_KILL;
+		job->em_state = GW_EM_STATE_HARD_KILL;
 		break;
 		
-		case GW_JOB_STATE_INIT:
-		case GW_JOB_STATE_PENDING:
-		case GW_JOB_STATE_HOLD:
-		case GW_JOB_STATE_STOPPED:
+	case GW_JOB_STATE_INIT:
+	case GW_JOB_STATE_PENDING:
+	case GW_JOB_STATE_HOLD:
+	case GW_JOB_STATE_STOPPED:
 		
 	        job->exit_time = time(NULL);
-	     break;
+		break;
             
 		
-		case GW_JOB_STATE_FAILED:
-		case GW_JOB_STATE_ZOMBIE:
+	case GW_JOB_STATE_FAILED:
+	case GW_JOB_STATE_ZOMBIE:
 		
 		break;
 			
         default:
             
-            gw_log_print("DM",'W',"Job %i can not be killed in current state.\n", job_id);
+            	gw_log_print("DM",'W',"Job %i can not be killed in current state.\n", job_id);
             
-            gw_am_trigger(gw_dm.rm_am,"GW_RM_KILL_FAILED",  _job_id);
+            	gw_am_trigger(gw_dm.rm_am,"GW_RM_KILL_FAILED",  _job_id);
             
-            pthread_mutex_unlock(&(job->mutex));            
+            	pthread_mutex_unlock(&(job->mutex));            
             
         return;
     }
     
-	array_id = job->array_id;
-	task_id  = job->task_id;
+    array_id = job->array_id;
+    task_id  = job->task_id;
 
-	sprintf(conf_filename, "%s/job.conf", job->directory);	
-	unlink(conf_filename);
+    sprintf(conf_filename, "%s/job.conf", job->directory);	
+    unlink(conf_filename);
 							
-	pthread_mutex_unlock(&(job->mutex));
+    pthread_mutex_unlock(&(job->mutex));
     gw_job_pool_free(job_id);
             
     gw_log_print("DM",'I',"Job %i killed (hard) and freed.\n", job_id);		
