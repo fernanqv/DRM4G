@@ -50,6 +50,8 @@ class Configuration(object):
     * instantiate objects such as communicators or managers
 
     """
+    vm_instances = dict()
+    
     def __init__(self):
         self.resources  = dict()
         if not os.path.exists( DRM4G_CONFIG_FILE ):
@@ -73,10 +75,10 @@ class Configuration(object):
         logger.debug("Reading file '%s' ..." % DRM4G_CONFIG_FILE)
         try:
             try:
-                file   = open(DRM4G_CONFIG_FILE, 'r')
+                config_file   = open(DRM4G_CONFIG_FILE, 'r')
                 parser = configparser.RawConfigParser()
                 try:
-                    parser.readfp( file , DRM4G_CONFIG_FILE )
+                    parser.readfp( config_file , DRM4G_CONFIG_FILE )
                 except Exception as err:
                     output = "Configuration file '%s' is unreadable or malformed: %s" % ( DRM4G_CONFIG_FILE , str( err ) )
                     logger.error( output )
@@ -96,10 +98,12 @@ class Configuration(object):
                                             instances.append( pickle.load( pf ) )
                                         except EOFError :
                                             break
-                                if not instances :
-                                    pass
                                 if instances:
                                     for instance in instances :
+                                        if Configuration.vm_instances.has_key( name ):
+                                            Configuration.vm_instances[ name ] += 1 
+                                        else:
+                                            Configuration.vm_instances[ name ] = 1
                                         insdict = dict()
                                         insdict['username'] = instance.vm_user
                                         insdict['frontend'] = instance.ext_ip
@@ -120,7 +124,7 @@ class Configuration(object):
                 output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err))
                 logger.error( output )
         finally:
-            file.close()
+            config_file.close()
 
     def check(self):
         """

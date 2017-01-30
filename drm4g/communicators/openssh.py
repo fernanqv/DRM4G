@@ -19,21 +19,16 @@
 #
 
 import sys
-import platform
 import os
-from os.path     import dirname, abspath, join, expanduser, exists, basename
+from os.path     import join, expanduser, exists, basename
 
 import io
-import socket
 import re
 import time
-import pipes
 import signal
-import logging
 import threading
 import subprocess
 import drm4g.communicators
-import drm4g.commands
 from drm4g.commands         import Agent
 from drm4g.communicators    import ComException, logger
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT, DRM4G_DIR
@@ -75,8 +70,8 @@ class Communicator(drm4g.communicators.Communicator):
             "    StrictHostKeyChecking no")
 
         for manager in ['im', 'tm', 'em', 'rocci']:
-            with io.FileIO(join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % manager), 'w') as file:
-                file.write(conf_text % (Communicator.socket_dir, manager, '%r@%h:%p'))
+            with io.FileIO(join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % manager), 'w') as conf_file:
+                conf_file.write(conf_text % (Communicator.socket_dir, manager, '%r@%h:%p'))
         try:
             if not exists(Communicator.socket_dir):
                 logger.debug("Creating socket directory in %s" % Communicator.socket_dir)

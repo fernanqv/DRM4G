@@ -29,10 +29,10 @@ import logging
 import subprocess
 import datetime
 
-from drm4g             import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
-from drm4g.managers    import rocci
-from drm4g.core.im_mad import GwImMad
-from os.path           import expanduser, join, dirname, exists, basename, expandvars
+from drm4g                             import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
+from drm4g.managers.cloud_providers    import rocci
+from drm4g.core.im_mad                 import GwImMad
+from os.path                           import expanduser, join, dirname, exists, basename, expandvars
 
 
 PY2 = sys.version_info[0] == 2
@@ -308,7 +308,7 @@ class Resource( object ):
         """
         self.check( )
         for resname, resdict in self.config.resources.items():
-            if resdict[ 'lrms' ] in ['rocci']:
+            if resdict[ 'lrms' ] in ['rocci', 'ec2']:
                 rocci.manage_instances('start', resname, resdict)
 
     def destroy_vms(self):
@@ -317,7 +317,7 @@ class Resource( object ):
         """
         self.check( )
         for resname, resdict in self.config.resources.items():
-            if resdict[ 'lrms' ] in ['rocci']:
+            if resdict[ 'lrms' ] in ['rocci', 'ec2']:
                 rocci.manage_instances('stop', resname, resdict)
 
     def update_hosts(self):

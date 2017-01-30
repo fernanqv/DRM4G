@@ -22,18 +22,18 @@ import re
 import time
 import uuid
 import socket
-import logging
-from datetime                   import timedelta, datetime
-from os.path                    import join, basename, expanduser
-from drm4g.utils.importlib      import import_module
-from drm4g.managers.rocci       import CloudSetup
-from utils                      import load_json, read_key, is_ip_private
-from drm4g                      import ( COMMUNICATORS,
-                                         REMOTE_JOBS_DIR,
-                                         REMOTE_VOS_DIR,
-                                         DRM4G_DIR )
+from datetime                                   import timedelta, datetime
+from os.path                                    import join, basename, expanduser
+from drm4g.utils.importlib                      import import_module
+from drm4g.managers.cloud_providers             import Instance, logger
+from drm4g.managers.cloud_providers.rocci       import CloudSetup
+from utils                                      import load_json, read_key, is_ip_private
+from drm4g                                      import ( COMMUNICATORS,
+                                                         REMOTE_JOBS_DIR,
+                                                         REMOTE_VOS_DIR,
+                                                         DRM4G_DIR )
 
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 cloud_setup_file = join(DRM4G_DIR, "etc", "cloudsetup.json")
 #cloud_contextualisation_file = join(DRM4G_DIR, "etc", "cloud_config.conf")
@@ -49,7 +49,7 @@ users:
       - %s
 """
 
-class Instance(object):
+class ROCCI(Instance):
 
     def __init__(self, basic_data):
         self.data=basic_data
@@ -113,7 +113,7 @@ class Instance(object):
                 content = cloud_config % (self.vm_user, self.vm_user, pub)
             else:
                 content = cloud_config
-            logger.debug("Your contextualisation file %s :\n%s\n" % (self.cloud_contextualisation_file, content))
+            logger.debug("Your contextualisation file %s :\n%s" % (self.cloud_contextualisation_file, content))
             #content = generic_cloud_cfg % (self.vm_user, self.vm_user, pub)
             cmd = "echo '%s' > %s" % (content, self.context_file)
             out,err = self.com_object.execCommand( cmd )
@@ -197,6 +197,7 @@ class Instance(object):
         self._wait_compute()
         if self.volume :
             self._create_link()
+        self._start_time()
         logger.debug( "Ending  rocci's create function" )
 
     def _wait_storage(self):
@@ -293,49 +294,49 @@ class Instance(object):
         self.id_volume = out.rstrip('\n')
         logger.debug( "Ending  rocci's _create_volume function" )
 
-    def delete(self):
-        logger.debug( "Running rocci's  delete function" )
+    def destroy(self):
+        logger.debug( "Running rocci's  destroy function" )
         logger.info( "Deleting resource %s" % self.id )
         if self.volume :
             cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action unlink --resource %s" % (
                              self.endpoint, self.proxy_file, self.id_link )
             out, err = self._exec_remote_cmd( cmd )
-            self.log_output("delete (unlink)", out, err)
+            self.log_output("destroy (unlink)", out, err)
 
             if 'certificate expired' in err :
                 self._renew_voms_proxy()
                 logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
                 out, err = self._exec_remote_cmd( cmd )
-                self.log_output("delete (unlink) 2", out, err)
+                self.log_output("destroy (unlink) 2", out, err)
             elif err :
                 logger.error( "Error unlinking volume '%s': %s" % ( self.id_volume, out ) )
             time.sleep( 20 )
             cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action delete --resource %s" % (
                              self.endpoint, self.proxy_file, self.id_volume )
             out, err = self._exec_remote_cmd( cmd )
-            self.log_output("delete (volume)", out, err)
+            self.log_output("destroy (volume)", out, err)
 
             if 'certificate expired' in err :
                 self._renew_voms_proxy()
                 logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
                 out, err = self._exec_remote_cmd( cmd )
-                self.log_output("delete (volume) 2", out, err)
+                self.log_output("destroy (volume) 2", out, err)
             elif err :
                 logger.error( "Error deleting volume '%s': %s" % ( self.id_volume, out ) )
         cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action delete --resource %s" % (
                              self.endpoint, self.proxy_file, self.id )
         out, err = self._exec_remote_cmd( cmd )
-        self.log_output("delete (resource)", out, err)
+        self.log_output("destroy (resource)", out, err)
 
         if 'certificate expired' in err :
             self._renew_voms_proxy()
             logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
             out, err = self._exec_remote_cmd( cmd )
-            self.log_output("delete (resource) 2", out, err)
+            self.log_output("destroy (resource) 2", out, err)
         elif err :
             logger.error( "Error deleting node '%s': %s" % ( self.id, out ) )
         logger.info( "    Resource '%s' has been successfully deleted" % self.id )
-        logger.debug( "Ending  rocci's delete function" )
+        logger.debug( "Ending  rocci's destroy function" )
 
     def get_description(self, id):
         logger.debug( "Running rocci's  get_description function" )

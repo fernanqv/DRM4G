@@ -50,7 +50,7 @@ def run( arg ) :
         else :
             daemon = Daemon()
             if not daemon.is_alive() :
-               raise Exception( 'DRM4G is stopped.' )
+                raise Exception( 'DRM4G is stopped.' )
 
             elif arg[ 'check' ] :
                 resource.check_frontends( )

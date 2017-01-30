@@ -197,7 +197,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
     ],
-    install_requires=['paramiko<2.0', 'docopt', 'openssh-wrapper'],
+    install_requires=['paramiko<2.0', 'docopt', 'openssh-wrapper', 'apache-libcloud'],
     scripts=bin_scripts,
     cmdclass={
         'install': build_wrapper,

@@ -25,6 +25,7 @@ import threading
 import logging
 import drm4g.managers
 import drm4g.managers.fork
+from drm4g.core.configure   import Configuration
 from utils                  import load_json
 from os.path                import exists, join
 from drm4g                  import DRM4G_DIR, DRM4G_LOGGER, RESOURCE_MANAGERS
@@ -33,8 +34,9 @@ try:
     from configparser       import SafeConfigParser
 except ImportError:
     from ConfigParser       import SafeConfigParser  # ver. < 3.0
+from drm4g.managers.cloud_providers  import logger
 
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
 
 pickled_file = join(DRM4G_DIR, "var", "rocci_pickled")
 
@@ -71,18 +73,20 @@ def start_instance( instance, resource_name ) :
             instance.get_ip()
             with open( pickled_file+"_"+resource_name, "a" ) as pf :
                 pickle.dump( instance, pf )
+            #Configuration.vm_instances[ resource_name ] += 1 #this could cause problems while using threads
         except Exception as err :
             logger.error( "Error creating instance: %s" % str( err ) )
             try :
                 logger.debug( "Trying to destroy the instance" )
-                instance.delete( )
+                instance.destroy( )
             except Exception as err :
                 logger.error( "Error destroying instance\n%s" % str( err ) )
 
 def stop_instance( instance, resource_name ):
     try :
-        instance.delete()
+        instance.destroy()
         pickle_remove(instance, resource_name)
+        Configuration.vm_instances[ resource_name ] = 0
     except Exception as err :
         logger.error( "Error destroying instance\n%s" % str( err ) )
 
@@ -95,7 +99,7 @@ def manage_instances(args, resource_name, config):
         threads = []
         handlers = []
         try:
-            instance = eval( "hdpackage.Instance( config )" )
+            instance = eval( "hdpackage.ROCCI( config )" )
         except KeyError as err:
             logger.error( "Either you have defined an incorrect value in your configuration file 'resources.conf'" \
                 " or there's a value that doesn't correspond with any of the keys in your cloud setup file 'cloudsetup.json':" )
@@ -124,6 +128,7 @@ def manage_instances(args, resource_name, config):
                 exit( 1 )
             threads = []
             for instance in instances :
+                #Configuration.vm_instances[ resource_name ] += 1
                 th = threading.Thread( target = stop_instance, args = ( instance, resource_name ) )
                 th.start()
                 threads.append( th )
@@ -131,6 +136,27 @@ def manage_instances(args, resource_name, config):
     else :
         logger.error( "Invalid option" )
         exit( 1 )
+
+def create_num_instances(num_instances, resource_name, config):
+    try :
+        hdpackage = import_module( RESOURCE_MANAGERS[config['lrms']] + ".%s" % config['lrms'] )
+    except Exception as err :
+        raise Exception( "The infrastructure selected does not exist. "  + str( err ) )
+    threads = []
+    try:
+        instance = eval( "hdpackage.ROCCI( config )" )
+    except KeyError as err:
+        logger.error( "Either you have defined an incorrect value in your configuration file 'resources.conf'" \
+            " or there's a value that doesn't correspond with any of the keys in your cloud setup file 'cloudsetup.json':" )
+        raise
+    except Exception as err:
+        logger.error( "An error occurred while trying to create a VM instance." )
+        raise
+    for number_of_th in range( num_instances ):
+        th = threading.Thread( target = start_instance, args = ( instance, resource_name, ) )
+        th.start()
+        threads.append( th )
+    [ th.join() for th in threads ]
 
 class Resource (drm4g.managers.Resource):
     pass

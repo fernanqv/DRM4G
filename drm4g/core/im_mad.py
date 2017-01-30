@@ -22,11 +22,14 @@ import sys
 import os
 import threading
 import logging
-from drm4g                 import DRM4G_DIR
-from drm4g.core.configure  import Configuration
-from drm4g.managers        import HostInformation
-from drm4g.utils.message   import Send
-
+from drm4g                              import DRM4G_DIR
+from threading                          import Thread
+from drm4g.core.configure               import Configuration
+from drm4g.core.configure               import logger as log2
+from drm4g.managers                     import HostInformation
+from drm4g.utils.message                import Send
+from drm4g.managers.cloud_providers     import rocci
+from _ast import Num
 
 class GwImMad (object):
     """
@@ -60,10 +63,12 @@ class GwImMad (object):
 
     logger  = logging.getLogger(__name__)
     message = Send()
+    lock = threading.Lock()
 
     def __init__(self):
         self._resources  = dict()
         self._config     = None
+        #self._num_vms    = 0
 
     def do_INIT(self, args):
         """
@@ -87,7 +92,7 @@ class GwImMad (object):
             self._config.load()
             errors        = self._config.check()
             assert not errors, ' '.join( errors )
-
+            
             self._resources  = self._config.make_resources()
             communicators    = self._config.make_communicators()
             hosts = ""
@@ -95,6 +100,18 @@ class GwImMad (object):
                 if  self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
                     continue
                 if  'cloud_provider' in self._config.resources[ resname ].keys():
+                    if not Configuration.vm_instances.has_key( resname ):
+                        Configuration.vm_instances[ resname ] = 0 
+                    log2.debug("do_DISCOVER is going to check if any VM needs to be created")
+                    log2.debug("VM instances created: %s  --  Total instances requested: %s" % (Configuration.vm_instances[ resname ], self._config.resources[ resname ][ 'instances' ]))
+                    log2.debug(Configuration.vm_instances[ resname ] < int(self._config.resources[ resname ][ 'instances' ]))
+                    #if self._num_vms < int(self._config.resources[ resname ][ 'instances' ]) and Configuration.vm_instances[ resname ] < int(self._config.resources[ resname ][ 'instances' ]) :
+                    if Configuration.vm_instances[ resname ] < int(self._config.resources[ resname ][ 'instances' ]) :
+                        #self._num_vms += 1
+                        num_instances = int(self._config.resources[ resname ][ 'instances' ]) - Configuration.vm_instances[ resname ]
+                        Configuration.vm_instances[ resname ] += num_instances
+                        log2.debug("Se van a crear %s instancias" % num_instances)
+                        self._call_create_vms(resname, num_instances)
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
@@ -112,6 +129,18 @@ class GwImMad (object):
         if output:
             self.message.stdout( out )
         self.logger.debug( out , exc_info=1 )
+
+    def _call_create_vms(self, resname, num_instances):
+        log2.debug("START FUNCTION _CALL_CREATE_VMS")
+        #if Configuration.vm_instances[ resname ] < int(self._config.resources[ resname ][ 'instances' ]) :
+        log2.debug("Creating %s new VMs" % num_instances)
+        log2.debug("Configuration.vm_instances[ resname ] equals %s" % Configuration.vm_instances[ resname ])
+        #num_instances = int(self._config.resources[resname]['instances']) - Configuration.vm_instances[resname]
+        log2.debug("About to call function create_num_instances") #rocci.create_num_instances(num_instances, resname, self._config.resources[ resname ])
+        background_thread = Thread(target=rocci.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
+        background_thread.start()
+        log2.debug("Finished function create_num_instances")
+        log2.debug("END FUNCTION _CALL_CREATE_VMS")
 
     def do_MONITOR(self, args, output=True):
         """
