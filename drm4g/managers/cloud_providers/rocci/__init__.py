@@ -66,21 +66,46 @@ def pickle_remove(inst, resource_name):
         except Exception as err:
             logger.error( "Error deleting instance from pickled file %s\n%s" % (pickled_file+"_"+resource_name, str( err )) )
 
-def start_instance( instance, resource_name ) :
-    with lock:
-        try:
-            instance.create()
-            instance.get_ip()
-            with open( pickled_file+"_"+resource_name, "a" ) as pf :
-                pickle.dump( instance, pf )
-            #Configuration.vm_instances[ resource_name ] += 1 #this could cause problems while using threads
+def pickle_dump(instance, resource_name):
+    #with lock:
+    lock.acquire()
+    try:
+        with open(pickled_file + "_" + resource_name, "a") as pf:
+            pickle.dump(instance, pf)
+    except Exception as err:
+        logger.error( "Error adding instance into pickled file %s\n%s" % (pickled_file+"_"+resource_name, str( err )) )
+    finally:
+        lock.release()
+
+def start_instance( config, resource_name ) :
+    #with lock:
+    try:            
+        try :
+            hdpackage = import_module( RESOURCE_MANAGERS[config['lrms']] + ".%s" % config['lrms'] )
         except Exception as err :
-            logger.error( "Error creating instance: %s" % str( err ) )
-            try :
-                logger.debug( "Trying to destroy the instance" )
-                instance.destroy( )
-            except Exception as err :
-                logger.error( "Error destroying instance\n%s" % str( err ) )
+            raise Exception( "The infrastructure selected does not exist. "  + str( err ) )
+        
+        try:
+            instance = eval( "hdpackage.ROCCI( config )" )
+        except KeyError as err:
+            logger.error( "Either you have defined an incorrect value in your configuration file 'resources.conf'" \
+                " or there's a value that doesn't correspond with any of the keys in your cloud setup file 'cloudsetup.json':" )
+            raise
+        except Exception as err:
+            logger.error( "An error ocurred while trying to create a VM instance." )
+            raise
+        
+        instance.create()
+        instance.get_ip()
+        pickle_dump(instance, resource_name)
+        #Configuration.vm_instances[ resource_name ] += 1 #this could cause problems while using threads
+    except Exception as err :
+        logger.error( "Error creating instance: %s" % str( err ) )
+        try :
+            logger.debug( "Trying to destroy the instance" )
+            instance.destroy( )
+        except Exception as err :
+            logger.error( "Error destroying instance\n%s" % str( err ) )
 
 def stop_instance( instance, resource_name ):
     try :
@@ -92,23 +117,10 @@ def stop_instance( instance, resource_name ):
 
 def manage_instances(args, resource_name, config):
     if args == "start" :
-        try :
-            hdpackage = import_module( RESOURCE_MANAGERS[config['lrms']] + ".%s" % config['lrms'] )
-        except Exception as err :
-            raise Exception( "The infrastructure selected does not exist. "  + str( err ) )
         threads = []
-        handlers = []
-        try:
-            instance = eval( "hdpackage.ROCCI( config )" )
-        except KeyError as err:
-            logger.error( "Either you have defined an incorrect value in your configuration file 'resources.conf'" \
-                " or there's a value that doesn't correspond with any of the keys in your cloud setup file 'cloudsetup.json':" )
-            raise
-        except Exception as err:
-            logger.error( "An error ocurred while trying to create a VM instance." )
-            raise
+        #handlers = []
         for number_of_th in range( int(config['instances']) ):
-            th = threading.Thread( target = start_instance, args = ( instance, resource_name, ) )
+            th = threading.Thread( target = start_instance, args = ( config, resource_name, ) )
             th.start()
             threads.append( th )
         [ th.join() for th in threads ]
