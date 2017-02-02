@@ -61,12 +61,8 @@ class Resource (object):
         """
         It will return a string with the host available in the resource.
         """
-        if 'cloud_provider' in self.features and self.features[ 'lrms' ] == 'rocci' :
-            self.host_list = [ "" ]
-            return ""
-        else :
-            self.host_list = [ self.name ]
-            return self.name
+        self.host_list = [ self.name ]
+        return self.name
 
     def host_properties(self, host ):
         """
