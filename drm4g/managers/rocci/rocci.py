@@ -93,9 +93,9 @@ class Instance(object):
         com_obj.private_key    = self.private_key
         com_obj.public_key     = basic_data.get('public_key', self.private_key+'.pub')
         com_obj.work_directory = basic_data.get('scratch', REMOTE_JOBS_DIR)
-        if self.comm == "op_ssh":
-            com_obj.parent_module = "rocci"
-            com_obj.configfile = join(DRM4G_DIR,'etc','openssh_rocci.conf')
+        # if self.comm == "op_ssh":
+        #     com_obj.parent_module = "rocci"
+        #     com_obj.configfile = join(DRM4G_DIR,'etc','openssh_rocci.conf')
         self.com_object = com_obj
 
         self.proxy_file = join( REMOTE_VOS_DIR , "x509up.%s" ) % self.vo
@@ -140,9 +140,9 @@ class Instance(object):
         com_obj.private_key    = self.private_key
         com_obj.public_key     = self.data.get('public_key', self.private_key+'.pub')
         com_obj.work_directory = self.data.get('scratch', REMOTE_JOBS_DIR)
-        if self.comm == "op_ssh":
-            com_obj.parent_module = "rocci"
-            com_obj.configfile = join(DRM4G_DIR,'etc','openssh_rocci.conf')
+        # if self.comm == "op_ssh":
+        #     com_obj.parent_module = "rocci"
+        #     com_obj.configfile = join(DRM4G_DIR,'etc','openssh_rocci.conf')
         self.com_object=com_obj
 
     def _exec_remote_cmd(self, command):

@@ -357,10 +357,10 @@ class Resource( object ):
             if resdict[ 'enable' ] == 'true' :
                 communicator = communicators.get( resname )
                 try :
-                    if resdict[ 'communicator' ] == 'op_ssh' :
-                        #it will use im's socket instead of creating a new one
-                        communicator.parent_module = 'im'
-                        communicator.configfile = join(DRM4G_DIR, 'etc', 'openssh_im.conf')
+                    # if resdict[ 'communicator' ] == 'op_ssh' :
+                    #     #it will use im's socket instead of creating a new one
+                    #     communicator.parent_module = 'im'
+                    #     communicator.configfile = join(DRM4G_DIR, 'etc', 'openssh_im.conf')
                     communicator.connect()
                     logger.info( "Resource '%s' :" % ( resname ) )
                     logger.info( "--> The front-end '%s' is accessible\n" % communicator.frontend )

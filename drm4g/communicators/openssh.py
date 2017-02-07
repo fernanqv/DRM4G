@@ -30,6 +30,7 @@ import time
 import pipes
 import signal
 import logging
+import traceback
 import threading
 import subprocess
 import drm4g.communicators
@@ -53,9 +54,22 @@ class Communicator(drm4g.communicators.Communicator):
 
     def __init__(self):
         super(Communicator,self).__init__()
+        #logger.debug("\n\nCREATING NEW COMMUNICATOR\n%s\n" % traceback.format_exc())
         self.conn=None
         self.parent_module=None
         self.configfile=None
+
+        # module_dict = {'rocci.py':'rocci', 'im_mad.py':'im', 'tm_mad.py':'tm', 'em_mad.py':'em'}
+        # #t=repr(traceback.format_stack())
+        # trace = traceback.extract_stack()
+        # for module_path in trace :
+        #     module = basename(module_path[0])
+        #     if module in module_dict :
+        #         self.parent_module = module_dict[module]
+        #         self.configfile = join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % module_dict[module])
+        #         break
+        self.get_parent_module()
+        
         with self._lock:
             self.agent=Agent()
             self.agent.start()
@@ -64,6 +78,22 @@ class Communicator(drm4g.communicators.Communicator):
         if not Communicator.socket_dir:
             Communicator.socket_dir=join(DRM4G_DIR, 'var', 'sockets')
 
+    def get_parent_module(self):
+        module_dict = {'rocci.py':'rocci', 'im_mad.py':'im', 'tm_mad.py':'tm', 'em_mad.py':'em'}
+        #t=repr(traceback.format_stack())
+        trace = traceback.extract_stack()
+        for module_path in trace :
+            module = basename(module_path[0])
+            if module in module_dict :
+                self.parent_module = module_dict[module]
+                self.configfile = join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % self.parent_module)
+                break
+            else:
+                #if it's none of the other modules but it's still calling Configuration().make_communicators
+                #it has to be from commands/__init__.py's check_frontends() being called from commands/resource.py 
+                #for which we had decided the 'im' socket would be used
+                self.parent_module = 'im' 
+                self.configfile = join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % self.parent_module)
 
     def createConfFiles(self):
         logger.debug("Running createConfFiles function from %s" % self.parent_module)
@@ -95,7 +125,13 @@ class Communicator(drm4g.communicators.Communicator):
         try:
             p_module=sys._getframe().f_back.f_code.co_filename
             p_function=sys._getframe().f_back.f_code.co_name
-            logger.debug("Running connect function\n    - called from "+p_module+"\n    - by function "+p_function)
+            t=repr(traceback.format_stack())
+            #for line in t:
+            #    print line
+
+            #logger.debug("Running connect function\n    - called from "+p_module+"\n    - by function "+p_function)
+            logger.debug("\n\nRunning connect function from %s\n    - called from %s\n    - by function %s\nTraceback :\n%s\n" % (self.parent_module, p_module, p_function, t))
+            #logger.debug("\np_module = %s\np_function = %s\n" % (p_module, p_function))
 
             if not self.configfile:
                 logger.debug("Variable 'self.configfile' is not defined")
