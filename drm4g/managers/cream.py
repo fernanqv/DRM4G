@@ -24,8 +24,7 @@ import logging
 import drm4g.managers
 from os.path         import basename , dirname , exists, join
 from drm4g           import REMOTE_VOS_DIR
-from drm4g.managers  import JobException
-
+from drm4g.managers  import JobException, HostInformation, Queue
 
 logger = logging.getLogger(__name__)
 
