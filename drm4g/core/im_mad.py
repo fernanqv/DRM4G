@@ -19,12 +19,8 @@
 #
 
 import sys
-import os
-import threading
 import logging
-from drm4g                 import DRM4G_DIR
 from drm4g.core.configure  import Configuration
-from drm4g.managers        import HostInformation
 from drm4g.utils.message   import Send
 
 
@@ -98,9 +94,6 @@ class GwImMad (object):
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
-                    if self._config.resources[ resname ][ 'communicator' ] == 'op_ssh' :
-                        self._resources[ resname ][ 'Resource' ].Communicator.configfile=os.path.join(DRM4G_DIR, 'etc', 'openssh_im.conf')
-                        self._resources[ resname ][ 'Resource' ].Communicator.parent_module='im'
                     self._resources[ resname ][ 'Resource' ].Communicator.connect()
                     hosts = hosts + " " + self._resources[ resname ] [ 'Resource' ].hosts()
                     self._resources[ resname ][ 'Resource' ].Communicator.close()
@@ -132,9 +125,6 @@ class GwImMad (object):
             assert info, "Host '%s' is not available" % HOST
             out = 'MONITOR %s SUCCESS %s' % (HID , info )
         except Exception as err :
-            #host_info = HostInformation()
-            #host_info.info()
-            #out = 'MONITOR %s SUCCESS %s' % (HID , host_info.info() )
             out = 'MONITOR %s FAILURE %s' % (HID , str(err) )
         if output:
             self.message.stdout(out)

@@ -43,7 +43,6 @@ Host field information:
     MAXQ          Max. queued jobs.
 """
 
-import logging
 from drm4g                import logger
 from drm4g.commands       import exec_cmd, Daemon
 

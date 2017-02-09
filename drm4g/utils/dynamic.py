@@ -28,7 +28,6 @@ from threading        import Thread
 from threading        import Lock
 
 
-
 """
 Use example
 from dynamic import ThreadPool

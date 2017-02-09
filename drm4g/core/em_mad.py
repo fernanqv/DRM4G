@@ -19,17 +19,11 @@
 #
 
 import sys
-import re
 import time
 import threading
 import logging
 from os.path                 import join, dirname
-from string                  import Template
-try :
-    from Queue               import Queue
-except :
-    from queue               import Queue
-from drm4g                   import REMOTE_JOBS_DIR, DRM4G_DIR
+from drm4g                   import REMOTE_JOBS_DIR
 from drm4g.utils.rsl2        import Rsl2Parser
 from drm4g.utils.list        import List
 from drm4g.core.configure    import Configuration
@@ -205,7 +199,7 @@ class GwEmMad (object):
                     oldStatus = job.getStatus( )
                     job.refreshJobStatus( )
                     newStatus = job.getStatus( )
-                    if oldStatus != newStatus:
+                    if oldStatus != newStatus or newStatus == 'DONE' or newStatus == 'FAILED':
                         if newStatus == 'DONE' or newStatus == 'FAILED':
                             self._job_list.delete(JID)
                             time.sleep ( 0.1 )
@@ -289,9 +283,6 @@ class GwEmMad (object):
                     self._communicators[ resname ] = self._configure.make_communicators()[resname]
                 job          = self._configure.make_resources()[ resname ]['Job']
                 communicator = self._communicators[ resname ]
-                if resdict[ 'communicator' ] == 'op_ssh' :
-                    communicator.configfile=join(DRM4G_DIR,'etc','openssh_em.conf')
-                    communicator.parent_module='em'
                 return job, communicator
 
 

@@ -20,7 +20,6 @@
 
 import xml.dom.minidom
 import re
-import time
 import drm4g.managers
 from string import Template
 
@@ -45,7 +44,7 @@ class Job (drm4g.managers.Job):
                   'SystemHold': 'PENDING',
                   'UserHold'  : 'PENDING',   #Job is idle and is not eligible to run due to a user, admin, or batch system hold.
                   'Canceling' : 'PENDING',   #Job is in the process of being cancelled.
-                  'Removed'   : 'FAILED',   #Job has run to its requested walltime successfully but has been canceled by the scheduler or resource manager due to exceeding its walltime or violating another policy; includes jobs canceled by users or administrators either before or after a job has started.
+                  'Removed'   : 'FAILED',    #Job has run to its requested walltime successfully but has been canceled by the scheduler or resource manager due to exceeding its walltime or violating another policy; includes jobs canceled by users or administrators either before or after a job has started.
                   'NotQueued' : 'FAILED',    #Indicates a system problem in most cases.
                   'Vacated'   :	'FAILED',    #Job canceled after walltime=partial execution due to a system failure.
                   'Running'   : 'ACTIVE',    #Job is currently executing the user application

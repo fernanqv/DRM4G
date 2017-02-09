@@ -21,8 +21,8 @@
 import os
 import time
 import pickle
-import threading
 import logging
+import threading
 import drm4g.managers
 import drm4g.managers.fork
 from utils                  import load_json
@@ -133,7 +133,16 @@ def manage_instances(args, resource_name, config):
         exit( 1 )
 
 class Resource (drm4g.managers.Resource):
-    pass
+    def hosts(self):
+        """
+        It will return a string with the host available in the resource.
+        """
+        if 'cloud_provider' in self.features :
+            self.host_list = [ "" ]
+            return ""
+        else :
+            self.host_list = [ self.name ]
+            return self.name
 
 class Job (drm4g.managers.fork.Job):
     pass

@@ -36,10 +36,9 @@ Commands:
     destroy                 Delete all virtual machines
 """
 
-import logging
 from drm4g                import logger
 from drm4g.core.configure import Configuration
-from drm4g.commands       import exec_cmd, Daemon, Resource
+from drm4g.commands       import Daemon, Resource
 
 def run( arg ) :
     try :
@@ -50,7 +49,7 @@ def run( arg ) :
         else :
             daemon = Daemon()
             if not daemon.is_alive() :
-               raise Exception( 'DRM4G is stopped.' )
+                raise Exception( 'DRM4G is stopped.' )
 
             elif arg[ 'check' ] :
                 resource.check_frontends( )

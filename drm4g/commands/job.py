@@ -65,7 +65,6 @@ Job field information:
     QUEUE                  Queue name.
 """
 
-import logging
 from os.path              import join, exists
 from drm4g                import DRM4G_DIR, logger
 from drm4g.commands       import exec_cmd, Daemon

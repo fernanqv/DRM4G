@@ -28,9 +28,8 @@ Options:
    -d --debug    Debug mode.
 """
 
-import logging
 from drm4g                import logger
-from drm4g.commands       import Daemon, Agent
+from drm4g.commands       import Daemon #, Agent
 
 def run( arg ) :
     try:
