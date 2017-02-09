@@ -19,12 +19,12 @@
 #
 
 import re
-import sys
 import logging
 import drm4g.managers
-from os.path         import basename , dirname , exists, join
+from os.path         import basename, dirname, join
 from drm4g           import REMOTE_VOS_DIR
 from drm4g.managers  import JobException, HostInformation, Queue
+from time            import sleep 
 
 logger = logging.getLogger(__name__)
 
@@ -233,7 +233,7 @@ class Job (drm4g.managers.Job):
                     "ABORTED"       : "FAILED",
                     }
 
-    def _renew_voms_proxy(self):
+    def _renew_voms_proxy(self, cont=0):
         output = "The proxy 'x509up.%s' has probably expired" %  self.resfeatures[ 'vo' ]
         logger.debug( output )
         if 'myproxy_server' in self.resfeatures :
@@ -251,6 +251,9 @@ class Job (drm4g.managers.Job):
         if err :
             output = "Error renewing the proxy(%s): %s" % ( cmd , err )
             logger.error( output )
+            if cont<3:
+                sleep(2.0)
+                self._renew_voms_proxy(cont+1)
 
     def jobSubmit(self, wrapper_file):
         cmd = '%s -e %s delegete-proxy' % (
@@ -317,8 +320,8 @@ class Job (drm4g.managers.Job):
         if mo:
             job_status = self.cream_states.setdefault(mo.groups()[0], 'UNKNOWN')
             if job_status == 'DONE' or job_status == 'FAILED' :
-               output_url = self._getOutputURL( out )
-               self._getOutputFiles( output_url )
+                output_url = self._getOutputURL( out )
+                self._getOutputFiles( output_url )
             return job_status
         else:
             return 'UNKNOWN'

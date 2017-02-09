@@ -28,7 +28,6 @@ Options:
    -d --debug    Debug mode
 """
 
-import logging
 import os
 from drm4g  import DRM4G_DAEMON, DRM4G_LOGGER, DRM4G_SCHED, logger
 

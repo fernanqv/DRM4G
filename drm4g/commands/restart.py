@@ -28,16 +28,15 @@ Options:
    -d --debug    Debug mode.
 """
 
-import logging
-from time                 import sleep
+#from time                 import sleep
 from drm4g                import logger
-from drm4g.commands       import Daemon, Agent
+from drm4g.commands       import Daemon
 
 def run( arg ) :
     try:
         daemon = Daemon()
         daemon.stop()
-        sleep( 2.0 )
+        #sleep( 2.0 )
         daemon.start()
     except Exception as err :
         logger.error( str( err ) )

@@ -18,10 +18,8 @@
 # permissions and limitations under the Licence.
 #
 
-import re
 import drm4g.managers.slurm
 from string         import Template
-from drm4g.managers import sec_to_H_M_S
 
 
 # The programs needed by these utilities. If they are not in a location

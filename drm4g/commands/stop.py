@@ -28,7 +28,6 @@ Options:
    -d --debug    Debug mode.
 """
 
-import logging
 from drm4g                import logger
 from drm4g.commands       import Daemon, Agent
 
