@@ -79,6 +79,7 @@ class GwImMad (object):
         self.max_pend_jobs_limit = 10
         self.schedule_interval = 5 #related with SCHEDULE_INTERVAL value in gwd.conf
         self.node_poll_time = self.schedule_interval*5
+        self.idle_vms = dict()
 
     def do_INIT(self, args):
         """
@@ -183,11 +184,26 @@ class GwImMad (object):
                     cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
                     self._config.resources[ resname ][ 'vm_instances' ] = vms
         except Exception as err:
-            self.logger.error( "Error updating SQLite database %s\n%s" % (resource_conf_db, str( err )) )
+            self.logger.error( "Error updating the SQLite database %s\n%s" % (resource_conf_db, str( err )) )
         finally:
             self.lock.release()
         background_thread = Thread(target=rocci.destroy_num_instances, args=(num_instances, resname, self._config.resources[resname]))
         background_thread.start()
+
+    def vm_is_idle(self, vm_name):
+        vm_is_idle = True
+        for job_state in ['i', 'p', 'w', 'e']:
+            command1 = "gwps -n -r %s -s %s" % (vm_name, job_state)
+            command2 = "wc -l"
+            pipe = subprocess.Popen(command1.split(), stdout=subprocess.PIPE)
+            running_jobs = subprocess.check_output(command2.split(), stdin=pipe.stdout)
+            _, _ = pipe.communicate() #just to ensure that the process is closed
+            running_jobs = int(running_jobs.strip())
+            #total_running_jobs += running_jobs
+            if running_jobs:
+                vm_is_idle = False
+                break        
+        return vm_is_idle
 
     def _dynamic_vm_deletion(self, resname):
         #if self._config.resources[ resname ][ 'vm_instances' ] > self._config.resources[ resname ][ 'max_nodes' ]:
@@ -201,8 +217,9 @@ class GwImMad (object):
                     cur = conn.cursor()
                     cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resname )
                     resource_id = cur.fetchone()[0]
-                    for row in cur.execute("SELECT pricing, start_time FROM VM_Pricing WHERE resource_id = %d" % resource_id ):
-                        pricing, start_time = row
+                    for row in cur.execute("SELECT name, state, pricing, start_time FROM VM_Pricing WHERE resource_id = %d" % resource_id ):
+                        vm_name, state, pricing, start_time = row
+                        running_hours = ceil(self.running_time(start_time))
                         current_balance = self.current_balance(pricing, start_time)
                         total_spent += current_balance
                         #if total expenditure is over the limit destroy all VMs
@@ -212,6 +229,23 @@ class GwImMad (object):
                             log3.info("\nEliminando todas las VMs\n")
                             rocci.manage_instances('stop', resname, self._config.resources[resname])
                             break
+                        
+                        #get the number of running jobs in VM
+                        #total_running_jobs = 0
+                        if vm_name not in self.idle_vms.keys():
+                            #set state to idle
+                            if self.vm_is_idle(vm_name): #if total_running_jobs == 0:
+                                #cur.execute("UPDATE VM_Pricing SET state = '%s' WHERE name = '%s'" % ('idle', vm_name))
+                                self.idle_vms[vm_name] = {'state':'idle', 'idle_since':time.time()}
+                        elif (time.time() - self.idle_vms[vm_name]['idle_since']) >= self.node_poll_time * 3:
+                            if not self.vm_is_idle(vm_name):
+                                del(self.idle_vms[vm_name])
+                        
+                        node_safe_time = (self._config.resources[ resname ]['node_safe_time'])/60.0 #turn it into hours
+                        #if time left for another hour to be reached is smaller than node_safe_time but bigger than one minute 
+                        if (1-(running_hours-int(running_hours))) < node_safe_time and (1-(running_hours-int(running_hours))) > 1/60.0:
+                            background_thread = Thread(target=rocci.destroy_vm_by_name, args=(resname, vm_name))
+                            background_thread.start()
         '''
         if os.path.exists( os.path.join( pickled_file+"_"+resname ) ):
             try:

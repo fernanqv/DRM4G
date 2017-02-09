@@ -59,7 +59,6 @@ class Communicator(drm4g.communicators.Communicator):
         if not Communicator.socket_dir:
             Communicator.socket_dir=join(DRM4G_DIR, 'var', 'sockets')
 
-
     def createConfFiles(self):
         logger.debug("Running createConfFiles function from %s" % self.parent_module)
         #the maximum length of the path of a unix domain socket is 108 on Linux, 104 on Mac OS X

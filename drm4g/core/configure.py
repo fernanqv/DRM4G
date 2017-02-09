@@ -134,7 +134,7 @@ class Configuration(object):
                                     cur.execute("CREATE TABLE Resources (name text not null, vms integer, id integer primary key autoincrement)")
                                     cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
                                     
-                                    cur.execute("CREATE TABLE VM_Pricing (name text primary key, resource_id int, pricing real, start_time real, foreign key(resource_id) references Resources(id))")
+                                    cur.execute("CREATE TABLE VM_Pricing (name text primary key, resource_id int, state text, pricing real, start_time real, foreign key(resource_id) references Resources(id))")
                         else:
                             conn = sqlite3.connect(resource_conf_db)
                             with conn:
@@ -183,6 +183,19 @@ class Configuration(object):
                 output = "'private_key' key has not been defined for '%s' resource" % resname
                 logger.error( output )
                 errors.append( output )
+            if 'pricing' in reslist :
+                #if ( not 'soft_billing' in reslist ) or ( not 'hard_billing' in reslist ):
+                #    output = "'soft_billing' and 'hard_billing' keys are mandatory for '%s' resource" % resname
+                #    logger.error( output )
+                #    errors.append( output )
+                if resdict[ 'soft_billing' ] > resdict[ 'hard_billing' ] :
+                    output = "'soft_billing' can't be larger than 'hard_billing', problem found in '%s' resource" % resname
+                    logger.error( output )
+                    errors.append( output )
+                if resdict[ 'soft_billing' ] < 0 or resdict[ 'hard_billing' ] < 0 :
+                    output = "'soft_billing' and 'hard_billing' can't be smaller than 0, problem found in '%s' resource" % resname
+                    logger.error( output )
+                    errors.append( output )
             if ( not 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 output = "'max_jobs_running' key is mandatory for '%s' resource" % resname
                 logger.error( output )

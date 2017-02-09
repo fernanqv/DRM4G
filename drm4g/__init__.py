@@ -92,4 +92,9 @@ RESOURCE_MANAGERS = {
                      "ec2"          : "drm4g.managers.cloud_providers.ec2",
                      }
 
+#Database
+RESOURCES_DB = join(DRM4G_DIR, "var", "resource_conf.db")
+CLOUD_RESOURCE_TABLE = "Resources"
+CLOUD_PRICING_TABLE = "VM_Pricing"
+
 

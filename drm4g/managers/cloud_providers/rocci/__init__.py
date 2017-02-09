@@ -43,19 +43,24 @@ resource_conf_db = os.path.join(DRM4G_DIR, "var", "resource_conf.db")
 
 lock = threading.RLock()
 
+
+def pickle_read(resource_name):
+    instances = []
+    with open(pickled_file + "_" + resource_name, "r") as pf:
+        while True:
+            try:
+                instances.append(pickle.load(pf))
+            except EOFError:
+                break    
+    if not instances:
+        logger.error("There are no VMs defined in '%s' or the file is not well formed." % (pickled_file + "_" + resource_name))
+        exit(1)
+    return instances
+
 def pickle_remove(inst, resource_name):
     with lock:
         try:
-            instances=[]
-            with open( pickled_file+"_"+resource_name, "r" ) as pf :
-                while True :
-                    try:
-                        instances.append( pickle.load( pf ) )
-                    except EOFError :
-                        break
-            if not instances :
-                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % (pickled_file+"_"+resource_name) )
-                exit( 1 )
+            instances = pickle_read(resource_name)
 
             with open( pickled_file+"_"+resource_name, "w" ) as pf :
                 for instance in instances:
@@ -78,7 +83,6 @@ def pickle_dump(instance, resource_name):
         lock.release()
 
 def start_instance( config, resource_name ) :
-    #try:            
     try :
         hdpackage = import_module( RESOURCE_MANAGERS[config['lrms']] + ".%s" % config['lrms'] )
     except Exception as err :
@@ -109,9 +113,9 @@ def start_instance( config, resource_name ) :
                     data=cur.fetchone()[0]
                     if resource_id:
                         if data==0:
-                            cur.execute("INSERT INTO VM_Pricing (name, resource_id, pricing, start_time) VALUES ('%s', %d, %f, %f)" % ((resource_name+"_"+instance.ext_ip), resource_id, instance.instance_pricing, instance.start_time))
+                            cur.execute("INSERT INTO VM_Pricing (name, resource_id, state, pricing, start_time) VALUES ('%s', %d, '%s', %f, %f)" % ((resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
                         else:
-                            cur.execute("UPDATE VM_Pricing SET resource_id = %d, pricing = %f, start_time = %f WHERE name = '%s'" % (resource_id, instance.instance_pricing, instance.start_time, (resource_name+"_"+instance.ext_ip)))
+                            cur.execute("UPDATE VM_Pricing SET resource_id = %d, state = '%s', pricing = %f, start_time = %f WHERE name = '%s'" % (resource_id, 'active', instance.instance_pricing, instance.start_time, (resource_name+"_"+instance.ext_ip)))
     except Exception as err :
         logger.error( "Error creating instance: %s" % str( err ) )
         try :
@@ -136,10 +140,11 @@ def manage_instances(args, resource_name, config):
             threads.append( th )
         [ th.join() for th in threads ]
     elif args == "stop" :
-        instances = []
         if not exists( pickled_file+"_"+resource_name ):
             logger.error( "There are no available VMs to be deleted for the resource %s" % resource_name )
         else:
+            '''
+            instances = []
             with open( pickled_file+"_"+resource_name, "r" ) as pf :
                 while True :
                     try:
@@ -149,6 +154,8 @@ def manage_instances(args, resource_name, config):
             if not instances :
                 logger.error( "There are no VMs defined in '%s' or the file is not well formed." % (pickled_file+"_"+resource_name) )
                 exit( 1 )
+            '''
+            instances = pickle_read(resource_name)
             threads = []
             for instance in instances :
                 th = threading.Thread( target = stop_instance, args = ( instance, resource_name ) )
@@ -176,6 +183,34 @@ def destroy_num_instances(num_instances, resource_name, config):
         th.start()
         threads.append( th )
     [ th.join() for th in threads ]
+    
+def destroy_vm_by_name(resource_name, vm_name):
+    with lock:
+        try:
+            '''
+            instances=[]
+            with open( pickled_file+"_"+resource_name, "r" ) as pf :
+                while True :
+                    try:
+                        instances.append( pickle.load( pf ) )
+                    except EOFError :
+                        break
+            if not instances :
+                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % (pickled_file+"_"+resource_name) )
+                exit( 1 )
+            '''
+            instances = pickle_read(resource_name)
+            with open( pickled_file+"_"+resource_name, "w" ) as pf :
+                for instance in instances:
+                    if (resource_name+'_'+instance.ext_ip) != vm_name :
+                        pickle.dump( instance, pf )
+                    else:
+                        instance.destroy()
+            if len(instances) == 1 :
+                os.remove( pickled_file+"_"+resource_name )
+        except Exception as err:
+            logger.error( "Error deleting instance from pickled file %s\n%s" % (pickled_file+"_"+resource_name, str( err )) )
+
 
 class Resource (drm4g.managers.Resource):
     pass
