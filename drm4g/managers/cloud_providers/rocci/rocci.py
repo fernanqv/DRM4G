@@ -70,7 +70,13 @@ class ROCCI(Instance):
         if self.vm_comm == 'local':
             self.vm_comm = 'pk_ssh'
         pub = read_key( self.private_key + ".pub" )
-
+        
+        if 'pricing' in basic_data.keys():
+            self.instance_pricing = float(basic_data[ 'pricing' ])
+            self.soft_billing = float(basic_data.get('soft_billing', 0.0))
+            self.hard_billing = float(basic_data.get('hard_billing', 0.0))
+            self.node_safe_time = int(basic_data.get('node_safe_time', 5)) 
+            
         try :
             cloud_setup = {}
             for name, features in load_json( cloud_setup_file ).items() :

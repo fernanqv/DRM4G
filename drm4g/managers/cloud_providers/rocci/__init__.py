@@ -21,6 +21,7 @@
 import os
 import time
 import pickle
+import sqlite3
 import threading
 import logging
 import drm4g.managers
@@ -77,25 +78,40 @@ def pickle_dump(instance, resource_name):
         lock.release()
 
 def start_instance( config, resource_name ) :
-    try:            
-        try :
-            hdpackage = import_module( RESOURCE_MANAGERS[config['lrms']] + ".%s" % config['lrms'] )
-        except Exception as err :
-            raise Exception( "The infrastructure selected does not exist. "  + str( err ) )
-        
-        try:
-            instance = eval( "hdpackage.ROCCI( config )" )
-        except KeyError as err:
-            logger.error( "Either you have defined an incorrect value in your configuration file 'resources.conf'" \
-                " or there's a value that doesn't correspond with any of the keys in your cloud setup file 'cloudsetup.json':" )
-            raise
-        except Exception as err:
-            logger.error( "An error occurred while trying to create a VM instance." )
-            raise
-        
+    #try:            
+    try :
+        hdpackage = import_module( RESOURCE_MANAGERS[config['lrms']] + ".%s" % config['lrms'] )
+    except Exception as err :
+        raise Exception( "The infrastructure selected does not exist. "  + str( err ) )
+    
+    try:
+        instance = eval( "hdpackage.ROCCI( config )" )
+    except KeyError as err:
+        logger.error( "Either you have defined an incorrect value in your configuration file 'resources.conf'" \
+            " or there's a value that doesn't correspond with any of the keys in your cloud setup file 'cloudsetup.json':" )
+        raise
+    except Exception as err:
+        logger.error( "An error occurred while trying to create a VM instance\n%s" % str( err ) )
+        raise
+    try:   
         instance.create()
         instance.get_ip()
         pickle_dump(instance, resource_name)
+        
+        if exists( resource_conf_db ):
+            with lock:
+                conn = sqlite3.connect(resource_conf_db)
+                with conn:
+                    cur = conn.cursor()
+                    cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resource_name)
+                    resource_id = cur.fetchone()[0]
+                    cur.execute("SELECT count(*) FROM VM_Pricing WHERE name = '%s'" % (resource_name+"_"+instance.ext_ip))
+                    data=cur.fetchone()[0]
+                    if resource_id:
+                        if data==0:
+                            cur.execute("INSERT INTO VM_Pricing (name, resource_id, pricing, start_time) VALUES ('%s', %d, %f, %f)" % ((resource_name+"_"+instance.ext_ip), resource_id, instance.instance_pricing, instance.start_time))
+                        else:
+                            cur.execute("UPDATE VM_Pricing SET resource_id = %d, pricing = %f, start_time = %f WHERE name = '%s'" % (resource_id, instance.instance_pricing, instance.start_time, (resource_name+"_"+instance.ext_ip)))
     except Exception as err :
         logger.error( "Error creating instance: %s" % str( err ) )
         try :
@@ -149,6 +165,14 @@ def create_num_instances(num_instances, resource_name, config):
     threads = []
     for number_of_th in range( num_instances ):
         th = threading.Thread( target = start_instance, args = ( config, resource_name, ) )
+        th.start()
+        threads.append( th )
+    [ th.join() for th in threads ]
+    
+def destroy_num_instances(num_instances, resource_name, config):
+    threads = []
+    for number_of_th in range( num_instances ):
+        th = threading.Thread( target = stop_instance, args = ( config, resource_name, ) )
         th.start()
         threads.append( th )
     [ th.join() for th in threads ]

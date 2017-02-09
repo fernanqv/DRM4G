@@ -124,14 +124,17 @@ class Configuration(object):
                                 raise Exception( "Could not create resource for the VMs of %s:\n%s" % (name,str(err)) )
                         else:
                             self.resources[ name ][ 'vm_instances' ] = 0
-                            
+                        
+                        #if no database exists    
                         if not os.path.exists( resource_conf_db ):
                             with self.lock:
                                 conn = sqlite3.connect(resource_conf_db)
                                 with conn:
                                     cur = conn.cursor()
-                                    cur.execute("CREATE TABLE Resources (name text primary key, vms integer)")
+                                    cur.execute("CREATE TABLE Resources (name text not null, vms integer, id integer primary key autoincrement)")
                                     cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
+                                    
+                                    cur.execute("CREATE TABLE VM_Pricing (name text primary key, resource_id int, pricing real, start_time real, foreign key(resource_id) references Resources(id))")
                         else:
                             conn = sqlite3.connect(resource_conf_db)
                             with conn:
@@ -139,6 +142,7 @@ class Configuration(object):
                                 cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % name)
                                 data=cur.fetchone()[0]
                                 with self.lock:
+                                    #if database exists but it's the first time a resource is found
                                     if data==0:
                                         cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
                                     else:
