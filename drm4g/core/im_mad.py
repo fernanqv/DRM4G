@@ -22,14 +22,18 @@ import sys
 import os
 import threading
 import logging
+import time
+import sqlite3
+import subprocess
 from drm4g                              import DRM4G_DIR
 from threading                          import Thread
 from drm4g.core.configure               import Configuration
-from drm4g.core.configure               import logger as log2
-from drm4g.managers                     import HostInformation
+from drm4g.managers.cloud_providers     import logger as log3
 from drm4g.utils.message                import Send
 from drm4g.managers.cloud_providers     import rocci
 from _ast import Num
+
+resource_conf_db = os.path.join(DRM4G_DIR, "var", "resource_conf.db")
 
 class GwImMad (object):
     """
@@ -68,7 +72,11 @@ class GwImMad (object):
     def __init__(self):
         self._resources  = dict()
         self._config     = None
-        #self._num_vms    = 0
+        self.pend_jobs_time = 0.0
+        self.max_pend_jobs_time = 0.0
+        self.max_pend_jobs_limit = 10
+        self.schedule_interval = 5 #related with SCHEDULE_INTERVAL value in gwd.conf
+        self.node_poll_time = self.schedule_interval*5
 
     def do_INIT(self, args):
         """
@@ -97,21 +105,50 @@ class GwImMad (object):
             communicators    = self._config.make_communicators()
             hosts = ""
             for resname in sorted( self._resources.keys() ) :
-                if  self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
+                if self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
                     continue
-                if  'cloud_provider' in self._config.resources[ resname ].keys():
-                    if not Configuration.vm_instances.has_key( resname ):
-                        Configuration.vm_instances[ resname ] = 0 
-                    log2.debug("do_DISCOVER is going to check if any VM needs to be created")
-                    log2.debug("VM instances created: %s  --  Total instances requested: %s" % (Configuration.vm_instances[ resname ], self._config.resources[ resname ][ 'instances' ]))
-                    log2.debug(Configuration.vm_instances[ resname ] < int(self._config.resources[ resname ][ 'instances' ]))
-                    #if self._num_vms < int(self._config.resources[ resname ][ 'instances' ]) and Configuration.vm_instances[ resname ] < int(self._config.resources[ resname ][ 'instances' ]) :
-                    if Configuration.vm_instances[ resname ] < int(self._config.resources[ resname ][ 'instances' ]) :
-                        #self._num_vms += 1
-                        num_instances = int(self._config.resources[ resname ][ 'instances' ]) - Configuration.vm_instances[ resname ]
-                        Configuration.vm_instances[ resname ] += num_instances
-                        log2.debug("Se van a crear %s instancias" % num_instances)
+                if 'cloud_provider' in self._config.resources[ resname ].keys():
+                    #this is taken care of in the configure.py module
+                    #if not self._config.resources[ resname ].has_key('vm_instances'):
+                    #    self._config.resources[ resname ]['vm_instances'] = 0 
+                    if self._config.resources[ resname ]['vm_instances'] < int(self._config.resources[ resname ][ 'min_nodes' ]) :
+                        num_instances = int(self._config.resources[ resname ][ 'min_nodes' ]) - self._config.resources[ resname ]['vm_instances']
                         self._call_create_vms(resname, num_instances)
+
+                    log3.info("\nTotal VMs creadas para %s: %s\n" % (resname, self._config.resources[ resname ]['vm_instances']))
+                    
+                    #get the number of pending jobs
+                    command1 = "gwps -n -s i"
+                    command2 = "wc -l"
+                    pipe = subprocess.Popen(command1.split(), stdout=subprocess.PIPE)
+                    pending_jobs = subprocess.check_output(command2.split(), stdin=pipe.stdout)
+                    _,_ = pipe.communicate() #just to ensure that the process is closed
+                    pending_jobs = int(pending_jobs.strip())
+                    
+                    if pending_jobs :
+                        if not self.pend_jobs_time :
+                            self.pend_jobs_time = time.time()
+                        #create VM if min_nodes == 0 and pending_jobs
+                        if int(self._config.resources[ resname ][ 'min_nodes' ]) == 0 and self._config.resources[ resname ]['vm_instances'] == 0 :
+                            self._call_create_vms(resname, 1)
+                            
+                        #create VM if pending jobs is low but it's taking too long
+                        if pending_jobs < self.max_pend_jobs_limit and (time.time() - self.pend_jobs_time) >= self.node_poll_time*3 :
+                            if self._config.resources[ resname ]['vm_instances'] < int(self._config.resources[ resname ][ 'max_nodes' ]) :
+                                self._call_create_vms(resname, 1)
+                    else:
+                        self.pend_jobs_time = 0.0
+                        
+                    #create VM if pending jobs is too high    
+                    if pending_jobs >= self.max_pend_jobs_limit :
+                        if self.max_pend_jobs_time == 0.0 :
+                            self.max_pend_jobs_time = time.time()
+                        elif (time.time() - self.max_pend_jobs_time) >= self.node_poll_time :
+                            if self._config.resources[ resname ]['vm_instances'] < int(self._config.resources[ resname ][ 'max_nodes' ]) :
+                                self._call_create_vms(resname, 1)
+                    else:
+                        self.max_pend_jobs_time = 0.0
+
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
@@ -131,16 +168,28 @@ class GwImMad (object):
         self.logger.debug( out , exc_info=1 )
 
     def _call_create_vms(self, resname, num_instances):
-        log2.debug("START FUNCTION _CALL_CREATE_VMS")
-        #if Configuration.vm_instances[ resname ] < int(self._config.resources[ resname ][ 'instances' ]) :
-        log2.debug("Creating %s new VMs" % num_instances)
-        log2.debug("Configuration.vm_instances[ resname ] equals %s" % Configuration.vm_instances[ resname ])
-        #num_instances = int(self._config.resources[resname]['instances']) - Configuration.vm_instances[resname]
-        log2.debug("About to call function create_num_instances") #rocci.create_num_instances(num_instances, resname, self._config.resources[ resname ])
+        self._config.resources[ resname ]['vm_instances'] += num_instances
+        self.lock.acquire()
+        try:
+            conn = sqlite3.connect(resource_conf_db)
+            with conn:
+                cur = conn.cursor()
+                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resname)
+                data=cur.fetchone()[0]
+                if data==0:
+                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (resname, num_instances))
+                else:
+                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
+                    vms = cur.fetchone()[0]
+                    vms += num_instances
+                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
+                    self._config.resources[ resname ][ 'vm_instances' ] = vms
+        except Exception as err:
+            self.logger.error( "Error updating SQLite database %s\n%s" % (resource_conf_db, str( err )) )
+        finally:
+            self.lock.release()
         background_thread = Thread(target=rocci.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
         background_thread.start()
-        log2.debug("Finished function create_num_instances")
-        log2.debug("END FUNCTION _CALL_CREATE_VMS")
 
     def do_MONITOR(self, args, output=True):
         """
@@ -161,9 +210,6 @@ class GwImMad (object):
             assert info, "Host '%s' is not available" % HOST
             out = 'MONITOR %s SUCCESS %s' % (HID , info )
         except Exception as err :
-            #host_info = HostInformation()
-            #host_info.info()
-            #out = 'MONITOR %s SUCCESS %s' % (HID , host_info.info() )
             out = 'MONITOR %s FAILURE %s' % (HID , str(err) )
         if output:
             self.message.stdout(out)

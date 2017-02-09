@@ -19,10 +19,10 @@
 #
 
 import os
-import os.path
 import pickle
-import sys
+import sqlite3
 import logging
+import threading
 from drm4g.utils.importlib import import_module
 from drm4g                 import ( DRM4G_CONFIG_FILE,
                                     COMMUNICATORS,
@@ -37,6 +37,7 @@ except ImportError :
 
 logger = logging.getLogger(__name__)
 pickled_file = os.path.join(DRM4G_DIR, "var", "rocci_pickled")
+resource_conf_db = os.path.join(DRM4G_DIR, "var", "resource_conf.db")
 
 class ConfigureException(Exception):
     pass
@@ -50,10 +51,18 @@ class Configuration(object):
     * instantiate objects such as communicators or managers
 
     """
-    vm_instances = dict()
+    lock = threading.Lock()
     
     def __init__(self):
         self.resources  = dict()
+        self.configuration_keys = ['enable', 'communicator', 'username', 'frontend', 'private_key',
+                                   'public_key', 'scratch', 'lrms', 'queue', 'max_jobs_in_queue',
+                                   'max_jobs_running', 'parallel_env', 'project', 'vo', 'host_filter',
+                                   'bdii', 'myproxy_server', 'vm_user', 'vm_communicator', 'vm_config',
+                                   'cloud_provider', 'flavour', 'virtual_image', 'instances', 'volume',
+                                   'max_nodes', 'min_nodes', 'access_id', 'secret_key', 'region', 'size',
+                                   'image', 'pricing', 'cloud_user', 'cloud_config_script', 'soft_billing',
+                                   'hard_billing', 'node_safe_time', 'vm_instances']
         if not os.path.exists( DRM4G_CONFIG_FILE ):
             assert DRM4G_CONFIG_FILE, "resources.conf does not exist, please provide one"
         self.init_time = os.stat( DRM4G_CONFIG_FILE ).st_mtime
@@ -88,7 +97,7 @@ class Configuration(object):
                     logger.debug(" Reading configuration for resource '%s'." % name )
                     self.resources[ name ] = dict( parser.items( sectname ) )
 
-                    if self.resources[ name ][ 'lrms' ] == "rocci" :
+                    if 'cloud_provider' in self.resources[ name ].keys():
                         if os.path.exists( os.path.join( pickled_file+"_"+name ) ):
                             try:
                                 instances = []
@@ -100,10 +109,6 @@ class Configuration(object):
                                             break
                                 if instances:
                                     for instance in instances :
-                                        if Configuration.vm_instances.has_key( name ):
-                                            Configuration.vm_instances[ name ] += 1 
-                                        else:
-                                            Configuration.vm_instances[ name ] = 1
                                         insdict = dict()
                                         insdict['username'] = instance.vm_user
                                         insdict['frontend'] = instance.ext_ip
@@ -117,6 +122,29 @@ class Configuration(object):
                                                 name+"_"+instance.ext_ip, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name+"_"+instance.ext_ip].items())]))
                             except Exception as err :
                                 raise Exception( "Could not create resource for the VMs of %s:\n%s" % (name,str(err)) )
+                        else:
+                            self.resources[ name ][ 'vm_instances' ] = 0
+                            
+                        if not os.path.exists( resource_conf_db ):
+                            with self.lock:
+                                conn = sqlite3.connect(resource_conf_db)
+                                with conn:
+                                    cur = conn.cursor()
+                                    cur.execute("CREATE TABLE Resources (name text primary key, vms integer)")
+                                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
+                        else:
+                            conn = sqlite3.connect(resource_conf_db)
+                            with conn:
+                                cur = conn.cursor()
+                                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % name)
+                                data=cur.fetchone()[0]
+                                with self.lock:
+                                    if data==0:
+                                        cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
+                                    else:
+                                        cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (name))
+                                        vms = cur.fetchone()[0]
+                                        self.resources[ name ][ 'vm_instances' ] = vms
 
                     logger.debug("Resource '%s' defined by: %s.",
                              sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name].items())]))
@@ -138,7 +166,7 @@ class Configuration(object):
 
             reslist = list(resdict.keys( ))
             for key in reslist:
-                if key not in ['enable', 'communicator', 'username', 'frontend', 'private_key', 'public_key', 'scratch', 'lrms', 'queue', 'max_jobs_in_queue', 'max_jobs_running', 'parallel_env', 'project', 'vo', 'host_filter', 'bdii', 'myproxy_server', 'vm_user', 'vm_communicator', 'vm_config', 'cloud_provider', 'flavour', 'virtual_image', 'instances', 'volume'] :
+                if key not in self.configuration_keys :
                     output = "'%s' resource has an invalid key : '%s'" % (resname, key)
                     logger.error( output )
                     errors.append( output )
