@@ -54,17 +54,15 @@ Commands:
                             myproxy server.
 """
 
-import logging
-from os.path              import expanduser, exists, expandvars, join
 from drm4g.core.configure import Configuration
-from drm4g.commands       import exec_cmd, Daemon, Agent, Proxy
-from drm4g                import logger, DRM4G_DIR
+from drm4g.commands       import Daemon, Agent, Proxy
+from drm4g                import logger
 
 def run( arg ) :
     try :
         daemon = Daemon()
         if not daemon.is_alive() :
-           raise Exception( 'DRM4G is stopped.' )
+            raise Exception( 'DRM4G is stopped.' )
         config = Configuration()
         config.load( )
         if config.check( ) :
@@ -78,13 +76,9 @@ def run( arg ) :
         if lrms == 'cream' or lrms == 'rocci' :
             comm = config.make_communicators()[ arg['<resource_name>'] ]
             if communicator == 'op_ssh' :
-                #comm.parent_module = 'id'
-                #comm.configfile = join(DRM4G_DIR,'etc','openssh_id.conf')
                 #paramiko will always be used to renew the grid certificate
                 config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'pk_ssh'
                 comm = config.make_communicators()[ arg['<resource_name>'] ]
-                #~logger.debug( "COMMUNICATOR IS %s" % comm.communicator )
-                #config.resources.get( arg['<resource_name>'] )[ 'communicator' ] = 'op_ssh'
             proxy = Proxy( config.resources[ arg['<resource_name>'] ] ,
                            comm
                            )

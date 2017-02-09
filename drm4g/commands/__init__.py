@@ -276,11 +276,16 @@ class Daemon( object ):
                 processes_to_kill = [pid]
                 while processes_to_kill:
                     for process in processes_to_kill:
-                        cmd = "ps ho pid --ppid %s" % (process)
-                        out , err = exec_cmd( cmd )
-                        processes_to_kill = [line.lstrip() for line in out.splitlines()] + processes_to_kill
-                        os.kill( int(process), signal.SIGTERM )
-                        processes_to_kill.remove(process)
+                        try:
+                            cmd = "ps ho pid --ppid %s" % (process)
+                            out , err = exec_cmd( cmd )
+                            processes_to_kill = [line.lstrip() for line in out.splitlines()] + processes_to_kill
+                            processes_to_kill.remove(process)
+                            os.kill( int(process), signal.SIGTERM )
+                        except OSError as err:
+                            if "No such process" in err:
+                                continue
+                            raise
             while self.is_alive() :
                 time.sleep(1)
             try:

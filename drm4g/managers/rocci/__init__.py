@@ -21,8 +21,8 @@
 import os
 import time
 import pickle
-import threading
 import logging
+import threading
 import drm4g.managers
 import drm4g.managers.fork
 from utils                  import load_json
