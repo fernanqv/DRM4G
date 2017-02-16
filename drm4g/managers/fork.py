@@ -18,7 +18,6 @@
 # permissions and limitations under the Licence.
 #
 
-import os
 import drm4g.managers
 from string import Template
 
@@ -48,12 +47,12 @@ class Job (drm4g.managers.Job):
         jobs_to_kill = [self.JobId]
         while jobs_to_kill:
             for job in jobs_to_kill:
-                 out, err = self.Communicator.execCommand('ps ho pid --ppid %s' % (job))
-                 jobs_to_kill = [line.lstrip() for line in out.splitlines()] + jobs_to_kill
-                 out, err = self.Communicator.execCommand('kill -9 %s' % (job))
-                 if err:
-                     raise drm4g.managers.JobException('Could not kill %s : %s' % (job, ' '.join(err.split('\n'))))
-                 jobs_to_kill.remove(job)
+                out, err = self.Communicator.execCommand('ps ho pid --ppid %s' % (job))
+                jobs_to_kill = [line.lstrip() for line in out.splitlines()] + jobs_to_kill
+                out, err = self.Communicator.execCommand('kill -9 %s' % (job))
+                if err:
+                    raise drm4g.managers.JobException('Could not kill %s : %s' % (job, ' '.join(err.split('\n'))))
+                jobs_to_kill.remove(job)
 
     def jobTemplate(self, parameters):
         line  = '#!/bin/bash\n'

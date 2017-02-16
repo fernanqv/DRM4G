@@ -19,15 +19,12 @@
 #
 
 import sys
-import threading
-import os
-import re
 import logging
+import threading
 from drm4g.utils.url       import urlparse
 from drm4g.utils.dynamic   import ThreadPool
 from drm4g.core.configure  import Configuration
 from drm4g.utils.message   import Send
-from drm4g                 import DRM4G_DIR
 
 
 class GwTmMad (object):
@@ -244,8 +241,5 @@ class GwTmMad (object):
                 elif resname not in self._communicator:
                     self.logger.debug( "    Since they are the same, its Communicator() will be returned")
                     self._communicator[ resname ] = self._configure.make_communicators()[resname]
-                    if resdict[ 'communicator' ] == 'op_ssh' :
-                        self._communicator[ resname ].configfile=os.path.join(DRM4G_DIR,'etc','openssh_tm.conf')
-                        self._communicator[ resname ].parent_module='tm'
                 self.logger.debug( "\nCommunicator for %s:\n    communicator: %s\n    username: %s\n    frontend: %s" % (resname, resdict[ 'communicator' ], self._communicator[ resname ].username, self._communicator[ resname ].frontend) )
                 return self._communicator[ resname ]

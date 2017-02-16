@@ -39,6 +39,8 @@ class Communicator(drm4g.communicators.Communicator):
     """
     Interact with local resources using shell commands
     """
+    _lock = __import__('threading').Lock()
+
     def connect(self):
         logger.debug( "Your are using the local communicator" )
 
@@ -67,19 +69,20 @@ class Communicator(drm4g.communicators.Communicator):
             raise ComException( output )
 
     def copy(self, source_url, destination_url, execution_mode):
-        if 'file://' in source_url:
-            from_dir = urlparse(source_url).path
-            to_dir   = self._set_dir(urlparse(destination_url).path)
-        else:
-            from_dir = self._set_dir(urlparse(source_url).path)
-            to_dir   = urlparse(destination_url).path
-        out, err = self.execCommand("cp -r %s %s" % (from_dir,to_dir))
-        if err:
-            output = "Could not copy from %s to %s : %s" % ( from_dir, to_dir , ' '.join( err.split( '\n' ) ) )
-            logger.error( output )
-            raise ComException( output )
-        if execution_mode == 'X':
-            os.chmod(to_dir, execution_permissions )
+        with self._lock:
+            if 'file://' in source_url:
+                from_dir = urlparse(source_url).path
+                to_dir   = self._set_dir(urlparse(destination_url).path)
+            else:
+                from_dir = self._set_dir(urlparse(source_url).path)
+                to_dir   = urlparse(destination_url).path
+            out, err = self.execCommand("cp -r %s %s" % (from_dir,to_dir))
+            if err:
+                output = "Could not copy from %s to %s : %s" % ( from_dir, to_dir , ' '.join( err.split( '\n' ) ) )
+                logger.error( output )
+                raise ComException( output )
+            if execution_mode == 'X':
+                os.chmod(to_dir, execution_permissions )
 
     def rmDirectory(self, url):
         to_dir   = self._set_dir(urlparse(url).path)

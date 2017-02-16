@@ -213,7 +213,16 @@ def destroy_vm_by_name(resource_name, vm_name):
 
 
 class Resource (drm4g.managers.Resource):
-    pass
+    def hosts(self):
+        """
+        It will return a string with the host available in the resource.
+        """
+        if 'cloud_provider' in self.features :
+            self.host_list = [ "" ]
+            return ""
+        else :
+            self.host_list = [ self.name ]
+            return self.name
 
 class Job (drm4g.managers.fork.Job):
     pass

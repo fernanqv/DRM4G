@@ -20,9 +20,7 @@
 
 import drm4g.managers
 from string import Template
-import xml.dom.minidom
 import re
-import time
 
 
 # The programs needed by these utilities. If they are not in a location

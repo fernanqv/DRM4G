@@ -127,7 +127,7 @@ class Agent( object ):
 
     def is_alive( self ):
         if not exists( self.agent_file ) :
-            logger.debug("'%s' does not exist" % ( self.agent_file ) )
+            logger.debug("  '%s' does not exist" % ( self.agent_file ) )
             return False
         else :
             if process_is_runnig( self.agent_file ):
@@ -273,10 +273,25 @@ class Daemon( object ):
         if self.is_alive():
             with open(self.gwd_pid) as pid_file:
                 pid = next(pid_file)
-                os.kill( int(pid), signal.SIGTERM )
+                processes_to_kill = [pid]
+                while processes_to_kill:
+                    for process in processes_to_kill:
+                        try:
+                            cmd = "ps ho pid --ppid %s" % (process)
+                            out , err = exec_cmd( cmd )
+                            processes_to_kill = [line.lstrip() for line in out.splitlines()] + processes_to_kill
+                            processes_to_kill.remove(process)
+                            os.kill( int(process), signal.SIGTERM )
+                        except OSError as err:
+                            if "No such process" in err:
+                                continue
+                            raise
             while self.is_alive() :
                 time.sleep(1)
-            os.remove(self.gwd_pid)
+            try:
+                os.remove(self.gwd_pid)
+            except OSError:
+                logger.error("  '%s' does not exist" % self.gwd_pid)
             logger.info( "  OK" )
         else:
             logger.info("  WARNING: daemon is already stopped")
@@ -357,10 +372,10 @@ class Resource( object ):
             if resdict[ 'enable' ] == 'true' :
                 communicator = communicators.get( resname )
                 try :
-                    if resdict[ 'communicator' ] == 'op_ssh' :
-                        #it will use im's socket instead of creating a new one
-                        communicator.parent_module = 'im'
-                        communicator.configfile = join(DRM4G_DIR, 'etc', 'openssh_im.conf')
+                    # if resdict[ 'communicator' ] == 'op_ssh' :
+                    #     #it will use im's socket instead of creating a new one
+                    #     communicator.parent_module = 'im'
+                    #     communicator.configfile = join(DRM4G_DIR, 'etc', 'openssh_im.conf')
                     communicator.connect()
                     logger.info( "Resource '%s' :" % ( resname ) )
                     logger.info( "--> The front-end '%s' is accessible\n" % communicator.frontend )

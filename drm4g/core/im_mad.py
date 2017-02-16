@@ -19,8 +19,6 @@
 #
 
 import sys
-import os
-import threading
 import logging
 import time
 import pickle
@@ -293,9 +291,6 @@ class GwImMad (object):
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
-                    if self._config.resources[ resname ][ 'communicator' ] == 'op_ssh' :
-                        self._resources[ resname ][ 'Resource' ].Communicator.configfile=os.path.join(DRM4G_DIR, 'etc', 'openssh_im.conf')
-                        self._resources[ resname ][ 'Resource' ].Communicator.parent_module='im'
                     self._resources[ resname ][ 'Resource' ].Communicator.connect()
                     hosts = hosts + " " + self._resources[ resname ] [ 'Resource' ].hosts()
                     self._resources[ resname ][ 'Resource' ].Communicator.close()

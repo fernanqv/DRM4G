@@ -28,7 +28,7 @@ from drm4g                 import ( DRM4G_CONFIG_FILE,
                                     COMMUNICATORS,
                                     RESOURCE_MANAGERS,
                                     REMOTE_JOBS_DIR,
-                                    SSH_PORT, DRM4G_DIR )
+                                    DRM4G_DIR )
 try :
     import configparser
 except ImportError :
@@ -84,10 +84,10 @@ class Configuration(object):
         logger.debug("Reading file '%s' ..." % DRM4G_CONFIG_FILE)
         try:
             try:
-                config_file   = open(DRM4G_CONFIG_FILE, 'r')
+                conf_file   = open(DRM4G_CONFIG_FILE, 'r')
                 parser = configparser.RawConfigParser()
                 try:
-                    parser.readfp( config_file , DRM4G_CONFIG_FILE )
+                    parser.readfp( conf_file , DRM4G_CONFIG_FILE )
                 except Exception as err:
                     output = "Configuration file '%s' is unreadable or malformed: %s" % ( DRM4G_CONFIG_FILE , str( err ) )
                     logger.error( output )
@@ -156,7 +156,7 @@ class Configuration(object):
                 output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err))
                 logger.error( output )
         finally:
-            config_file.close()
+            conf_file.close()
 
     def check(self):
         """
