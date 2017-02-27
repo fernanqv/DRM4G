@@ -120,13 +120,15 @@ class Configuration(object):
                                         self.resources[ name+"_"+instance.ext_ip ] = insdict
                                         logger.debug("Resource '%s' defined by: %s.",
                                                 name+"_"+instance.ext_ip, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name+"_"+instance.ext_ip].items())]))
+                                #self.resources[ name ][ 'vm_instances' ] = len(instances)
                             except Exception as err :
                                 raise Exception( "Could not create resource for the VMs of %s:\n%s" % (name,str(err)) )
-                        else:
-                            self.resources[ name ][ 'vm_instances' ] = 0
+                        #else:
+                            #self.resources[ name ][ 'vm_instances' ] = 0
                         
                         #if no database exists    
                         if not os.path.exists( resource_conf_db ):
+                            self.resources[ name ][ 'vm_instances' ] = 0
                             with self.lock:
                                 conn = sqlite3.connect(resource_conf_db)
                                 with conn:
@@ -141,14 +143,15 @@ class Configuration(object):
                                 cur = conn.cursor()
                                 cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % name)
                                 data=cur.fetchone()[0]
-                                with self.lock:
-                                    #if database exists but it's the first time a resource is found
-                                    if data==0:
+                                #if database exists but it's the first time a resource is found
+                                if data==0:
+                                    with self.lock:
+                                        self.resources[ name ][ 'vm_instances' ] = 0
                                         cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
-                                    else:
-                                        cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (name))
-                                        vms = cur.fetchone()[0]
-                                        self.resources[ name ][ 'vm_instances' ] = vms
+                                else:
+                                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (name))
+                                    vms = cur.fetchone()[0]
+                                    self.resources[ name ][ 'vm_instances' ] = vms
 
                     logger.debug("Resource '%s' defined by: %s.",
                              sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name].items())]))

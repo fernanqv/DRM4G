@@ -24,7 +24,7 @@ import threading
 from libcloud.compute.types          import Provider
 from libcloud.compute.providers      import get_driver
 from libcloud.compute.types          import NodeState
-from drm4g.managers.cloud_providers  import Instance, logger
+from drm4g.managers.cloud_providers  import Instance
 
 class EC2(Instance):
 

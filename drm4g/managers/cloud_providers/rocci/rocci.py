@@ -21,12 +21,13 @@
 import re
 import time
 import uuid
-import socket
+#import socket
 from datetime                                   import timedelta, datetime
 from os.path                                    import join, basename, expanduser
 from drm4g.utils.importlib                      import import_module
 from drm4g.managers.cloud_providers             import Instance, logger
 from drm4g.managers.cloud_providers.rocci       import CloudSetup
+from drm4g.utils.proxy_certificate              import _renew_voms_proxy  
 from utils                                      import load_json, read_key, is_ip_private
 from drm4g                                      import ( COMMUNICATORS,
                                                          REMOTE_JOBS_DIR,
@@ -132,7 +133,8 @@ class ROCCI(Instance):
         cmd = "ls %s" % self.proxy_file #to check if it exists
         out,err = self.com_object.execCommand( cmd )
         if err:
-            self._renew_voms_proxy()
+            #self._renew_voms_proxy()
+            _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
 
     #This is here to avoid having the error "TypeError: can't pickle lock objects" when creating the pickled file
     def __getstate__(self):
@@ -157,6 +159,7 @@ class ROCCI(Instance):
         logger.debug("~~~~~~~~~~~~~~~~         Command executed         ~~~~~~~~~~~~~~~~")
         return out, err
 
+    '''
     def _renew_voms_proxy(self, cont=0):
         try:
             logger.debug( "Running rocci's _renew_voms_proxy function" )
@@ -192,6 +195,7 @@ class ROCCI(Instance):
                 self._renew_voms_proxy(cont+1)
             else:
                 raise
+    '''
 
     def create(self):
         logger.debug( "Running rocci's  create function" )
@@ -248,7 +252,7 @@ class ROCCI(Instance):
         self.log_output("_create_link", out, err)
 
         if 'certificate expired' in err :
-            self._renew_voms_proxy()
+            _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("_create_link 2", out, err)
         elif err :
@@ -268,7 +272,7 @@ class ROCCI(Instance):
             self.log_output("_create_resource", out, err)
 
             if 'certificate expired' in err :
-                self._renew_voms_proxy()
+                _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
                 logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
                 out, err = self._exec_remote_cmd( cmd )
                 self.log_output("_create_resource 2", out, err)
@@ -291,7 +295,7 @@ class ROCCI(Instance):
         self.log_output("_create_volume", out, err)
 
         if 'certificate expired' in err :
-            self._renew_voms_proxy()
+            _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("_create_volume 2", out, err)
         elif err :
@@ -310,7 +314,7 @@ class ROCCI(Instance):
             self.log_output("destroy (unlink)", out, err)
 
             if 'certificate expired' in err :
-                self._renew_voms_proxy()
+                _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
                 logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
                 out, err = self._exec_remote_cmd( cmd )
                 self.log_output("destroy (unlink) 2", out, err)
@@ -323,7 +327,7 @@ class ROCCI(Instance):
             self.log_output("destroy (volume)", out, err)
 
             if 'certificate expired' in err :
-                self._renew_voms_proxy()
+                _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
                 logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
                 out, err = self._exec_remote_cmd( cmd )
                 self.log_output("destroy (volume) 2", out, err)
@@ -335,7 +339,7 @@ class ROCCI(Instance):
         self.log_output("destroy (resource)", out, err)
 
         if 'certificate expired' in err :
-            self._renew_voms_proxy()
+            _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
             logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("destroy (resource) 2", out, err)
@@ -352,7 +356,7 @@ class ROCCI(Instance):
         self.log_output("get_description", out, err)
 
         if 'certificate expired' in err :
-            self._renew_voms_proxy()
+            _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
             logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("get_description 2", out, err)
@@ -370,7 +374,7 @@ class ROCCI(Instance):
         self.log_output("get_floating_ips (floating check)", out, err)
 
         if 'certificate expired' in err :
-            self._renew_voms_proxy()
+            _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("get_floating_ips (floating check) 2", out, err)
         elif err :
@@ -392,7 +396,7 @@ class ROCCI(Instance):
             self.log_output("get_public_ip", out, err)
 
             if 'certificate expired' in err :
-                self._renew_voms_proxy()
+                _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
                 out, err = self._exec_remote_cmd( cmd )
                 self.log_output("get_public_ip 2", out, err)
 
@@ -421,7 +425,7 @@ class ROCCI(Instance):
                     if 'No more floating ips in pool' in str(err):
                         cont+=1
                     elif 'certificate expired' in str(err) :
-                        self._renew_voms_proxy()
+                        _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
                         continue
                     elif err:
                         logger.debug("An unexpected error occurred:\n"+str(err))
@@ -460,7 +464,7 @@ class ROCCI(Instance):
         self.log_output("get_network_interfaces", out, err)
 
         if 'certificate expired' in err :
-            self._renew_voms_proxy()
+            _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("get_network_interfaces 2", out, err)
         elif err :

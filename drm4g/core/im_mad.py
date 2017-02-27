@@ -18,6 +18,7 @@
 # permissions and limitations under the Licence.
 #
 
+import os
 import sys
 import logging
 import time
@@ -25,9 +26,9 @@ import pickle
 import sqlite3
 import subprocess
 from drm4g                              import DRM4G_DIR
-from threading                          import Thread
+from threading                          import Thread, Lock
 from drm4g.core.configure               import Configuration
-from drm4g.managers.cloud_providers     import logger as log3
+#from drm4g.managers.cloud_providers     import logger as log3
 from drm4g.utils.message                import Send
 from drm4g.managers.cloud_providers     import rocci
 from math                               import ceil
@@ -67,7 +68,7 @@ class GwImMad (object):
 
     logger  = logging.getLogger(__name__)
     message = Send()
-    lock = threading.Lock()
+    lock = Lock()
 
     def __init__(self):
         self._resources  = dict()
@@ -90,7 +91,7 @@ class GwImMad (object):
         self.logger.debug(out)
 
     def _call_create_vms(self, resname, num_instances):
-        self._config.resources[ resname ]['vm_instances'] += num_instances
+        #self._config.resources[ resname ]['vm_instances'] += num_instances
         self.lock.acquire()
         try:
             conn = sqlite3.connect(resource_conf_db)
@@ -115,11 +116,12 @@ class GwImMad (object):
         background_thread.start()
 
     def _dynamic_vm_creation(self, resname):
+        
+        #log3.info("\nTotal VMs creadas para %s: %s\n" % (resname, self._config.resources[resname]['vm_instances']))          
+        
         if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['min_nodes']):
             num_instances = int(self._config.resources[resname]['min_nodes']) - self._config.resources[resname]['vm_instances']
             self._call_create_vms(resname, num_instances)
-            
-        log3.info("\nTotal VMs creadas para %s: %s\n" % (resname, self._config.resources[resname]['vm_instances']))
         
         #get the number of pending jobs
         command1 = "gwps -n -s i"
@@ -154,17 +156,36 @@ class GwImMad (object):
             self.max_pend_jobs_time = 0.0
             
     def running_time(self, start_time):
+        '''
+        Given start time in seconds since epoch, returns running time in hours   
+        '''
         if not start_time:
             return 0
         else:
-            return (time.time() - start_time)/3600
+            #return (time.time() - start_time)/3600.0
+            return (time.time() - start_time)/360.0
         
     def current_balance(self, pricing, start_time):
         running_hours = ceil(self.running_time(start_time))
         return running_hours * pricing
-    
+
+    def vm_is_idle(self, vm_name):
+        vm_is_idle = True
+        for job_state in ['i', 'p', 'w', 'e']:
+            command1 = "gwps -n -r %s -s %s" % (vm_name, job_state)
+            command2 = "wc -l"
+            pipe = subprocess.Popen(command1.split(), stdout=subprocess.PIPE)
+            running_jobs = subprocess.check_output(command2.split(), stdin=pipe.stdout)
+            _, _ = pipe.communicate() #just to ensure that the process is closed
+            running_jobs = int(running_jobs.strip())
+            #total_running_jobs += running_jobs
+            if running_jobs:
+                vm_is_idle = False
+                break        
+        return vm_is_idle
+    '''
     def _call_destroy_vms(self, resname, num_instances):
-        self._config.resources[ resname ]['vm_instances'] += num_instances
+        self._config.resources[ resname ]['vm_instances'] -= num_instances
         self.lock.acquire()
         try:
             conn = sqlite3.connect(resource_conf_db)
@@ -187,63 +208,119 @@ class GwImMad (object):
             self.lock.release()
         background_thread = Thread(target=rocci.destroy_num_instances, args=(num_instances, resname, self._config.resources[resname]))
         background_thread.start()
-
-    def vm_is_idle(self, vm_name):
-        vm_is_idle = True
-        for job_state in ['i', 'p', 'w', 'e']:
-            command1 = "gwps -n -r %s -s %s" % (vm_name, job_state)
-            command2 = "wc -l"
-            pipe = subprocess.Popen(command1.split(), stdout=subprocess.PIPE)
-            running_jobs = subprocess.check_output(command2.split(), stdin=pipe.stdout)
-            _, _ = pipe.communicate() #just to ensure that the process is closed
-            running_jobs = int(running_jobs.strip())
-            #total_running_jobs += running_jobs
-            if running_jobs:
-                vm_is_idle = False
-                break        
-        return vm_is_idle
+    
+    ''
+    no me acuerdo de que queria hacer con esto
+    def delete_from_db(self, vm_name):
+        """
+        It will delete a specified VM from the database 
+        @param vm_name : name of the VM
+        @type vm_name : string
+        """
+        with self.lock:
+            conn = sqlite3.connect(resource_conf_db)
+            with conn:
+                cur = conn.cursor()
+                cur.execute("DELETE FROM Resources WHERE name = '%s'" % vm_name )
+                
+        self._config.resources[ resname ]['vm_instances'] += num_instances
+        self.lock.acquire()
+        try:
+            conn = sqlite3.connect(resource_conf_db)
+            with conn:
+                cur = conn.cursor()
+                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resname)
+                data=cur.fetchone()[0]
+                if data==0:
+                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (resname, num_instances))
+                    self._config.resources[ resname ][ 'vm_instances' ] = num_instances
+                else:
+                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
+                    vms = cur.fetchone()[0]
+                    vms += num_instances
+                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
+                    self._config.resources[ resname ][ 'vm_instances' ] = vms
+        except Exception as err:
+            self.logger.error( "Error updating SQLite database %s\n%s" % (resource_conf_db, str( err )) )
+        finally:
+            self.lock.release()
+        background_thread = Thread(target=rocci.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
+        background_thread.start()
+    '''
 
     def _dynamic_vm_deletion(self, resname):
+        """
+        For a specified resource, it will check if any of its VMs should be deleted 
+        @param resname : name of the resource
+        @type resname : string
+        """
         #if self._config.resources[ resname ][ 'vm_instances' ] > self._config.resources[ resname ][ 'max_nodes' ]:
         #    num_instances = self._config.resources[resname]['vm_instances'] - int(self._config.resources[resname]['min_nodes'])
         #    self._call_destroy_vms(resname, num_instances)
         if os.path.exists( resource_conf_db ):
-            with self.lock:
-                total_spent = 0
-                conn = sqlite3.connect(resource_conf_db)
-                with conn:
-                    cur = conn.cursor()
-                    cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resname )
-                    resource_id = cur.fetchone()[0]
-                    for row in cur.execute("SELECT name, state, pricing, start_time FROM VM_Pricing WHERE resource_id = %d" % resource_id ):
-                        vm_name, state, pricing, start_time = row
-                        running_hours = ceil(self.running_time(start_time))
-                        current_balance = self.current_balance(pricing, start_time)
-                        total_spent += current_balance
-                        #if total expenditure is over the limit destroy all VMs
-                        log3.info("Total gastado : %s" % total_spent)
-                        log3.info("Maximo permitdo : %s\n" % self._config.resources[resname]['hard_billing'])
-                        if total_spent >= float(self._config.resources[resname]['hard_billing']) :
-                            log3.info("\nEliminando todas las VMs\n")
-                            rocci.manage_instances('stop', resname, self._config.resources[resname])
-                            break
+            #with self.lock:
+            total_spent = 0
+            conn = sqlite3.connect(resource_conf_db)
+            with conn:
+                cur = conn.cursor()
+                cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resname )
+                resource_id = cur.fetchone()[0]
+                for row in cur.execute("SELECT name, state, pricing, start_time FROM VM_Pricing WHERE resource_id = %d" % resource_id ):
+                    vm_name, state, pricing, start_time = row
+                    #running_hours = ceil(self.running_time(start_time))
+                    running_hours = self.running_time(start_time)
+                    current_balance = self.current_balance(pricing, start_time)
+                    #total_spent += current_balance # el metodo current balance ya calcula el total
+                    total_spent = current_balance
+                    #if total expenditure is over the limit destroy all VMs
+                    #log3.info("Total gastado : %s" % total_spent)
+                    #log3.info("Maximo permitdo : %s" % self._config.resources[resname]['hard_billing'])
+                    if total_spent >= float(self._config.resources[resname]['hard_billing']) :
+                        #log3.info("\nEliminando todas las VMs\n")
                         
-                        #get the number of running jobs in VM
-                        #total_running_jobs = 0
-                        if vm_name not in self.idle_vms.keys():
-                            #set state to idle
-                            if self.vm_is_idle(vm_name): #if total_running_jobs == 0:
-                                #cur.execute("UPDATE VM_Pricing SET state = '%s' WHERE name = '%s'" % ('idle', vm_name))
-                                self.idle_vms[vm_name] = {'state':'idle', 'idle_since':time.time()}
-                        elif (time.time() - self.idle_vms[vm_name]['idle_since']) >= self.node_poll_time * 3:
-                            if not self.vm_is_idle(vm_name):
-                                del(self.idle_vms[vm_name])
+                        self._config.resources[ resname ]['vm_instances'] = 0
+                        rocci.manage_instances('stop', resname, self._config.resources[resname])
                         
-                        node_safe_time = (self._config.resources[ resname ]['node_safe_time'])/60.0 #turn it into hours
-                        #if time left for another hour to be reached is smaller than node_safe_time but bigger than one minute 
-                        if (1-(running_hours-int(running_hours))) < node_safe_time and (1-(running_hours-int(running_hours))) > 1/60.0:
+                        with self.lock:
+                            cur.execute("UPDATE Resources SET vms = 0 WHERE name = '%s'" % resname) #cur.execute("DELETE FROM Resources where name = '%s'" % resname)
+                            cur.execute("DELETE FROM VM_Pricing where resource_id = '%d'" % resource_id)
+                        break
+
+                    #get the number of running jobs in VM
+                    #total_running_jobs = 0
+                    if vm_name not in self.idle_vms.keys():
+                        #set state to idle
+                        if self.vm_is_idle(vm_name): #if total_running_jobs == 0:
+                            #cur.execute("UPDATE VM_Pricing SET state = '%s' WHERE name = '%s'" % ('idle', vm_name))
+                            self.idle_vms[vm_name] = {'state':'idle', 'idle_since':time.time()}
+                    elif (time.time() - self.idle_vms[vm_name]['idle_since']) >= self.node_poll_time * 3:
+                        #after waiting for 3 times the node pole time, it will then check each time if it's still idle, until it's not or it's deleted
+                        if not self.vm_is_idle(vm_name):
+                            del(self.idle_vms[vm_name])
+
+                    node_safe_time = int(self._config.resources[ resname ]['node_safe_time'])/60.0 #turns node_safe_time into hours
+                    #if time left for another hour to be reached is smaller than node_safe_time but bigger than one minute 
+                    #if (1-(running_hours-int(running_hours))) < node_safe_time and (1-(running_hours-int(running_hours))) > 1/60.0:
+                    #log3.info("Idle VMs: %s" % self.idle_vms.keys())
+                    six_min = 6/60.0
+                    one_min = 1/60.0
+                    #log3.info(one_min-(running_hours-int(running_hours)))
+                    #log3.info((six_min-(running_hours-int(running_hours))) < node_safe_time)
+                    if (six_min-(running_hours-int(running_hours))) < node_safe_time and (six_min-(running_hours-int(running_hours))) > 1/60.0:
+                        #log3.info("Deleting VMs")
+
+                        #this verifies that the VM "vm_name" still exists, since it could have been destroyed with the command "drm4g resource destroy"
+                        cur.execute("SELECT count(*) FROM VM_Pricing WHERE name = '%s'" % vm_name)
+                        data = cur.fetchone()[0]
+                        if data:
+                            self._config.resources[ resname ]['vm_instances'] -= 1
                             background_thread = Thread(target=rocci.destroy_vm_by_name, args=(resname, vm_name))
                             background_thread.start()
+                            
+                            with self.lock:
+                                cur.execute("UPDATE Resources SET vms= %d WHERE name = '%s'" % (self._config.resources[ resname ]['vm_instances'], resname))
+                                cur.execute("DELETE FROM VM_Pricing where name = '%s'" % vm_name)
+                        del(self.idle_vms[vm_name])
         '''
         if os.path.exists( os.path.join( pickled_file+"_"+resname ) ):
             try:
@@ -287,7 +364,9 @@ class GwImMad (object):
                     continue
                 if 'cloud_provider' in self._config.resources[ resname ].keys(): 
                     self._dynamic_vm_creation(resname)
-                    self._dynamic_vm_deletion(resname)
+                    #if there are existing VMs for this resname
+                    if os.path.exists(pickled_file+"_"+resname):
+                        self._dynamic_vm_deletion(resname)
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]

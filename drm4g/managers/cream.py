@@ -21,10 +21,11 @@
 import re
 import logging
 import drm4g.managers
-from os.path         import basename, dirname, join
-from drm4g           import REMOTE_VOS_DIR
-from drm4g.managers  import JobException, HostInformation, Queue
-from time            import sleep 
+from os.path                                import basename, dirname, join
+from drm4g                                  import REMOTE_VOS_DIR
+from drm4g.utils.proxy_certificate          import _renew_voms_proxy  
+from drm4g.managers                         import JobException, HostInformation, Queue
+#from time                                   import sleep 
 
 logger = logging.getLogger(__name__)
 
@@ -233,6 +234,7 @@ class Job (drm4g.managers.Job):
                     "ABORTED"       : "FAILED",
                     }
 
+    ''' 
     def _renew_voms_proxy(self, cont=0):
         output = "The proxy 'x509up.%s' has probably expired" %  self.resfeatures[ 'vo' ]
         logger.debug( output )
@@ -254,7 +256,7 @@ class Job (drm4g.managers.Job):
             if cont<3:
                 sleep(2.0)
                 self._renew_voms_proxy(cont+1)
-
+    '''
     def jobSubmit(self, wrapper_file):
         cmd = '%s -e %s delegete-proxy' % (
                                            CREAM_DELEGATE % self.resfeatures[ 'vo' ] ,
@@ -264,7 +266,8 @@ class Job (drm4g.managers.Job):
         out, err = self.Communicator.execCommand( cmd )
         logger.debug( out + err )
         if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
-            self._renew_voms_proxy()
+            #self._renew_voms_proxy()
+            _renew_voms_proxy(self.Communicator, self.resfeatures.get('myproxy_server'), self.resfeatures[ 'vo' ])
             logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
             logger.debug( out + err )
@@ -282,7 +285,7 @@ class Job (drm4g.managers.Job):
         out, err = self.Communicator.execCommand( cmd )
         logger.debug( out + err )
         if ( 'The proxy has EXPIRED' in out ) or ( 'is not accessible' in err ) :
-            self._renew_voms_proxy()
+            _renew_voms_proxy(self.Communicator, self.resfeatures.get('myproxy_server'), self.resfeatures[ 'vo' ])
             logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
             logger.debug( out + err )
@@ -308,7 +311,7 @@ class Job (drm4g.managers.Job):
         out, err = self.Communicator.execCommand( cmd )
         logger.debug( out + err )
         if 'The proxy has EXPIRED' in out :
-            self._renew_voms_proxy()
+            _renew_voms_proxy(self.Communicator, self.resfeatures.get('myproxy_server'), self.resfeatures[ 'vo' ])
             logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
             logger.debug( out + err )
@@ -332,7 +335,7 @@ class Job (drm4g.managers.Job):
         out, err = self.Communicator.execCommand( cmd )
         logger.debug( out + err )
         if 'The proxy has EXPIRED' in out :
-            self._renew_voms_proxy()
+            _renew_voms_proxy(self.Communicator, self.resfeatures.get('myproxy_server'), self.resfeatures[ 'vo' ])
             logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
             logger.debug( out + err )
@@ -347,7 +350,7 @@ class Job (drm4g.managers.Job):
         out, err = self.Communicator.execCommand( cmd )
         logger.debug( out + err )
         if 'The proxy has EXPIRED' in out :
-            self._renew_voms_proxy()
+            _renew_voms_proxy(self.Communicator, self.resfeatures.get('myproxy_server'), self.resfeatures[ 'vo' ])
             logger.debug( "Executing command: %s" % cmd )
             out , err = self.Communicator.execCommand( cmd )
         if "ERROR" in err:
