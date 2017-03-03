@@ -22,13 +22,13 @@ import os
 import sys
 import logging
 import time
-import pickle
+#import pickle
 import sqlite3
 import subprocess
 from drm4g                              import DRM4G_DIR
 from threading                          import Thread, Lock
 from drm4g.core.configure               import Configuration
-#from drm4g.managers.cloud_providers     import logger as log3
+from drm4g.managers.cloud_providers     import logger as log3
 from drm4g.utils.message                import Send
 from drm4g.managers.cloud_providers     import rocci
 from math                               import ceil
@@ -77,7 +77,7 @@ class GwImMad (object):
         self.max_pend_jobs_time = 0.0
         self.max_pend_jobs_limit = 10
         self.schedule_interval = 5 #related with SCHEDULE_INTERVAL value in gwd.conf
-        self.node_poll_time = self.schedule_interval*5
+        self.node_poll_time = self.schedule_interval*6
         self.idle_vms = dict()
 
     def do_INIT(self, args):
@@ -92,7 +92,7 @@ class GwImMad (object):
 
     def _call_create_vms(self, resname, num_instances):
         #self._config.resources[ resname ]['vm_instances'] += num_instances
-        self.lock.acquire()
+        """self.lock.acquire()
         try:
             conn = sqlite3.connect(resource_conf_db)
             with conn:
@@ -100,6 +100,7 @@ class GwImMad (object):
                 cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resname)
                 data=cur.fetchone()[0]
                 if data==0:
+                    #it should never use this
                     cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (resname, num_instances))
                     self._config.resources[ resname ][ 'vm_instances' ] = num_instances
                 else:
@@ -111,13 +112,31 @@ class GwImMad (object):
         except Exception as err:
             self.logger.error( "Error updating SQLite database %s\n%s" % (resource_conf_db, str( err )) )
         finally:
-            self.lock.release()
+            self.lock.release()"""
+        #log3.info("_call_create_vms - %s's vm_instances before = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
+        try:
+            conn = sqlite3.connect(resource_conf_db)
+            with self.lock:
+                with conn:
+                    cur = conn.cursor()
+                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
+                    vms = cur.fetchone()[0]
+                    vms += num_instances
+                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
+                    self._config.resources[ resname ][ 'vm_instances' ] = vms
+        except Exception as err:
+            self.logger.error( "Error updating SQLite database %s\n%s" % (resource_conf_db, str( err )) )
+
+        ##log3.info("_call_create_vms - %s's vm_instances before = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
+        #self._config.resources[ resname ][ 'vm_instances' ] += num_instances
+        #log3.info("_call_create_vms - %s's vm_instances after = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
         background_thread = Thread(target=rocci.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
         background_thread.start()
 
     def _dynamic_vm_creation(self, resname):
         
-        #log3.info("\nTotal VMs creadas para %s: %s\n" % (resname, self._config.resources[resname]['vm_instances']))          
+        ##log3.info("\nTotal VMs creadas para %s: %s" % (resname, self._config.resources[resname]['vm_instances']))          
+        #log3.info("_dynamic_vm_creation - %s's vm_instances = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
         
         if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['min_nodes']):
             num_instances = int(self._config.resources[resname]['min_nodes']) - self._config.resources[resname]['vm_instances']
@@ -162,8 +181,8 @@ class GwImMad (object):
         if not start_time:
             return 0
         else:
-            #return (time.time() - start_time)/3600.0
-            return (time.time() - start_time)/360.0
+            return (time.time() - start_time)/3600.0
+            #return (time.time() - start_time)/360.0
         
     def current_balance(self, pricing, start_time):
         running_hours = ceil(self.running_time(start_time))
@@ -178,76 +197,13 @@ class GwImMad (object):
             running_jobs = subprocess.check_output(command2.split(), stdin=pipe.stdout)
             _, _ = pipe.communicate() #just to ensure that the process is closed
             running_jobs = int(running_jobs.strip())
+            #log3.info("%s's running jobs = %s" % (vm_name, running_jobs))
             #total_running_jobs += running_jobs
             if running_jobs:
                 vm_is_idle = False
                 break        
         return vm_is_idle
-    '''
-    def _call_destroy_vms(self, resname, num_instances):
-        self._config.resources[ resname ]['vm_instances'] -= num_instances
-        self.lock.acquire()
-        try:
-            conn = sqlite3.connect(resource_conf_db)
-            with conn:
-                cur = conn.cursor()
-                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resname)
-                data=cur.fetchone()[0]
-                if data==0:
-                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (resname, num_instances))
-                    self._config.resources[ resname ][ 'vm_instances' ] = num_instances
-                else:
-                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
-                    vms = cur.fetchone()[0]
-                    vms += num_instances
-                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
-                    self._config.resources[ resname ][ 'vm_instances' ] = vms
-        except Exception as err:
-            self.logger.error( "Error updating the SQLite database %s\n%s" % (resource_conf_db, str( err )) )
-        finally:
-            self.lock.release()
-        background_thread = Thread(target=rocci.destroy_num_instances, args=(num_instances, resname, self._config.resources[resname]))
-        background_thread.start()
     
-    ''
-    no me acuerdo de que queria hacer con esto
-    def delete_from_db(self, vm_name):
-        """
-        It will delete a specified VM from the database 
-        @param vm_name : name of the VM
-        @type vm_name : string
-        """
-        with self.lock:
-            conn = sqlite3.connect(resource_conf_db)
-            with conn:
-                cur = conn.cursor()
-                cur.execute("DELETE FROM Resources WHERE name = '%s'" % vm_name )
-                
-        self._config.resources[ resname ]['vm_instances'] += num_instances
-        self.lock.acquire()
-        try:
-            conn = sqlite3.connect(resource_conf_db)
-            with conn:
-                cur = conn.cursor()
-                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resname)
-                data=cur.fetchone()[0]
-                if data==0:
-                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (resname, num_instances))
-                    self._config.resources[ resname ][ 'vm_instances' ] = num_instances
-                else:
-                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
-                    vms = cur.fetchone()[0]
-                    vms += num_instances
-                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
-                    self._config.resources[ resname ][ 'vm_instances' ] = vms
-        except Exception as err:
-            self.logger.error( "Error updating SQLite database %s\n%s" % (resource_conf_db, str( err )) )
-        finally:
-            self.lock.release()
-        background_thread = Thread(target=rocci.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
-        background_thread.start()
-    '''
-
     def _dynamic_vm_deletion(self, resname):
         """
         For a specified resource, it will check if any of its VMs should be deleted 
@@ -273,19 +229,23 @@ class GwImMad (object):
                     #total_spent += current_balance # el metodo current balance ya calcula el total
                     total_spent = current_balance
                     #if total expenditure is over the limit destroy all VMs
-                    #log3.info("Total gastado : %s" % total_spent)
-                    #log3.info("Maximo permitdo : %s" % self._config.resources[resname]['hard_billing'])
+                    ##log3.info("Total gastado : %s" % total_spent)
+                    ##log3.info("Maximo permitdo : %s" % self._config.resources[resname]['hard_billing'])
                     if total_spent >= float(self._config.resources[resname]['hard_billing']) :
-                        #log3.info("\nEliminando todas las VMs\n")
-                        
+                        ##log3.info("\nEliminando todas las VMs\n")
+                        log3.info("_dynamic_vm_deletion - deleting all vms because expenditure is over the limit")
+                        log3.info("Total spent : %s" % total_spent)
+                        log3.info("Maximum limit : %s" % self._config.resources[resname]['hard_billing'])
                         self._config.resources[ resname ]['vm_instances'] = 0
                         rocci.manage_instances('stop', resname, self._config.resources[resname])
-                        
+                        '''
                         with self.lock:
+                            #this way the databse is only accessed once
+                            #but then rocci.stop_instance would have to be modified to not access the database (the rest of methods that depend on it would also have to be modified)
                             cur.execute("UPDATE Resources SET vms = 0 WHERE name = '%s'" % resname) #cur.execute("DELETE FROM Resources where name = '%s'" % resname)
                             cur.execute("DELETE FROM VM_Pricing where resource_id = '%d'" % resource_id)
                         break
-
+                        '''
                     #get the number of running jobs in VM
                     #total_running_jobs = 0
                     if vm_name not in self.idle_vms.keys():
@@ -294,33 +254,50 @@ class GwImMad (object):
                             #cur.execute("UPDATE VM_Pricing SET state = '%s' WHERE name = '%s'" % ('idle', vm_name))
                             self.idle_vms[vm_name] = {'state':'idle', 'idle_since':time.time()}
                     elif (time.time() - self.idle_vms[vm_name]['idle_since']) >= self.node_poll_time * 3:
-                        #after waiting for 3 times the node pole time, it will then check each time if it's still idle, until it's not or it's deleted
+                        #after waiting for 3 times the node pole time (1'30"), it will then check each time if it's still idle, until it's not or it's deleted
                         if not self.vm_is_idle(vm_name):
                             del(self.idle_vms[vm_name])
+                            
+                    log3.info("_dynamic_vm_deletion - idle_vms = %s" % self.idle_vms.items())
 
                     node_safe_time = int(self._config.resources[ resname ]['node_safe_time'])/60.0 #turns node_safe_time into hours
                     #if time left for another hour to be reached is smaller than node_safe_time but bigger than one minute 
                     #if (1-(running_hours-int(running_hours))) < node_safe_time and (1-(running_hours-int(running_hours))) > 1/60.0:
-                    #log3.info("Idle VMs: %s" % self.idle_vms.keys())
+                    ##log3.info("Idle VMs: %s" % self.idle_vms.keys())
                     six_min = 6/60.0
                     one_min = 1/60.0
-                    #log3.info(one_min-(running_hours-int(running_hours)))
-                    #log3.info((six_min-(running_hours-int(running_hours))) < node_safe_time)
-                    if (six_min-(running_hours-int(running_hours))) < node_safe_time and (six_min-(running_hours-int(running_hours))) > 1/60.0:
-                        #log3.info("Deleting VMs")
-
-                        #this verifies that the VM "vm_name" still exists, since it could have been destroyed with the command "drm4g resource destroy"
-                        cur.execute("SELECT count(*) FROM VM_Pricing WHERE name = '%s'" % vm_name)
-                        data = cur.fetchone()[0]
-                        if data:
-                            self._config.resources[ resname ]['vm_instances'] -= 1
-                            background_thread = Thread(target=rocci.destroy_vm_by_name, args=(resname, vm_name))
-                            background_thread.start()
-                            
-                            with self.lock:
-                                cur.execute("UPDATE Resources SET vms= %d WHERE name = '%s'" % (self._config.resources[ resname ]['vm_instances'], resname))
-                                cur.execute("DELETE FROM VM_Pricing where name = '%s'" % vm_name)
-                        del(self.idle_vms[vm_name])
+                    one_hour = 1
+                    ##log3.info(one_min-(running_hours-int(running_hours)))
+                    ##log3.info((six_min-(running_hours-int(running_hours))) < node_safe_time)
+                    if self._config.resources[ resname ]['vm_instances'] > self._config.resources[ resname ]['min_nodes']:
+                        if (one_hour-(running_hours-int(running_hours))) < node_safe_time and (one_hour-(running_hours-int(running_hours))) > one_min:
+                            ##log3.info("Deleting VMs")
+                            '''
+                            log3.info("_dynamic_vm_deletion - deleting vm %s for being idle for too long" % vm_name)
+                            log3.info("(six_min-(running_hours-int(running_hours))) = %s" % (six_min-(running_hours-int(running_hours))))
+                            log3.info("node_safe_time = %s" % node_safe_time)
+                            log3.info("(six_min-(running_hours-int(running_hours))) < node_safe_time = %s" % ((six_min-(running_hours-int(running_hours))) < node_safe_time))
+                            log3.info("(six_min-(running_hours-int(running_hours))) = %s" % (six_min-(running_hours-int(running_hours))))
+                            log3.info("1/60.0 = %s" % one_min)
+                            log3.info("(six_min-(running_hours-int(running_hours))) > one_min = %s" % ((six_min-(running_hours-int(running_hours))) > one_min))
+                            '''
+                            #this verifies that the VM "vm_name" still exists, since it could have been destroyed with the command "drm4g resource destroy"
+                            cur.execute("SELECT count(*) FROM VM_Pricing WHERE name = '%s'" % vm_name)
+                            data = cur.fetchone()[0]
+                            if data:
+                                log3.info("data = %s for %s VM" % (data, vm_name))
+                                log3.info("self._config.resources[ resname ]['vm_instances'] before = %s" % self._config.resources[ resname ]['vm_instances'])
+                                self._config.resources[ resname ]['vm_instances'] -= 1
+                                log3.info("self._config.resources[ resname ]['vm_instances'] after = %s" % self._config.resources[ resname ]['vm_instances'])
+                                background_thread = Thread(target=rocci.destroy_vm_by_name, args=(resname, vm_name))
+                                background_thread.start()
+                                
+                                '''
+                                with self.lock:
+                                    cur.execute("UPDATE Resources SET vms= %d WHERE name = '%s'" % (self._config.resources[ resname ]['vm_instances'], resname))
+                                    cur.execute("DELETE FROM VM_Pricing where name = '%s'" % vm_name)
+                                '''
+                            del(self.idle_vms[vm_name])
         '''
         if os.path.exists( os.path.join( pickled_file+"_"+resname ) ):
             try:
@@ -363,10 +340,15 @@ class GwImMad (object):
                 if self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
                     continue
                 if 'cloud_provider' in self._config.resources[ resname ].keys(): 
-                    self._dynamic_vm_creation(resname)
+                    if self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['max_nodes']:
+                        #log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
+                        self._dynamic_vm_creation(resname)
+                        #log3.info("do_DISCOVER - %s's vm_instances after _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                     #if there are existing VMs for this resname
                     if os.path.exists(pickled_file+"_"+resname):
+                        log3.info("do_DISCOVER - before _dynamic_vm_deletion")
                         self._dynamic_vm_deletion(resname)
+                        log3.info("do_DISCOVER - after _dynamic_vm_deletion")
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
@@ -440,4 +422,71 @@ class GwImMad (object):
                     self.logger.debug(out)
         except Exception as e:
             self.logger.warning(str(e))
+            
+
+    '''
+    def _call_destroy_vms(self, resname, num_instances):
+        self._config.resources[ resname ]['vm_instances'] -= num_instances
+        self.lock.acquire()
+        try:
+            conn = sqlite3.connect(resource_conf_db)
+            with conn:
+                cur = conn.cursor()
+                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resname)
+                data=cur.fetchone()[0]
+                if data==0:
+                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (resname, num_instances))
+                    self._config.resources[ resname ][ 'vm_instances' ] = num_instances
+                else:
+                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
+                    vms = cur.fetchone()[0]
+                    vms += num_instances
+                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
+                    self._config.resources[ resname ][ 'vm_instances' ] = vms
+        except Exception as err:
+            self.logger.error( "Error updating the SQLite database %s\n%s" % (resource_conf_db, str( err )) )
+        finally:
+            self.lock.release()
+        background_thread = Thread(target=rocci.destroy_num_instances, args=(num_instances, resname, self._config.resources[resname]))
+        background_thread.start()
+    
+    ''
+    no me acuerdo de que queria hacer con esto
+    def delete_from_db(self, vm_name):
+        """
+        It will delete a specified VM from the database 
+        @param vm_name : name of the VM
+        @type vm_name : string
+        """
+        with self.lock:
+            conn = sqlite3.connect(resource_conf_db)
+            with conn:
+                cur = conn.cursor()
+                cur.execute("DELETE FROM Resources WHERE name = '%s'" % vm_name )
+                
+        self._config.resources[ resname ]['vm_instances'] += num_instances
+        self.lock.acquire()
+        try:
+            conn = sqlite3.connect(resource_conf_db)
+            with conn:
+                cur = conn.cursor()
+                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resname)
+                data=cur.fetchone()[0]
+                if data==0:
+                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (resname, num_instances))
+                    self._config.resources[ resname ][ 'vm_instances' ] = num_instances
+                else:
+                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
+                    vms = cur.fetchone()[0]
+                    vms += num_instances
+                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
+                    self._config.resources[ resname ][ 'vm_instances' ] = vms
+        except Exception as err:
+            self.logger.error( "Error updating SQLite database %s\n%s" % (resource_conf_db, str( err )) )
+        finally:
+            self.lock.release()
+        background_thread = Thread(target=rocci.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
+        background_thread.start()
+    '''
+
 

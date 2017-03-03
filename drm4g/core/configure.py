@@ -126,38 +126,41 @@ class Configuration(object):
                         #else:
                             #self.resources[ name ][ 'vm_instances' ] = 0
                         
-                        #if no database exists    
-                        if not os.path.exists( resource_conf_db ):
-                            self.resources[ name ][ 'vm_instances' ] = 0
-                            with self.lock:
+                        #if no database exists 
+                        with self.lock:
+                            if not os.path.exists( resource_conf_db ):
+                                if os.path.exists( os.path.join(DRM4G_DIR, "var") ):
+                                    self.resources[ name ][ 'vm_instances' ] = 0
+                                    #with self.lock:
+                                    conn = sqlite3.connect(resource_conf_db)
+                                    with conn:
+                                        cur = conn.cursor()
+                                        cur.execute("CREATE TABLE Resources (name text not null, vms integer, id integer primary key autoincrement)")
+                                        cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
+                                        
+                                        cur.execute("CREATE TABLE VM_Pricing (name text primary key, resource_id int, state text, pricing real, start_time real, foreign key(resource_id) references Resources(id))")
+                            else:
                                 conn = sqlite3.connect(resource_conf_db)
                                 with conn:
                                     cur = conn.cursor()
-                                    cur.execute("CREATE TABLE Resources (name text not null, vms integer, id integer primary key autoincrement)")
-                                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
-                                    
-                                    cur.execute("CREATE TABLE VM_Pricing (name text primary key, resource_id int, state text, pricing real, start_time real, foreign key(resource_id) references Resources(id))")
-                        else:
-                            conn = sqlite3.connect(resource_conf_db)
-                            with conn:
-                                cur = conn.cursor()
-                                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % name)
-                                data=cur.fetchone()[0]
-                                #if database exists but it's the first time a resource is found
-                                if data==0:
-                                    with self.lock:
+                                    cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % name)
+                                    data=cur.fetchone()[0]
+                                    #if database exists but it's the first time a resource is found
+                                    if data==0:
+                                        #with self.lock:
                                         self.resources[ name ][ 'vm_instances' ] = 0
                                         cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
-                                else:
-                                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (name))
-                                    vms = cur.fetchone()[0]
-                                    self.resources[ name ][ 'vm_instances' ] = vms
+                                    else:
+                                        cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (name))
+                                        vms = cur.fetchone()[0]
+                                        self.resources[ name ][ 'vm_instances' ] = vms
 
                     logger.debug("Resource '%s' defined by: %s.",
                              sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name].items())]))
             except Exception as err:
                 output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err))
                 logger.error( output )
+                
         finally:
             conf_file.close()
 

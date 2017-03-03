@@ -124,35 +124,57 @@ def start_instance( config, resource_name ) :
         try:
             #with lock:
             conn = sqlite3.connect(resource_conf_db)
-            with conn:
-                cur = conn.cursor()
-                cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resource_name)
-                resource_id = cur.fetchone()[0]
-                cur.execute("SELECT count(*) FROM VM_Pricing WHERE name = '%s'" % (resource_name+"_"+instance.ext_ip))
-                data=cur.fetchone()[0]
-                if resource_id:
-                    with lock:
-                        if data==0:
-                            cur.execute("INSERT INTO VM_Pricing (name, resource_id, state, pricing, start_time) VALUES ('%s', %d, '%s', %f, %f)" % ((resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
-                        else:
-                            cur.execute("UPDATE VM_Pricing SET resource_id = %d, state = '%s', pricing = %f, start_time = %f WHERE name = '%s'" % (resource_id, 'active', instance.instance_pricing, instance.start_time, (resource_name+"_"+instance.ext_ip)))
+            with lock:
+                with conn:
+                    cur = conn.cursor()
+                    '''
+                    cur.execute("SELECT vms, id FROM Resources WHERE name='%s'" % (resource_name))
+                    vms, resource_id = cur.fetchone()
+                    vms += 1
+                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resource_name))
+                    '''
+                    cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resource_name)
+                    resource_id = cur.fetchone()[0]
+                    cur.execute("SELECT count(*) FROM VM_Pricing WHERE name = '%s'" % (resource_name+"_"+instance.ext_ip))
+                    data=cur.fetchone()[0]
+                    #if resource_id:
+                    #with lock:
+                    if data==0:
+                        cur.execute("INSERT INTO VM_Pricing (name, resource_id, state, pricing, start_time) VALUES ('%s', %d, '%s', %f, %f)" % ((resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
+                    else:
+                        cur.execute("UPDATE VM_Pricing SET resource_id = %d, state = '%s', pricing = %f, start_time = %f WHERE name = '%s'" % (resource_id, 'active', instance.instance_pricing, instance.start_time, (resource_name+"_"+instance.ext_ip)))
         except Exception as err :
             raise Exception( "Error updating instance information in the database %s: %s" % (resource_conf_db, str( err )) )
     except Exception as err :
         logger.error( "Error creating instance: %s" % str( err ) )
         try :
             logger.debug( "Trying to destroy the instance" )
-            instance.destroy( )
+            stop_instance(instance, resource_name)
         except Exception as err :
-            logger.error( "Error destroying instance\n%s" % str( err ) )
+            logger.error( "Error destroying instance\n%s" % str( err ) )           
+
+def delete_vm_from_db(instance, resource_name):
+    try:
+        #with lock:
+        conn = sqlite3.connect(resource_conf_db)
+        with conn:
+            with lock:
+                cur = conn.cursor()
+                cur.execute("SELECT vms FROM Resources WHERE name = '%s'" % resource_name)
+                vms = cur.fetchone()[0]
+                cur.execute("UPDATE Resources SET vms= %d WHERE name = '%s'" % ((vms-1), resource_name))
+                cur.execute("DELETE FROM VM_Pricing where name = '%s'" % (resource_name+"_"+instance.ext_ip))
+    except Exception as err :
+        raise Exception( "Error deleting instance information in the database %s: %s" % (resource_conf_db, str( err )) )
 
 def stop_instance( instance, resource_name ):
     """
     Destroys one VM and eliminates it from the pickled file
     """
     try :
-        instance.destroy()
         pickle_remove(instance, resource_name)
+        delete_vm_from_db(instance, resource_name)
+        instance.destroy()
     except Exception as err :
         logger.error( "Error destroying instance\n%s" % str( err ) )
 
@@ -208,13 +230,14 @@ def create_num_instances(num_instances, resource_name, config):
         threads.append( th )
     [ th.join() for th in threads ]
     
+#not being used anymore
 def destroy_num_instances(num_instances, resource_name, config):
     '''
     Destroys a specified number of VMs for a selected resource configuration
     '''
     threads = []
     for number_of_th in range( num_instances ):
-        th = threading.Thread( target = stop_instance, args = ( config, resource_name, ) )
+        th = threading.Thread( target = stop_instance, args = ( config, resource_name, ) ) #stop_instance doens't use "config"
         th.start()
         threads.append( th )
     [ th.join() for th in threads ]
@@ -243,6 +266,7 @@ def destroy_vm_by_name(resource_name, vm_name):
                 if (resource_name+'_'+instance.ext_ip) != vm_name :
                     pickle.dump( instance, pf )
                 else:
+                    delete_vm_from_db(instance, resource_name)
                     instance.destroy()
         if len(instances) == 1 :
             os.remove( pickled_file+"_"+resource_name )
