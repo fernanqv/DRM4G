@@ -55,7 +55,7 @@ def _renew_voms_proxy(com_object, myproxy_server, vo, cont=0):
             logger.error( "Error renewing the proxy(%s): %s" % ( cmd , err ) )
             if cont<4:
                 sleep(2.0)
-                _renew_voms_proxy(com_object, proxy_file, myproxy_server, vo, cont+1)
+                _renew_voms_proxy(com_object, myproxy_server, vo, cont+1)
             else:
                 raise Exception("Probably the proxy certificate hasn't been created. Be sure to run the the following command before trying again:" \
                 "\n    \033[93mdrm4g id <resource_name> init\033[0m")
@@ -63,7 +63,7 @@ def _renew_voms_proxy(com_object, myproxy_server, vo, cont=0):
     except socket.timeout:
         logger.debug("Captured a socket.time exception")
         if cont<4:
-            _renew_voms_proxy(com_object, proxy_file, myproxy_server, vo, cont+1)
+            _renew_voms_proxy(com_object, myproxy_server, vo, cont+1)
         else:
             raise
         

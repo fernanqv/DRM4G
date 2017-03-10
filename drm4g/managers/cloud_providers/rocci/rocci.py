@@ -50,10 +50,10 @@ users:
       - %s
 """
 
-class ROCCI(Instance):
+class Instance(Instance):
 
     def __init__(self, basic_data):
-        self.data=basic_data
+        self.data = basic_data
         self.id = None
         self.id_volume = None
         self.id_link = None
@@ -62,8 +62,10 @@ class ROCCI(Instance):
         self.volume = int(basic_data['volume'])
         self.myproxy_server = basic_data.get('myproxy_server', '')
         self.private_key = expanduser(basic_data['private_key'])
+        self.public_key = basic_data.get('public_key', self.private_key+'.pub')
+        self.lrms = basic_data.get('lrms')
         self.context_file = basename(self.private_key)+".login"
-        self.vm_user = basic_data.get('vm_user', 'drm4g_admin')
+        self.vm_user = basic_data.get('vm_user', self.DEFAULT_USER)
         self.cloud_contextualisation_file = basic_data.get('vm_config', join(DRM4G_DIR, "etc", "cloud_config.conf"))
         self.comm = basic_data[ 'communicator' ]
         self.max_jobs_running = basic_data['max_jobs_running']
@@ -91,7 +93,7 @@ class ROCCI(Instance):
         except Exception as err :
             logger.error( "Error reading the cloud setup file: " + str( err ) )
 
-        infra_cfg = cloud_setup[ basic_data['lrms'] ]
+        infra_cfg = cloud_setup[ basic_data['cloud_connector'] ]
         cloud_cfg = infra_cfg.cloud_providers[ basic_data['cloud_provider'] ]
         self.vo = infra_cfg.vo
         self.endpoint = cloud_cfg[ "endpoint" ]
@@ -104,7 +106,7 @@ class ROCCI(Instance):
         com_obj.username       = basic_data['username']
         com_obj.frontend       = basic_data['frontend']
         com_obj.private_key    = self.private_key
-        com_obj.public_key     = basic_data.get('public_key', self.private_key+'.pub')
+        com_obj.public_key     = self.public_key #basic_data.get('public_key', self.private_key+'.pub')
         com_obj.work_directory = basic_data.get('scratch', REMOTE_JOBS_DIR)
         self.com_object = com_obj
 

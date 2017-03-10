@@ -125,7 +125,7 @@ class Communicator(drm4g.communicators.Communicator):
             #    print line
 
             #logger.debug("Running connect function\n    - called from "+p_module+"\n    - by function "+p_function)
-            logger.debug("\n\nRunning connect function from %s\n    - called from %s\n    - by function %s\nTraceback :\n%s\n" % (self.parent_module, p_module, p_function, t))
+            logger.debug("\n\nRunning connect function from %s\n    - called from %s\n    - by function %s\n    - Traceback :\n%s\n" % (self.parent_module, p_module, p_function, t))
             #logger.debug("\np_module = %s\np_function = %s\n" % (p_module, p_function))
 
             if not self.configfile:
@@ -140,11 +140,13 @@ class Communicator(drm4g.communicators.Communicator):
                 logger.debug("No master conncection exists for %s so a new one will be created" % self.parent_module)
                 def first_ssh():
                     try:
-                        logger.debug("Running first_ssh function\n    - Creating first connection for %s" % self.parent_module)
+                        logger.debug("Running first_ssh function")
+                        logger.debug("    - Creating first connection for %s" % self.parent_module)
                         #this is here because the threads are created at the same time, so the moment one creates the conection, the rest are going to cause an UnboundLocalError exception
                         #(which probably shouldn't be ocurring since ControlMaster is set to auto - only if they execute this at the same time)
                         if not exists(join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))):
                             command = 'ssh -F %s -i %s -p %s -T %s@%s' % (self.configfile, self.private_key, str(self.port), self.username, self.frontend)
+                            logger.debug("    - Executing command '%s'" % command)
                         pipe = subprocess.Popen(command.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         out,err = pipe.communicate()
 

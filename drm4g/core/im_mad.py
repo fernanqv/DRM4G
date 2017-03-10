@@ -25,15 +25,17 @@ import time
 #import pickle
 import sqlite3
 import subprocess
-from drm4g                              import DRM4G_DIR
+import drm4g.managers.cloud_providers   as     cloud_conn
+from drm4g                              import DRM4G_DIR, CLOUD_CONNECTORS
 from threading                          import Thread, Lock
 from drm4g.core.configure               import Configuration
 from drm4g.managers.cloud_providers     import logger as log3
 from drm4g.utils.message                import Send
-from drm4g.managers.cloud_providers     import rocci
+from drm4g.utils.importlib              import import_module
+#from drm4g.managers.cloud_providers     import rocci
 from math                               import ceil
 
-pickled_file = os.path.join(DRM4G_DIR, "var", "rocci_pickled")
+pickled_file = os.path.join(DRM4G_DIR, "var", "%s_pickled")
 resource_conf_db = os.path.join(DRM4G_DIR, "var", "resource_conf.db")
 
 class GwImMad (object):
@@ -130,7 +132,9 @@ class GwImMad (object):
         ##log3.info("_call_create_vms - %s's vm_instances before = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
         #self._config.resources[ resname ][ 'vm_instances' ] += num_instances
         #log3.info("_call_create_vms - %s's vm_instances after = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
-        background_thread = Thread(target=rocci.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
+        
+        #cloud_conn = import_module(CLOUD_CONNECTORS[ self._config.resources[resname][ 'cloud_connector' ] ] )
+        background_thread = Thread(target=cloud_conn.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
         background_thread.start()
 
     def _dynamic_vm_creation(self, resname):
@@ -237,7 +241,7 @@ class GwImMad (object):
                         log3.info("Total spent : %s" % total_spent)
                         log3.info("Maximum limit : %s" % self._config.resources[resname]['hard_billing'])
                         self._config.resources[ resname ]['vm_instances'] = 0
-                        rocci.manage_instances('stop', resname, self._config.resources[resname])
+                        cloud_conn.manage_instances('stop', resname, self._config.resources[resname])
                         '''
                         with self.lock:
                             #this way the databse is only accessed once
@@ -289,7 +293,7 @@ class GwImMad (object):
                                 log3.info("self._config.resources[ resname ]['vm_instances'] before = %s" % self._config.resources[ resname ]['vm_instances'])
                                 self._config.resources[ resname ]['vm_instances'] -= 1
                                 log3.info("self._config.resources[ resname ]['vm_instances'] after = %s" % self._config.resources[ resname ]['vm_instances'])
-                                background_thread = Thread(target=rocci.destroy_vm_by_name, args=(resname, vm_name))
+                                background_thread = Thread(target=cloud_conn.destroy_vm_by_name, args=(resname, vm_name))
                                 background_thread.start()
                                 
                                 '''
@@ -339,16 +343,17 @@ class GwImMad (object):
             for resname in sorted( self._resources.keys() ) :
                 if self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
                     continue
-                if 'cloud_provider' in self._config.resources[ resname ].keys(): 
+                if 'cloud_connector' in self._config.resources[ resname ].keys(): 
+                    '''#log3.info(self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['max_nodes'])
                     if self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['max_nodes']:
-                        #log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
+                        log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                         self._dynamic_vm_creation(resname)
-                        #log3.info("do_DISCOVER - %s's vm_instances after _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
+                        log3.info("do_DISCOVER - %s's vm_instances after _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                     #if there are existing VMs for this resname
-                    if os.path.exists(pickled_file+"_"+resname):
+                    if os.path.exists(pickled_file % self._config.resources[ resname ]['cloud_connector'] + "_" + resname):
                         log3.info("do_DISCOVER - before _dynamic_vm_deletion")
                         self._dynamic_vm_deletion(resname)
-                        log3.info("do_DISCOVER - after _dynamic_vm_deletion")
+                        log3.info("do_DISCOVER - after _dynamic_vm_deletion")'''
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
@@ -376,6 +381,8 @@ class GwImMad (object):
             for resname, resdict in list(self._resources.items()) :
                 if self._config.resources[ resname ][ 'enable' ].lower() == 'false':
                     raise Exception( "Resource '%s' is not enable" % resname )
+                if 'cloud_connector' in self._config.resources[ resname ].keys():
+                    continue
                 if HOST in resdict['Resource'].host_list :
                     info = resdict['Resource'].host_properties( HOST )
                     resdict['Resource'].Communicator.close()

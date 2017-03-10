@@ -28,7 +28,7 @@ import drm4g.managers
 import drm4g.managers.fork
 from utils                  import load_json
 from os.path                import exists, join
-from drm4g                  import DRM4G_DIR, DRM4G_LOGGER, RESOURCE_MANAGERS
+from drm4g                  import DRM4G_DIR, DRM4G_LOGGER, CLOUD_CONNECTORS
 from drm4g.utils.importlib  import import_module
 try:
     from configparser       import SafeConfigParser
@@ -38,12 +38,12 @@ from drm4g.managers.cloud_providers  import logger
 
 #logger = logging.getLogger(__name__)
 
-pickled_file = join(DRM4G_DIR, "var", "rocci_pickled")
+#pickled_file = join(DRM4G_DIR, "var", "rocci_pickled")
 resource_conf_db = os.path.join(DRM4G_DIR, "var", "resource_conf.db")
 
 lock = threading.RLock()
 
-
+"""
 def pickle_read(resource_name):
     '''
     Reads the pickled file and returns all of the VMs created for the specified resource
@@ -98,11 +98,11 @@ def pickle_dump(instance, resource_name):
         lock.release()
 
 def start_instance( config, resource_name ) :
-    """
+    ""
     Creates a VM using the configuration indicated by a selected resource
-    """
+    ""
     try :
-        hdpackage = import_module( RESOURCE_MANAGERS[config['lrms']] + ".%s" % config['lrms'] )
+        hdpackage = import_module( CLOUD_CONNECTORS[config['cloud_connector']] + ".%s" % config['cloud_connector'] )
     except Exception as err :
         raise Exception( "The infrastructure selected does not exist. "  + str( err ) )
     
@@ -168,9 +168,9 @@ def delete_vm_from_db(instance, resource_name):
         raise Exception( "Error deleting instance information in the database %s: %s" % (resource_conf_db, str( err )) )
 
 def stop_instance( instance, resource_name ):
-    """
+    ""
     Destroys one VM and eliminates it from the pickled file
-    """
+    ""
     try :
         pickle_remove(instance, resource_name)
         delete_vm_from_db(instance, resource_name)
@@ -179,10 +179,10 @@ def stop_instance( instance, resource_name ):
         logger.error( "Error destroying instance\n%s" % str( err ) )
 
 def manage_instances(args, resource_name, config):
-    """
+    ""
     Either creates as many VMs as indicated by the resource configuration
     or destroys all VMs for a selected resource
-    """
+    ""
     if args == "start" :
         threads = []
         for number_of_th in range( int(config['instances']) ):
@@ -276,10 +276,10 @@ def destroy_vm_by_name(resource_name, vm_name):
 
 class Resource (drm4g.managers.Resource):
     def hosts(self):
-        """
+        ""
         It will return a string with the host available in the resource.
-        """
-        if 'cloud_provider' in self.features :
+        ""
+        if 'cloud_connector' in self.features :
             self.host_list = [ "" ]
             return ""
         else :
@@ -288,7 +288,7 @@ class Resource (drm4g.managers.Resource):
 
 class Job (drm4g.managers.fork.Job):
     pass
-
+"""
 class CloudSetup(object):
 
     def __init__(self, name, features = {}):

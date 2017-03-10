@@ -88,9 +88,11 @@ RESOURCE_MANAGERS = {
                      "mnslurm"      : "drm4g.managers.marenostrum",
                      "slurm_res"    : "drm4g.managers.slurm_res",
                      "neptuno"      : "drm4g.managers.neptuno",
-                     "rocci"        : "drm4g.managers.cloud_providers.rocci",
-                     "ec2"          : "drm4g.managers.cloud_providers.ec2",
                      }
+CLOUD_CONNECTORS = {
+                   "rocci"        : "drm4g.managers.cloud_providers.rocci",
+                   "ec2"          : "drm4g.managers.cloud_providers.ec2",
+                   }
 
 #Database
 RESOURCES_DB = join(DRM4G_DIR, "var", "resource_conf.db")

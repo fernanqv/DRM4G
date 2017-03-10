@@ -23,10 +23,12 @@ import pickle
 import sqlite3
 import logging
 import threading
+import drm4g.managers.cloud_providers
 from drm4g.utils.importlib import import_module
 from drm4g                 import ( DRM4G_CONFIG_FILE,
                                     COMMUNICATORS,
                                     RESOURCE_MANAGERS,
+                                    CLOUD_CONNECTORS,
                                     REMOTE_JOBS_DIR,
                                     DRM4G_DIR )
 try :
@@ -36,7 +38,7 @@ except ImportError :
 
 
 logger = logging.getLogger(__name__)
-pickled_file = os.path.join(DRM4G_DIR, "var", "rocci_pickled")
+pickled_file = os.path.join(DRM4G_DIR, "var", "%s_pickled")
 resource_conf_db = os.path.join(DRM4G_DIR, "var", "resource_conf.db")
 
 class ConfigureException(Exception):
@@ -61,8 +63,8 @@ class Configuration(object):
                                    'bdii', 'myproxy_server', 'vm_user', 'vm_communicator', 'vm_config',
                                    'cloud_provider', 'flavour', 'virtual_image', 'instances', 'volume',
                                    'max_nodes', 'min_nodes', 'access_id', 'secret_key', 'region', 'size',
-                                   'image', 'pricing', 'cloud_user', 'cloud_config_script', 'soft_billing',
-                                   'hard_billing', 'node_safe_time', 'vm_instances']
+                                   'image', 'pricing', 'cloud_user', 'cloud_connector', 'cloud_config_script',
+                                   'soft_billing', 'hard_billing', 'node_safe_time', 'vm_instances']
         if not os.path.exists( DRM4G_CONFIG_FILE ):
             assert DRM4G_CONFIG_FILE, "resources.conf does not exist, please provide one"
         self.init_time = os.stat( DRM4G_CONFIG_FILE ).st_mtime
@@ -97,11 +99,12 @@ class Configuration(object):
                     logger.debug(" Reading configuration for resource '%s'." % name )
                     self.resources[ name ] = dict( parser.items( sectname ) )
 
-                    if 'cloud_provider' in self.resources[ name ].keys():
-                        if os.path.exists( os.path.join( pickled_file+"_"+name ) ):
+                    if 'cloud_connector' in self.resources[ name ].keys():
+                        cloud_connector = self.resources[ name ]['cloud_connector']
+                        if os.path.exists( os.path.join( pickled_file % cloud_connector + "_" + name ) ):
                             try:
                                 instances = []
-                                with open( pickled_file+"_"+name, "r" ) as pf :
+                                with open( pickled_file % cloud_connector + "_" + name, "r" ) as pf :
                                     while True :
                                         try:
                                             instances.append( pickle.load( pf ) )
@@ -115,7 +118,7 @@ class Configuration(object):
                                         insdict['communicator'] = instance.vm_comm
                                         insdict['private_key'] = instance.private_key
                                         insdict['enable'] = 'true'
-                                        insdict['lrms'] = 'fork'
+                                        insdict['lrms'] = instance.lrms 
                                         insdict['max_jobs_running'] = instance.max_jobs_running
                                         self.resources[ name+"_"+instance.ext_ip ] = insdict
                                         logger.debug("Resource '%s' defined by: %s.",
@@ -185,7 +188,7 @@ class Configuration(object):
                     output = "'%s' resource does not have '%s' key" % (resname, key)
                     logger.error( output )
                     errors.append( output )
-            if ( resdict[ 'lrms' ] == 'rocci' and not resdict.get( 'private_key' ) ) :
+            if ( resdict.get( 'cloud_connector' ) in CLOUD_CONNECTORS and not resdict.get( 'private_key' ) ) :
                 output = "'private_key' key has not been defined for '%s' resource" % resname
                 logger.error( output )
                 errors.append( output )
@@ -319,7 +322,11 @@ class Configuration(object):
         for name, resdict in list(self.resources.items()):
             try:
                 resources[name]             = dict()
-                manager                     = import_module(RESOURCE_MANAGERS[ resdict[ 'lrms' ] ] )
+                if 'cloud_connector' in self.resources[ name ].keys():
+                    #this is probably not needed, since the im_mad has an "if" that skips all resources with a "cloud_connector" key
+                    manager                     = drm4g.managers.cloud_providers
+                else:
+                    manager                     = import_module(RESOURCE_MANAGERS[ resdict[ 'lrms' ] ] )
                 resource_object             = getattr( manager , 'Resource' ) ()
                 resource_object.name        = name
                 resource_object.features    = resdict

@@ -29,8 +29,10 @@ import logging
 import subprocess
 import datetime
 
-from drm4g                             import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
-from drm4g.managers.cloud_providers    import rocci
+from drm4g.utils.importlib             import import_module
+from drm4g                             import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR, CLOUD_CONNECTORS
+#from drm4g.managers.cloud_providers    import rocci
+from drm4g.managers.cloud_providers    import manage_instances
 from drm4g.core.im_mad                 import GwImMad
 from os.path                           import expanduser, join, dirname, exists, basename, expandvars
 
@@ -323,8 +325,10 @@ class Resource( object ):
         """
         self.check( )
         for resname, resdict in self.config.resources.items():
-            if resdict[ 'lrms' ] in ['rocci', 'ec2']:
-                rocci.manage_instances('start', resname, resdict)
+            if resdict.get( 'cloud_connector' ) in CLOUD_CONNECTORS:
+                #cloud_conn = import_module(CLOUD_CONNECTORS[ resdict.get( 'cloud_connector' ) ] )
+                #cloud_conn.manage_instances('start', resname, resdict)
+                manage_instances('start', resname, resdict)
 
     def destroy_vms(self):
         """
@@ -332,8 +336,10 @@ class Resource( object ):
         """
         self.check( )
         for resname, resdict in self.config.resources.items():
-            if resdict[ 'lrms' ] in ['rocci', 'ec2']:
-                rocci.manage_instances('stop', resname, resdict)
+            if resdict.get( 'cloud_connector' ) in CLOUD_CONNECTORS:
+                #cloud_conn = import_module(CLOUD_CONNECTORS[ resdict.get( 'cloud_connector' ) ] )
+                #cloud_conn.manage_instances('stop', resname, resdict)
+                manage_instances('stop', resname, resdict)
 
     def update_hosts(self):
         """
@@ -359,7 +365,7 @@ class Resource( object ):
                 logger.info("        username:      "+str(resdict['username']))
             logger.info("        frontend:      "+str(resdict['frontend']))
             if 'private_key' in resdict.keys():
-                logger.info("        private key:   "+str(resdict['private_key']))
+                logger.info("        private_key:   "+str(resdict['private_key']))
             logger.info("        lrms:          "+str(resdict['lrms']))
 
     def check_frontends( self ) :
