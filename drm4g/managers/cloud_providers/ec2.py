@@ -174,7 +174,7 @@ class Instance(Instance):
     def destroy(self):
         logger.info( "Deleting EC2 resource %s" % self.node_id )
         self.driver.destroy_node(self.node)
-        logger.info( "    EC2 resource '%s' has been successfully created" % self.node_id )
+        logger.info( "    EC2 resource '%s' has been successfully deleted" % self.node_id )
 
     def get_ip(self):
         logger.info( "Getting EC2 resource's IP direction" )

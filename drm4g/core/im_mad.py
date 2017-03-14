@@ -133,10 +133,13 @@ class GwImMad (object):
         #self._config.resources[ resname ][ 'vm_instances' ] += num_instances
         #log3.info("_call_create_vms - %s's vm_instances after = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
         
+        '''
         #cloud_conn = import_module(CLOUD_CONNECTORS[ self._config.resources[resname][ 'cloud_connector' ] ] )
         background_thread = Thread(target=cloud_conn.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
         background_thread.start()
-
+        '''
+        cloud_conn.create_num_instances(num_instances, resname, self._config.resources[resname])
+        
     def _dynamic_vm_creation(self, resname):
         
         ##log3.info("\nTotal VMs creadas para %s: %s" % (resname, self._config.resources[resname]['vm_instances']))          
@@ -244,7 +247,7 @@ class GwImMad (object):
                         cloud_conn.manage_instances('stop', resname, self._config.resources[resname])
                         '''
                         with self.lock:
-                            #this way the databse is only accessed once
+                            #this way the database is only accessed once
                             #but then rocci.stop_instance would have to be modified to not access the database (the rest of methods that depend on it would also have to be modified)
                             cur.execute("UPDATE Resources SET vms = 0 WHERE name = '%s'" % resname) #cur.execute("DELETE FROM Resources where name = '%s'" % resname)
                             cur.execute("DELETE FROM VM_Pricing where resource_id = '%d'" % resource_id)
@@ -293,7 +296,7 @@ class GwImMad (object):
                                 log3.info("self._config.resources[ resname ]['vm_instances'] before = %s" % self._config.resources[ resname ]['vm_instances'])
                                 self._config.resources[ resname ]['vm_instances'] -= 1
                                 log3.info("self._config.resources[ resname ]['vm_instances'] after = %s" % self._config.resources[ resname ]['vm_instances'])
-                                background_thread = Thread(target=cloud_conn.destroy_vm_by_name, args=(resname, vm_name))
+                                background_thread = Thread(target=cloud_conn.destroy_vm_by_name, args=(resname, vm_name, self._config.resources[resname]['cloud_connector']))
                                 background_thread.start()
                                 
                                 '''

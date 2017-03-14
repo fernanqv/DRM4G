@@ -74,6 +74,7 @@ class Communicator(drm4g.communicators.Communicator):
             Communicator.socket_dir=join(DRM4G_DIR, 'var', 'sockets')
 
     def get_parent_module(self):
+        #the "rocci" connection is used to connect to the remote computer that will create its VMs
         module_dict = {'rocci.py':'rocci', 'im_mad.py':'im', 'tm_mad.py':'tm', 'em_mad.py':'em'}
         #t=repr(traceback.format_stack())
         trace = traceback.extract_stack()
@@ -98,7 +99,7 @@ class Communicator(drm4g.communicators.Communicator):
             "    ControlPath %s/%s-%s\n"
             "    ControlPersist 10m\n"
             "    StrictHostKeyChecking no")
-
+        #the "rocci" connection is used to connect to the remote computer that will create its VMs
         for manager in ['im', 'tm', 'em', 'rocci']:
             with io.FileIO(join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % manager), 'w') as conf_file:
                 conf_file.write(conf_text % (Communicator.socket_dir, manager, '%r@%h:%p'))

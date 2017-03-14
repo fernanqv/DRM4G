@@ -18,7 +18,7 @@
 # permissions and limitations under the Licence.
 #
 
-import os.path
+import os
 import time
 import logging
 import threading
@@ -31,11 +31,15 @@ from drm4g.managers           import logger
 from drm4g.utils.importlib    import import_module
 from drm4g                    import DRM4G_DIR, CLOUD_CONNECTORS
 from os.path                  import exists, join
+try:
+    from configparser       import SafeConfigParser
+except ImportError:
+    from ConfigParser       import SafeConfigParser  # ver. < 3.0
 
 lock = threading.RLock()
 #logger = logging.getLogger(__name__)
 pickled_file = join(DRM4G_DIR, "var", "%s_pickled")
-resource_conf_db = os.path.join(DRM4G_DIR, "var", "resource_conf.db")
+resource_conf_db = join(DRM4G_DIR, "var", "resource_conf.db")
 
 def pickle_read(resource_name, cloud_connector):
     '''
@@ -44,14 +48,15 @@ def pickle_read(resource_name, cloud_connector):
     @return: instances : list of VMs
     '''
     instances = []
-    with open(pickled_file % cloud_connector + "_" + resource_name, "r") as pf:
-        while True:
-            try:
-                instances.append(pickle.load(pf))
-            except EOFError:
-                break    
+    if exists(pickled_file % cloud_connector + "_" + resource_name):
+        with open(pickled_file % cloud_connector + "_" + resource_name, "r") as pf:
+            while True:
+                try:
+                    instances.append(pickle.load(pf))
+                except EOFError:
+                    break    
     if not instances:
-        logger.error("There are no VMs defined in '%s' or the file is not well formed." % (pickled_file % cloud_connector + "_" + resource_name))
+        logger.error("There are no VMs defined in '%s', the file doesn't exist or the file is not well formed." % (pickled_file % cloud_connector + "_" + resource_name))
         exit(1)
     return instances
 
@@ -61,20 +66,25 @@ def pickle_remove(inst, resource_name, cloud_connector):
     @param: inst : VMs to be eliminated
     @param resource_name: name of the resource
     '''
-    with lock:
-        try:
-            instances = pickle_read(resource_name, cloud_connector)
-
-            with open( pickled_file % cloud_connector + "_" + resource_name, "w" ) as pf :
+    if exists(pickled_file % cloud_connector + "_" + resource_name):
+        instances = pickle_read(resource_name, cloud_connector)
+        if instances:
+            try:
+                #instances = pickle_read(resource_name, cloud_connector)
+                with lock:
+                    with open( pickled_file % cloud_connector + "_" + resource_name, "w" ) as pf :
+                        for instance in instances:
+                            if instance.ext_ip != inst.ext_ip :
+                                pickle.dump( instance, pf )
+                
+                    if len(instances) == 1 :
+                        os.remove( pickled_file % cloud_connector + "_" + resource_name )
+            except Exception as err:
+                logger.error( "Error deleting instance from pickled file %s\n%s" % (pickled_file % cloud_connector + "_" + resource_name, str( err )) )
+                logger.debug( "Saving the instances back into the pickled file %s" % pickled_file % cloud_connector + "_" + resource_name )
                 for instance in instances:
-                    if instance.ext_ip != inst.ext_ip :
-                        pickle.dump( instance, pf )
-
-            if len(instances) == 1 :
-                os.remove( pickled_file % cloud_connector + "_" + resource_name )
-        except Exception as err:
-            logger.error( "Error deleting instance from pickled file %s\n%s" % (pickled_file % cloud_connector + "_" + resource_name, str( err )) )
-
+                    pickle_dump(instance, resource_name, cloud_connector)
+            
 def pickle_dump(instance, resource_name, cloud_connector):
     '''
     Adds a VM to the pickled file 
@@ -96,20 +106,17 @@ def create_num_instances(num_instances, resource_name, config):
     '''
     threads = []
     for number_of_th in range( num_instances ):
-        th = threading.Thread( target = start_instance, args = ( config, resource_name, ) )
+        th = threading.Thread( target = start_instance, args = ( config, resource_name, num_instances, ) )
         th.start()
         threads.append( th )
     [ th.join() for th in threads ]
 
-def start_instance( config, resource_name ) :
+def start_instance( config, resource_name, num_instances=0 ) :
     """
     Creates a VM using the configuration indicated by a selected resource
     """
     try :
-        if config['cloud_connector'] == 'rocci':
-            hdpackage = import_module( CLOUD_CONNECTORS[config['cloud_connector']] + ".%s" % 'rocci' )
-        else:
-            hdpackage = import_module( CLOUD_CONNECTORS[config['cloud_connector']] )
+        hdpackage = import_module( CLOUD_CONNECTORS[config['cloud_connector']] )
     except Exception as err :
         raise Exception( "The infrastructure selected does not exist. "  + str( err ) )
     
@@ -155,11 +162,58 @@ def start_instance( config, resource_name ) :
     except Exception as err :
         logger.error( "Error creating instance: %s" % str( err ) )
         try :
-            logger.debug( "Trying to destroy the instance" )
-            stop_instance(config, instance, resource_name)
+            logger.debug( "Destroying the instance" )
+            if instance.id:
+                stop_instance(config, instance, resource_name)
+            else:
+                conn = sqlite3.connect(resource_conf_db)
+                with lock:
+                    with conn:
+                        cur = conn.cursor()
+                        cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resource_name))
+                        vms = cur.fetchone()[0]
+                        vms -= num_instances
+                        cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resource_name))
         except Exception as err :
-            logger.error( "Error destroying instance\n%s" % str( err ) ) 
-            
+            logger.error( "Error destroying instance\n%s" % str( err ) )
+
+def destroy_vm_by_name(resource_name, vm_name, cloud_connector):
+    '''
+    Destroys a specific VM and removes it from the pickled file
+    '''
+    #with lock: #(it's only called by the im from inside a lock, so this one is redundant) not any more
+    instances = pickle_read(resource_name, cloud_connector)
+    if instances:
+        try:
+            '''
+            instances=[]
+            with open( pickled_file+"_"+resource_name, "r" ) as pf :
+                while True :
+                    try:
+                        instances.append( pickle.load( pf ) )
+                    except EOFError :
+                        break
+            if not instances :
+                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % (pickled_file+"_"+resource_name) )
+                exit( 1 )
+            '''
+            #instances = pickle_read(resource_name, cloud_connector)
+            with lock:
+                with open( pickled_file % cloud_connector + "_" + resource_name, "w" ) as pf :
+                    for instance in instances:
+                        if (resource_name+'_'+instance.ext_ip) != vm_name :
+                            pickle.dump( instance, pf )
+                        else:
+                            delete_vm_from_db(instance, resource_name)
+                            instance.destroy()
+                if len(instances) == 1 :
+                    os.remove( pickled_file % cloud_connector + "_" + resource_name )
+        except Exception as err:
+            logger.error( "Error deleting instance from pickled file %s\n%s" % (pickled_file % cloud_connector + "_" + resource_name, str( err )) )
+            logger.debug( "Saving the instances back into the pickled file %s" % pickled_file % cloud_connector + "_" + resource_name )
+            for instance in instances:
+                pickle_dump(instance, resource_name, cloud_connector)
+
 def delete_vm_from_db(instance, resource_name):
     try:
         #with lock:
@@ -172,18 +226,18 @@ def delete_vm_from_db(instance, resource_name):
                 cur.execute("UPDATE Resources SET vms= %d WHERE name = '%s'" % ((vms-1), resource_name))
                 cur.execute("DELETE FROM VM_Pricing where name = '%s'" % (resource_name+"_"+instance.ext_ip))
     except Exception as err :
-        raise Exception( "Error deleting instance information in the database %s: %s" % (resource_conf_db, str( err )) )
+        raise Exception( "Error deleting instance information from the database %s: %s" % (resource_conf_db, str( err )) )
 
 def stop_instance( config, instance, resource_name ):
     """
     Destroys one VM and eliminates it from the pickled file
     """
     try :
+        instance.destroy()
         pickle_remove(instance, resource_name, config['cloud_connector'])
         delete_vm_from_db(instance, resource_name)
-        instance.destroy()
     except Exception as err :
-        logger.error( "Error destroying instance\n%s" % str( err ) )
+        logger.error( "Error destroying instance\n    %s" % str( err ) )
         
 def manage_instances(args, resource_name, config):
     """
@@ -203,7 +257,7 @@ def manage_instances(args, resource_name, config):
                 #config.resources[ resource_name ][ 'vm_instances' ] = vms #I can't update this value                         
         threads = []
         for number_of_th in range( int(config['min_nodes']) ):
-            th = threading.Thread( target = start_instance, args = ( config, resource_name, ) )
+            th = threading.Thread( target = start_instance, args = ( config, resource_name, int(config['min_nodes']), ) )
             th.start()
             threads.append( th )
         [ th.join() for th in threads ]
@@ -211,6 +265,16 @@ def manage_instances(args, resource_name, config):
         cloud_connector = config['cloud_connector']
         if not exists( pickled_file % cloud_connector + "_" + resource_name ):
             logger.error( "There are no available VMs to be deleted for the resource %s" % resource_name )
+            conn = sqlite3.connect(resource_conf_db)
+            with lock:
+                with conn:
+                    #this updates the number of VMs in the database for "resource_name", but only when creating VMs through the command "drm4g resource create"
+                    cur = conn.cursor()
+                    cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resource_name)
+                    data=cur.fetchone()[0]
+                    if data != 0:
+                        cur.execute("UPDATE Resources SET vms= %d WHERE name = '%s'" % (0, resource_name))
+                        cur.execute("DELETE FROM VM_Pricing where name like '%s'" % (resource_name+'%'))
         else:
             '''
             instances = []
@@ -225,12 +289,13 @@ def manage_instances(args, resource_name, config):
                 exit( 1 )
             '''
             instances = pickle_read(resource_name, cloud_connector)
-            threads = []
-            for instance in instances :
-                th = threading.Thread( target = stop_instance, args = ( config, instance, resource_name ) )
-                th.start()
-                threads.append( th )
-            [ th.join() for th in threads ]
+            if instances:
+                threads = []
+                for instance in instances :
+                    th = threading.Thread( target = stop_instance, args = ( config, instance, resource_name ) )
+                    th.start()
+                    threads.append( th )
+                [ th.join() for th in threads ]
         #if exists(resource_conf_db):
         #    os.remove( resource_conf_db ) 
     else :
@@ -310,3 +375,11 @@ class Resource (drm4g.managers.Resource):
 
 class Job (drm4g.managers.fork.Job):
     pass
+
+class CloudSetup(object):
+
+    def __init__(self, name, features = {}):
+        self.name             = name
+        self.vo               = features.get( "vo" )
+        #self.url              = features.get( "url" )
+        self.cloud_providers  = features.get( "cloud_providers" )

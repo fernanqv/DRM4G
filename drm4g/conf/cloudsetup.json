@@ -69,6 +69,15 @@
         "flavours" : {
           "Small"  : "http://schemas.openstack.org/template/resource#cpu-1-ram-2gb-disk-10gb"
         }
+      },
+      "EGI FedCloud - FZJ" : {
+        "endpoint" : "https://fsd-cloud.zam.kfa-juelich.de:8787/",
+        "apps" : {
+          "Ubuntu-14.04" : "http://schemas.openstack.org/template/os#28dc7a15-cd71-4289-9e01-ba5552f5e740"
+        },
+        "flavours" : {
+          "Small"  : "http://schemas.openstack.org/template/resource#321"
+        }
       }
     }
   }

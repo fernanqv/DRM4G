@@ -25,8 +25,7 @@ import uuid
 from datetime                                   import timedelta, datetime
 from os.path                                    import join, basename, expanduser
 from drm4g.utils.importlib                      import import_module
-from drm4g.managers.cloud_providers             import Instance, logger
-from drm4g.managers.cloud_providers.rocci       import CloudSetup
+from drm4g.managers.cloud_providers             import Instance, logger, CloudSetup
 from drm4g.utils.proxy_certificate              import _renew_voms_proxy  
 from utils                                      import load_json, read_key, is_ip_private
 from drm4g                                      import ( COMMUNICATORS,
@@ -185,12 +184,12 @@ class Instance(Instance):
             self.log_output("_renew_voms_proxy", out, err)
 
             if err:
-                logger.debug( "Ending  rocci's _renew_voms_proxy function with an error" )
+                logger.debug( "Ending rocci's _renew_voms_proxy function with an error" )
                 logger.error( "Error renewing the proxy(%s): %s" % ( cmd , err ) )
                 raise Exception("Probably the proxy certificate hasn't been created. Be sure to run the the following command before trying again:" \
                     "\n    \033[93mdrm4g id <resource_name> init\033[0m")
             logger.info( "The proxy certificate will be operational for 24 hours" )
-            logger.debug( "Ending  rocci's _renew_voms_proxy" )
+            logger.debug( "Ending rocci's _renew_voms_proxy" )
         except socket.timeout:
             logger.debug("Captured a socket.time exception")
             if cont<3:
@@ -210,7 +209,7 @@ class Instance(Instance):
         if self.volume :
             self._create_link()
         self._start_time()
-        logger.debug( "Ending  rocci's create function" )
+        logger.debug( "Ending rocci's create function" )
 
     def _wait_storage(self):
         logger.debug( "Running rocci's _wait_storage function" )
@@ -226,7 +225,7 @@ class Instance(Instance):
                 break
             time.sleep(10)
             now += timedelta( seconds = 10 )
-        logger.debug( "Ending  rocci's _wait_storage function" )
+        logger.debug( "Ending rocci's _wait_storage function" )
 
     def _wait_compute(self):
         logger.debug( "Running rocci's _wait_compute function" )
@@ -243,7 +242,7 @@ class Instance(Instance):
                 break
             time.sleep(10)
             now += timedelta( seconds = 10 )
-        logger.debug( "Ending  rocci's _wait_compute function" )
+        logger.debug( "Ending rocci's _wait_compute function" )
 
     def _create_link(self):
         logger.debug( "Running rocci's _create_link function" )
@@ -258,10 +257,10 @@ class Instance(Instance):
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("_create_link 2", out, err)
         elif err :
-            logger.error( "Ending  rocci's _create_link function with an error" )
+            logger.error( "Ending rocci's _create_link function with an error" )
             raise Exception( "Error linking resource and volume: %s" % out )
         self.id_link = out.rstrip('\n')
-        logger.debug( "Ending  rocci's _create_link function" )
+        logger.debug( "Ending rocci's _create_link function" )
 
     def _create_resource(self):
         try:
@@ -279,13 +278,13 @@ class Instance(Instance):
                 out, err = self._exec_remote_cmd( cmd )
                 self.log_output("_create_resource 2", out, err)
             elif err :
-                logger.error( "Ending  rocci's  _create_resource function with an error" )
-                raise Exception( "Error creating VM : %s" % out )
+                logger.error( "Ending rocci's  _create_resource function with an error" )
+                raise Exception( "An error occurred while creating a rocci VM : %s" % err )
             self.id = out.rstrip('\n')
             logger.info( "    Resource '%s' has been successfully created" % self.id )
-            logger.debug( "Ending  rocci's  _create_resource function" )
+            logger.debug( "Ending rocci's  _create_resource function" )
         except Exception as err:
-            raise Exception("Most likely the issue is being caused by a timeout error:\n"+str(err))
+            raise Exception("Most likely the issue is being caused by a timeout error:\n    "+str(err))
 
     def _create_volume(self):
         logger.debug( "Running rocci's _create_volume function" )
@@ -301,54 +300,58 @@ class Instance(Instance):
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("_create_volume 2", out, err)
         elif err :
-            logger.error( "Ending  rocci's _create_volume function with an error" )
+            logger.error( "Ending rocci's _create_volume function with an error" )
             raise Exception( "Error creating volume : %s" % out )
         self.id_volume = out.rstrip('\n')
-        logger.debug( "Ending  rocci's _create_volume function" )
+        logger.debug( "Ending rocci's _create_volume function" )
 
     def destroy(self):
         logger.debug( "Running rocci's  destroy function" )
-        logger.info( "Deleting resource %s" % self.id )
-        if self.volume :
-            cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action unlink --resource %s" % (
-                             self.endpoint, self.proxy_file, self.id_link )
-            out, err = self._exec_remote_cmd( cmd )
-            self.log_output("destroy (unlink)", out, err)
-
-            if 'certificate expired' in err :
-                _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
-                logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
+        if self.id:
+            logger.info( "Deleting resource %s" % self.id )
+            if self.volume :
+                cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action unlink --resource %s" % (
+                                 self.endpoint, self.proxy_file, self.id_link )
                 out, err = self._exec_remote_cmd( cmd )
-                self.log_output("destroy (unlink) 2", out, err)
-            elif err :
-                logger.error( "Error unlinking volume '%s': %s" % ( self.id_volume, out ) )
-            time.sleep( 20 )
+                self.log_output("destroy (unlink)", out, err)
+    
+                if 'certificate expired' in err :
+                    _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
+                    logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
+                    out, err = self._exec_remote_cmd( cmd )
+                    self.log_output("destroy (unlink) 2", out, err)
+                elif err :
+                    logger.error( "Error unlinking volume '%s': %s" % ( self.id_volume, out ) )
+                time.sleep( 20 )
+                cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action delete --resource %s" % (
+                                 self.endpoint, self.proxy_file, self.id_volume )
+                out, err = self._exec_remote_cmd( cmd )
+                self.log_output("destroy (volume)", out, err)
+    
+                if 'certificate expired' in err :
+                    _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
+                    logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
+                    out, err = self._exec_remote_cmd( cmd )
+                    self.log_output("destroy (volume) 2", out, err)
+                elif err :
+                    logger.error( "Error deleting volume '%s': %s" % ( self.id_volume, out ) )
             cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action delete --resource %s" % (
-                             self.endpoint, self.proxy_file, self.id_volume )
+                                 self.endpoint, self.proxy_file, self.id )
             out, err = self._exec_remote_cmd( cmd )
-            self.log_output("destroy (volume)", out, err)
-
+            self.log_output("destroy (resource)", out, err)
+    
             if 'certificate expired' in err :
                 _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
                 logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
                 out, err = self._exec_remote_cmd( cmd )
-                self.log_output("destroy (volume) 2", out, err)
+                self.log_output("destroy (resource) 2", out, err)
             elif err :
-                logger.error( "Error deleting volume '%s': %s" % ( self.id_volume, out ) )
-        cmd = "occi --endpoint %s --auth x509 --user-cred %s --voms --action delete --resource %s" % (
-                             self.endpoint, self.proxy_file, self.id )
-        out, err = self._exec_remote_cmd( cmd )
-        self.log_output("destroy (resource)", out, err)
-
-        if 'certificate expired' in err :
-            _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
-            logger.debug( "After executing _renew_voms_proxy - Going to execute cmd again" )
-            out, err = self._exec_remote_cmd( cmd )
-            self.log_output("destroy (resource) 2", out, err)
-        elif err :
-            logger.error( "Error deleting node '%s': %s" % ( self.id, out ) )
-        logger.info( "    Resource '%s' has been successfully deleted" % self.id )
-        logger.debug( "Ending  rocci's destroy function" )
+                logger.error( "Error deleting node '%s': %s" % ( self.id, out ) )
+            else:
+                logger.info( "    Resource '%s' has been successfully deleted" % self.id )
+        else:
+            logger.debug( "    The resource didn't manage to get created" )
+        logger.debug( "Ending rocci's destroy function" )
 
     def get_description(self, id):
         logger.debug( "Running rocci's  get_description function" )
@@ -363,9 +366,9 @@ class Instance(Instance):
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("get_description 2", out, err)
         elif err and "Insecure world writable dir" not in err:
-            logger.error( "Ending  rocci's get_description function with an error" )
+            logger.error( "Ending rocci's get_description function with an error" )
             raise Exception( "Error getting description node '%s': %s" % ( id, out ) )
-        logger.debug( "Ending  rocci's get_description function" )
+        logger.debug( "Ending rocci's get_description function" )
         return out
 
     def get_floating_ips(self):
@@ -380,8 +383,8 @@ class Instance(Instance):
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("get_floating_ips (floating check) 2", out, err)
         elif err :
-            logger.error( "Ending  rocci's get_floating_ips function with an error" )
-        logger.debug( "Ending  rocci's get_floating_ips function" )
+            logger.error( "Ending rocci's get_floating_ips function with an error" )
+        logger.debug( "Ending rocci's get_floating_ips function" )
         return out
 
     def get_public_ip(self):
@@ -454,9 +457,9 @@ class Instance(Instance):
                 else :
                     self.ext_ip = ip
         if not self.ext_ip :
-            logger.error( "Ending  rocci's get_public_ip function with an error" )
+            logger.error( "Ending rocci's get_public_ip function with an error" )
             raise Exception( "Error trying to get a public IP" )
-        logger.debug( "Ending  rocci's get_public_ip function" )
+        logger.debug( "Ending rocci's get_public_ip function" )
 
     def get_network_interfaces(self):
         logger.debug( "Running rocci's  get_network_interfaces function" )
@@ -470,9 +473,9 @@ class Instance(Instance):
             out, err = self._exec_remote_cmd( cmd )
             self.log_output("get_network_interfaces 2", out, err)
         elif err :
-            logger.error( "Ending  rocci's get_network_interfaces function with an error" )
+            logger.error( "Ending rocci's get_network_interfaces function with an error" )
             raise Exception( "Error getting network list" )
-        logger.debug( "Ending  rocci's get_network_interfaces function" )
+        logger.debug( "Ending rocci's get_network_interfaces function" )
         return out.strip().split()
 
     def get_ip(self):
@@ -490,7 +493,7 @@ class Instance(Instance):
                 self.get_public_ip()
             logger.info( "    Public IP: %s" % self.ext_ip )
         else :
-            logger.error( "Ending  rocci's get_ip function with an error" )
+            logger.error( "Ending rocci's get_ip function with an error" )
             raise Exception( "Error getting IP" )
 
         logger.debug( "*********** get_ip -- self.int_ip ***********" )
@@ -500,7 +503,7 @@ class Instance(Instance):
         logger.debug( "*********** get_ip -- ip ***********" )
         logger.debug( str(ip) )
         logger.debug( "*********** get_ip -- end ***********" )
-        logger.debug( "Ending  rocci's get_ip function" )
+        logger.debug( "Ending rocci's get_ip function" )
 
     def log_output(self, msg, out, err, extra=None):
         logger.debug( "Command return:" )
