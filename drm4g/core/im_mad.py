@@ -127,7 +127,7 @@ class GwImMad (object):
                     cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
                     self._config.resources[ resname ][ 'vm_instances' ] = vms
         except Exception as err:
-            self.logger.error( "Error updating SQLite database %s\n%s" % (resource_conf_db, str( err )) )
+            self.logger.error( "Error updating SQLite database %s: %s" % (resource_conf_db, str( err )) )
 
         ##log3.info("_call_create_vms - %s's vm_instances before = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
         #self._config.resources[ resname ][ 'vm_instances' ] += num_instances
@@ -147,7 +147,9 @@ class GwImMad (object):
         
         if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['min_nodes']):
             num_instances = int(self._config.resources[resname]['min_nodes']) - self._config.resources[resname]['vm_instances']
-            self._call_create_vms(resname, num_instances)
+            #self._call_create_vms(resname, num_instances)
+            self._config.resources[ resname ][ 'vm_instances' ] += num_instances
+            cloud_conn.create_num_instances(num_instances, resname, self._config.resources[resname])
         
         #get the number of pending jobs
         command1 = "gwps -n -s i"
@@ -162,12 +164,16 @@ class GwImMad (object):
                 self.pend_jobs_time = time.time()
             #create VM if min_nodes == 0 and pending_jobs
             if int(self._config.resources[resname]['min_nodes']) == 0 and self._config.resources[resname]['vm_instances'] == 0:
-                self._call_create_vms(resname, 1)
+                #self._call_create_vms(resname, 1)
+                self._config.resources[ resname ][ 'vm_instances' ] += 1
+                cloud_conn.create_num_instances(1, resname, self._config.resources[resname])
 
             #create VM if pending jobs is low but it's taking too long
             if pending_jobs < self.max_pend_jobs_limit and (time.time() - self.pend_jobs_time) >= self.node_poll_time * 3:
                 if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['max_nodes']):
-                    self._call_create_vms(resname, 1)
+                    #self._call_create_vms(resname, 1)
+                    self._config.resources[ resname ][ 'vm_instances' ] += 1
+                    cloud_conn.create_num_instances(1, resname, self._config.resources[resname])
         else:
             self.pend_jobs_time = 0.0
 
@@ -177,7 +183,9 @@ class GwImMad (object):
                 self.max_pend_jobs_time = time.time()
             elif (time.time() - self.max_pend_jobs_time) >= self.node_poll_time:
                 if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['max_nodes']):
-                    self._call_create_vms(resname, 1)
+                    #self._call_create_vms(resname, 1)
+                    self._config.resources[ resname ][ 'vm_instances' ] += 1
+                    cloud_conn.create_num_instances(1, resname, self._config.resources[resname])
         else:
             self.max_pend_jobs_time = 0.0
             

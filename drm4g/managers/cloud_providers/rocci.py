@@ -155,7 +155,7 @@ class Instance(Instance):
         self.com_object=com_obj
 
     def _exec_remote_cmd(self, command):
-        logger.debug("~~~~~~~~~~~~~~~~ Going to execute remote command: ~~~~~~~~~~~~~~~~\n"+command)
+        logger.debug("~~~~~~~~~~~~~~~~ Going to execute remote command: ~~~~~~~~~~~~~~~~") #\n"+command)
         out, err = self.com_object.execCommand( command )
         logger.debug("~~~~~~~~~~~~~~~~         Command executed         ~~~~~~~~~~~~~~~~")
         return out, err

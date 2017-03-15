@@ -126,7 +126,7 @@ class Communicator(drm4g.communicators.Communicator):
             #    print line
 
             #logger.debug("Running connect function\n    - called from "+p_module+"\n    - by function "+p_function)
-            logger.debug("\n\nRunning connect function from %s\n    - called from %s\n    - by function %s\n    - Traceback :\n%s\n" % (self.parent_module, p_module, p_function, t))
+            logger.debug("Running connect function from %s\n    - called from %s\n    - by function %s\n    - Traceback:\n%s" % (self.parent_module, p_module, p_function, t))
             #logger.debug("\np_module = %s\np_function = %s\n" % (p_module, p_function))
 
             if not self.configfile:

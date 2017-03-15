@@ -139,6 +139,9 @@ class Instance(Instance):
         cls = get_driver(Provider.EC2)
         self.driver = cls( self.access_id, self.secret_key, region = self.region )
         self.node = self.driver.list_nodes([self.node_id])[0]
+        size_id = self.data.get('size', 't2.micro')
+        self.size = [s for s in self.driver.list_sizes() if s.id == size_id ][0]
+        self.image = self.driver.get_image( self.data.get('image', 'ami-c51e3eb6') )
         
     def create_security_group(self):
         if not self.SECURITY_GROUP_NAME in self.driver.ex_list_security_groups():
