@@ -360,13 +360,15 @@ class Resource( object ):
         logger.info("Resources:")
         for resname, resdict in self.config.resources.items():
             logger.info("    "+str(resname))
-            logger.info("        communicator:  "+str(resdict['communicator']))
+            logger.info("        communicator:        "+str(resdict['communicator']))
             if 'username' in resdict.keys():
-                logger.info("        username:      "+str(resdict['username']))
-            logger.info("        frontend:      "+str(resdict['frontend']))
+                logger.info("        username:            "+str(resdict['username']))
+            logger.info("        frontend:            "+str(resdict['frontend']))
             if 'private_key' in resdict.keys():
-                logger.info("        private_key:   "+str(resdict['private_key']))
-            logger.info("        lrms:          "+str(resdict['lrms']))
+                logger.info("        private_key:         "+str(resdict['private_key']))
+            logger.info("        lrms:                "+str(resdict['lrms']))
+            if not 'cloud_connector' in resdict.keys():
+                logger.info("        max_jobs_running:    "+str(resdict['max_jobs_running']))
 
     def check_frontends( self ) :
         """

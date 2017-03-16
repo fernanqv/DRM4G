@@ -101,15 +101,16 @@ class Configuration(object):
 
                     if 'cloud_connector' in self.resources[ name ].keys():
                         cloud_connector = self.resources[ name ]['cloud_connector']
-                        if os.path.exists( os.path.join( pickled_file % cloud_connector + "_" + name ) ):
+                        if os.path.exists( pickled_file % cloud_connector + "_" + name ):
                             try:
                                 instances = []
-                                with open( pickled_file % cloud_connector + "_" + name, "r" ) as pf :
-                                    while True :
-                                        try:
-                                            instances.append( pickle.load( pf ) )
-                                        except EOFError :
-                                            break
+                                with self.lock:
+                                    with open( pickled_file % cloud_connector + "_" + name, "r" ) as pf :
+                                        while True :
+                                            try:
+                                                instances.append( pickle.load( pf ) )
+                                            except EOFError :
+                                                break
                                 if instances:
                                     for instance in instances :
                                         insdict = dict()
@@ -125,7 +126,7 @@ class Configuration(object):
                                                 name+"_"+instance.ext_ip, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name+"_"+instance.ext_ip].items())]))
                                 #self.resources[ name ][ 'vm_instances' ] = len(instances)
                             except Exception as err :
-                                raise Exception( "Could not create resource for the VMs of %s:\n%s" % (name,str(err)) )
+                                raise Exception( "Could not add %s VM's information to the resource list:\n%s" % (name,str(err)) )
                         #else:
                             #self.resources[ name ][ 'vm_instances' ] = 0
                         
@@ -161,7 +162,7 @@ class Configuration(object):
                     logger.debug("Resource '%s' defined by: %s.",
                              sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name].items())]))
             except Exception as err:
-                output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err))
+                output = "Error while reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err))
                 logger.error( output )
                 
         finally:

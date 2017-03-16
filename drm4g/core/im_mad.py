@@ -355,7 +355,7 @@ class GwImMad (object):
                 if self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
                     continue
                 if 'cloud_connector' in self._config.resources[ resname ].keys(): 
-                    '''#log3.info(self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['max_nodes'])
+                    #log3.info(self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['max_nodes'])
                     if self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['max_nodes']:
                         log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                         self._dynamic_vm_creation(resname)
@@ -364,7 +364,7 @@ class GwImMad (object):
                     if os.path.exists(pickled_file % self._config.resources[ resname ]['cloud_connector'] + "_" + resname):
                         log3.info("do_DISCOVER - before _dynamic_vm_deletion")
                         self._dynamic_vm_deletion(resname)
-                        log3.info("do_DISCOVER - after _dynamic_vm_deletion")'''
+                        log3.info("do_DISCOVER - after _dynamic_vm_deletion")
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]

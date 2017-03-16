@@ -18,6 +18,7 @@
 # permissions and limitations under the Licence.
 #
 
+import uuid
 import time
 import threading
 from libcloud.compute.types           import Provider
@@ -25,11 +26,7 @@ from libcloud.compute.providers       import get_driver
 from libcloud.compute.types           import NodeState
 from os.path                          import expanduser, join
 from drm4g.managers.cloud_providers   import Instance, logger
-from drm4g.utils.importlib            import import_module
-from drm4g                            import ( COMMUNICATORS,
-                                               REMOTE_JOBS_DIR,
-                                               REMOTE_VOS_DIR,
-                                               DRM4G_DIR )
+from drm4g                            import DRM4G_DIR
 
 class Instance(Instance):
     
@@ -68,17 +65,6 @@ class Instance(Instance):
             raise Exception( "No correct image_id has been specified."
                              "Please review your 'image_id'" )
 
-        # Note: This key will be added to the authorized keys for the user admin
-        try:
-            public_key_path = expanduser(basic_data.get('public_key', '~/.ssh/id_rsa.pub'))
-        except :
-            raise Exception( "No correct public_key has been specified."
-                             "Please review your 'public_key'" )
-        with open(public_key_path) as fp:
-            public_key = fp.read().strip()
-        #self.deployment = self.generate_cloud_config(public_key, user=basic_data.get('cloud_user', self.DEFAULT_USER),
-        #                                             user_cloud_config=basic_data.get('cloud_config_script'))
-        
         self.data = basic_data
         self.vm_user = basic_data.get('vm_user', self.DEFAULT_USER)
         self.myproxy_server = basic_data.get('myproxy_server', '')
@@ -91,6 +77,15 @@ class Instance(Instance):
             self.vm_comm = 'pk_ssh'
         self.cloud_contextualisation_file = basic_data.get('vm_config', join(DRM4G_DIR, "etc", "cloud_config.conf"))
         
+        # Note: This key will be added to the authorized keys for the user admin
+        try:
+            public_key_path = expanduser(basic_data.get('public_key', (self.private_key + '.pub')))
+        except :
+            raise Exception( "No correct public_key has been specified."
+                             "Please review your 'public_key'" )
+        with open(public_key_path) as fp:
+            public_key = fp.read().strip()
+            
         self.deployment = self.generate_cloud_config(public_key, user=self.vm_user,
                                                      user_cloud_config=basic_data.get('cloud_config_script'))
             
@@ -106,19 +101,8 @@ class Instance(Instance):
             elif self.soft_billing and not self.hard_billing :
                 self.hard_billing = self.soft_billing
         
-        communicator = import_module(COMMUNICATORS[ basic_data[ 'communicator' ] ] )
-        com_obj = getattr( communicator , 'Communicator' ) ()
-        com_obj.username       = basic_data['username']
-        com_obj.frontend       = basic_data['frontend']
-        com_obj.private_key    = self.private_key
-        com_obj.public_key     = basic_data.get('public_key', self.private_key+'.pub')
-        com_obj.work_directory = basic_data.get('scratch', REMOTE_JOBS_DIR)
-        self.com_object = com_obj
-        
     def __getstate__(self):
         odict = self.__dict__.copy()
-        #This is here to avoid having the error "TypeError: can't pickle lock objects" when creating the pickled file
-        del odict['com_object']
         #And from here to avoid the error "TypeError: an integer is required"
         del odict['image']
         del odict['size']
@@ -128,14 +112,6 @@ class Instance(Instance):
 
     def __setstate__(self, dict):
         self.__dict__.update(dict)
-        communicator = import_module(COMMUNICATORS[ self.data[ 'communicator' ] ] )
-        com_obj = getattr( communicator , 'Communicator' ) ()
-        com_obj.username       = self.data['username']
-        com_obj.frontend       = self.data['frontend']
-        com_obj.private_key    = self.private_key
-        com_obj.public_key     = self.data.get('public_key', self.private_key+'.pub')
-        com_obj.work_directory = self.data.get('scratch', REMOTE_JOBS_DIR)
-        self.com_object=com_obj
         cls = get_driver(Provider.EC2)
         self.driver = cls( self.access_id, self.secret_key, region = self.region )
         self.node = self.driver.list_nodes([self.node_id])[0]
@@ -153,7 +129,7 @@ class Instance(Instance):
         logger.info( "Creating new EC2 resource" )
         with self._lock:
             self.create_security_group()
-        self.node = self.driver.create_node(name='drm4g_VM', image=self.image, size=self.size,
+        self.node = self.driver.create_node(name='%s_DRM4G_VM_%s' % (self.image.extra['owner_alias'], uuid.uuid4().hex), image=self.image, size=self.size,
                     ex_security_groups=[self.SECURITY_GROUP_NAME], ex_userdata=self.deployment)
         self.node_id = self.node.id
         self._start_time()
