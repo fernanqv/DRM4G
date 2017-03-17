@@ -113,17 +113,18 @@ class Configuration(object):
                                                 break
                                 if instances:
                                     for instance in instances :
-                                        insdict = dict()
-                                        insdict['username'] = instance.vm_user
-                                        insdict['frontend'] = instance.ext_ip
-                                        insdict['communicator'] = instance.vm_comm
-                                        insdict['private_key'] = instance.private_key
-                                        insdict['enable'] = 'true'
-                                        insdict['lrms'] = instance.lrms 
-                                        insdict['max_jobs_running'] = instance.max_jobs_running
-                                        self.resources[ name+"_"+instance.ext_ip ] = insdict
-                                        logger.debug("Resource '%s' defined by: %s.",
-                                                name+"_"+instance.ext_ip, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name+"_"+instance.ext_ip].items())]))
+                                        if instance.ext_ip:
+                                            insdict = dict()
+                                            insdict['username'] = instance.vm_user
+                                            insdict['frontend'] = instance.ext_ip
+                                            insdict['communicator'] = instance.vm_comm
+                                            insdict['private_key'] = instance.private_key
+                                            insdict['enable'] = 'true'
+                                            insdict['lrms'] = instance.lrms 
+                                            insdict['max_jobs_running'] = instance.max_jobs_running
+                                            self.resources[ name+"_"+instance.ext_ip ] = insdict
+                                            logger.debug("Resource '%s' defined by: %s.",
+                                                    name+"_"+instance.ext_ip, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name+"_"+instance.ext_ip].items())]))
                                 #self.resources[ name ][ 'vm_instances' ] = len(instances)
                             except Exception as err :
                                 raise Exception( "Could not add %s VM's information to the resource list:\n%s" % (name,str(err)) )
@@ -139,10 +140,11 @@ class Configuration(object):
                                     conn = sqlite3.connect(resource_conf_db)
                                     with conn:
                                         cur = conn.cursor()
-                                        cur.execute("CREATE TABLE Resources (name text not null, vms integer, id integer primary key autoincrement)")
+                                        cur.execute("CREATE TABLE Resources (name text not null, vms integer, id integer primary key autoincrement, pending_vms integer)")
                                         cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
                                         
-                                        cur.execute("CREATE TABLE VM_Pricing (name text primary key, resource_id int, state text, pricing real, start_time real, foreign key(resource_id) references Resources(id))")
+                                        cur.execute("CREATE TABLE VM_Pricing (id text primary key, name text, resource_id int, state text, pricing real, start_time real, foreign key(resource_id) references Resources(id))")
+                                        cur.execute("CREATE TABLE Non_Active_VMs (id integer primary key autoincrement, vm_id text, resource_name text, cloud_connector text, foreign key(vm_id) references VM_Pricing(id), foreign key(resource_name) references Resources(name))")
                             else:
                                 conn = sqlite3.connect(resource_conf_db)
                                 with conn:

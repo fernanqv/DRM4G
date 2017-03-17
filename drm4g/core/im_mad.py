@@ -93,29 +93,6 @@ class GwImMad (object):
         self.logger.debug(out)
 
     def _call_create_vms(self, resname, num_instances):
-        #self._config.resources[ resname ]['vm_instances'] += num_instances
-        """self.lock.acquire()
-        try:
-            conn = sqlite3.connect(resource_conf_db)
-            with conn:
-                cur = conn.cursor()
-                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resname)
-                data=cur.fetchone()[0]
-                if data==0:
-                    #it should never use this
-                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (resname, num_instances))
-                    self._config.resources[ resname ][ 'vm_instances' ] = num_instances
-                else:
-                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
-                    vms = cur.fetchone()[0]
-                    vms += num_instances
-                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
-                    self._config.resources[ resname ][ 'vm_instances' ] = vms
-        except Exception as err:
-            self.logger.error( "Error updating SQLite database %s\n%s" % (resource_conf_db, str( err )) )
-        finally:
-            self.lock.release()"""
-        #log3.info("_call_create_vms - %s's vm_instances before = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
         try:
             conn = sqlite3.connect(resource_conf_db)
             with self.lock:
@@ -129,15 +106,6 @@ class GwImMad (object):
         except Exception as err:
             self.logger.error( "Error updating SQLite database %s: %s" % (resource_conf_db, str( err )) )
 
-        ##log3.info("_call_create_vms - %s's vm_instances before = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
-        #self._config.resources[ resname ][ 'vm_instances' ] += num_instances
-        #log3.info("_call_create_vms - %s's vm_instances after = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
-        
-        '''
-        #cloud_conn = import_module(CLOUD_CONNECTORS[ self._config.resources[resname][ 'cloud_connector' ] ] )
-        background_thread = Thread(target=cloud_conn.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
-        background_thread.start()
-        '''
         cloud_conn.create_num_instances(num_instances, resname, self._config.resources[resname])
         
     def _dynamic_vm_creation(self, resname):
@@ -313,28 +281,7 @@ class GwImMad (object):
                                     cur.execute("DELETE FROM VM_Pricing where name = '%s'" % vm_name)
                                 '''
                             del(self.idle_vms[vm_name])
-        '''
-        if os.path.exists( os.path.join( pickled_file+"_"+resname ) ):
-            try:
-                instances = []
-                total_spent = 0
-                with open( pickled_file+"_"+resname, "r" ) as pf :
-                    while True :
-                        try:
-                            instances.append( pickle.load( pf ) )
-                        except EOFError :
-                            break
-                if instances:
-                    for instance in instances :
-                        total_spent += instance.current_balance()
-                
-                #if total expenditure is over the limit destroy all VMs
-                if total_spent >= instance.hard_billing :
-                    rocci.manage_instances('stop', resname, self._config[resname])
-            except Exception as err:
-                raise Exception( "An error occurred while trying to automatically delete a VMs from the resource %s:\n%s" % (resname, str(err)) )
-        '''
-        
+
     def do_DISCOVER(self, args, output=True):
         """
         Discovers hosts (i.e. DISCOVER - - -)
@@ -351,10 +298,26 @@ class GwImMad (object):
             self._resources  = self._config.make_resources()
             communicators    = self._config.make_communicators()
             hosts = ""
+            
+            checked_for_non_active_vms = False
             for resname in sorted( self._resources.keys() ) :
                 if self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
                     continue
-                if 'cloud_connector' in self._config.resources[ resname ].keys(): 
+                if 'cloud_connector' in self._config.resources[ resname ].keys():
+                    if not checked_for_non_active_vms: #this will only be checked once per im cycle
+                        if os.path.exists( resource_conf_db ):
+                            data = []
+                            with self.lock:
+                                conn = sqlite3.connect(resource_conf_db)
+                                with conn:
+                                    cur = conn.cursor()
+                                    #cur.execute("SELECT count(*) FROM Non_Active_VMs")
+                                    cur.execute("SELECT resource_name, cloud_connector FROM Non_Active_VMs")
+                                    data = cur.fetchall()
+                            if data:
+                                cloud_conn.is_vm_active(data)
+                        checked_for_non_active_vms = True
+                    '''
                     #log3.info(self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['max_nodes'])
                     if self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['max_nodes']:
                         log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
@@ -365,6 +328,7 @@ class GwImMad (object):
                         log3.info("do_DISCOVER - before _dynamic_vm_deletion")
                         self._dynamic_vm_deletion(resname)
                         log3.info("do_DISCOVER - after _dynamic_vm_deletion")
+                    '''
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]
@@ -441,70 +405,5 @@ class GwImMad (object):
         except Exception as e:
             self.logger.warning(str(e))
             
-
-    '''
-    def _call_destroy_vms(self, resname, num_instances):
-        self._config.resources[ resname ]['vm_instances'] -= num_instances
-        self.lock.acquire()
-        try:
-            conn = sqlite3.connect(resource_conf_db)
-            with conn:
-                cur = conn.cursor()
-                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resname)
-                data=cur.fetchone()[0]
-                if data==0:
-                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (resname, num_instances))
-                    self._config.resources[ resname ][ 'vm_instances' ] = num_instances
-                else:
-                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
-                    vms = cur.fetchone()[0]
-                    vms += num_instances
-                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
-                    self._config.resources[ resname ][ 'vm_instances' ] = vms
-        except Exception as err:
-            self.logger.error( "Error updating the SQLite database %s\n%s" % (resource_conf_db, str( err )) )
-        finally:
-            self.lock.release()
-        background_thread = Thread(target=rocci.destroy_num_instances, args=(num_instances, resname, self._config.resources[resname]))
-        background_thread.start()
-    
-    ''
-    no me acuerdo de que queria hacer con esto
-    def delete_from_db(self, vm_name):
-        """
-        It will delete a specified VM from the database 
-        @param vm_name : name of the VM
-        @type vm_name : string
-        """
-        with self.lock:
-            conn = sqlite3.connect(resource_conf_db)
-            with conn:
-                cur = conn.cursor()
-                cur.execute("DELETE FROM Resources WHERE name = '%s'" % vm_name )
-                
-        self._config.resources[ resname ]['vm_instances'] += num_instances
-        self.lock.acquire()
-        try:
-            conn = sqlite3.connect(resource_conf_db)
-            with conn:
-                cur = conn.cursor()
-                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resname)
-                data=cur.fetchone()[0]
-                if data==0:
-                    cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (resname, num_instances))
-                    self._config.resources[ resname ][ 'vm_instances' ] = num_instances
-                else:
-                    cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
-                    vms = cur.fetchone()[0]
-                    vms += num_instances
-                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resname))
-                    self._config.resources[ resname ][ 'vm_instances' ] = vms
-        except Exception as err:
-            self.logger.error( "Error updating SQLite database %s\n%s" % (resource_conf_db, str( err )) )
-        finally:
-            self.lock.release()
-        background_thread = Thread(target=rocci.create_num_instances, args=(num_instances, resname, self._config.resources[resname]))
-        background_thread.start()
-    '''
-
+            
 

@@ -32,6 +32,7 @@ from drm4g                                      import ( COMMUNICATORS,
                                                          REMOTE_JOBS_DIR,
                                                          REMOTE_VOS_DIR,
                                                          DRM4G_DIR )
+from telnetlib import SE
 
 #logger = logging.getLogger(__name__)
 
@@ -208,7 +209,7 @@ class Instance(Instance):
         self._wait_compute()
         if self.volume :
             self._create_link()
-        self._start_time()
+        #self._start_time()
         logger.debug( "Ending rocci's create function" )
 
     def _wait_storage(self):
@@ -243,6 +244,27 @@ class Instance(Instance):
             time.sleep(10)
             now += timedelta( seconds = 10 )
         logger.debug( "Ending rocci's _wait_compute function" )
+        
+    def is_resource_active(self):
+        logger.debug( "Running rocci's is_resource_active function" )
+        if self.volume:
+            out = self.get_description(self.id_volume)
+            pattern = re.compile( "occi.storage.state\s*=\s*(.*)" )
+            mo = pattern.findall( out )
+            if mo and mo[ 0 ] == "online" :
+                pass
+            else:
+                return False
+        out = self.get_description(self.id)
+        pattern = re.compile( "occi.compute.state\s*=\s*(.*)" )
+        mo = pattern.findall( out )
+        logger.debug( "The resource's state is %s" % mo[ 0 ] )
+        logger.debug( "Ending rocci's is_resource_active function" )
+        if mo and mo[ 0 ] == "active" :
+            if self.volume:
+                self._create_link()
+            return True
+        return False
 
     def _create_link(self):
         logger.debug( "Running rocci's _create_link function" )
@@ -281,6 +303,7 @@ class Instance(Instance):
                 logger.error( "Ending rocci's  _create_resource function with an error" )
                 raise Exception( "An error occurred while creating a rocci VM : %s" % err )
             self.id = out.rstrip('\n')
+            self._start_time()
             logger.info( "    Resource '%s' has been successfully created" % self.id )
             logger.debug( "Ending rocci's  _create_resource function" )
         except Exception as err:
