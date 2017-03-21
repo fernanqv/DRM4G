@@ -32,7 +32,6 @@ from drm4g                                      import ( COMMUNICATORS,
                                                          REMOTE_JOBS_DIR,
                                                          REMOTE_VOS_DIR,
                                                          DRM4G_DIR )
-from telnetlib import SE
 
 #logger = logging.getLogger(__name__)
 
@@ -59,22 +58,22 @@ class Instance(Instance):
         self.id_link = None
         self.int_ip = None
         self.ext_ip = None
-        self.volume = int(basic_data['volume'])
+        self.volume = int(basic_data[ 'volume' ])
         self.myproxy_server = basic_data.get('myproxy_server', '')
         self.private_key = expanduser(basic_data['private_key'])
         self.public_key = basic_data.get('public_key', self.private_key+'.pub')
         self.lrms = basic_data.get('lrms')
-        self.context_file = basename(self.private_key)+".login"
+        self.context_file = basename(self.private_key) + '.login'
         self.vm_user = basic_data.get('vm_user', self.DEFAULT_USER)
-        self.cloud_contextualisation_file = basic_data.get('vm_config', join(DRM4G_DIR, "etc", "cloud_config.conf"))
+        self.cloud_contextualisation_file = basic_data.get('vm_config', join(DRM4G_DIR, 'etc', 'cloud_config.conf'))
         self.comm = basic_data[ 'communicator' ]
-        self.max_jobs_running = basic_data['max_jobs_running']
+        self.max_jobs_running = basic_data[ 'max_jobs_running' ]
         self.vm_comm = basic_data.get('vm_communicator', self.comm)
         if self.vm_comm == 'local':
             self.vm_comm = 'pk_ssh'
-        pub = read_key( self.private_key + ".pub" )
+        pub = read_key( self.private_key + '.pub' )
         
-        if 'pricing' in basic_data.keys():
+        if 'pricing' in basic_data.keys() :
             self.instance_pricing = float(basic_data[ 'pricing' ])
             self.soft_billing = float(basic_data.get('soft_billing'))
             self.hard_billing = float(basic_data.get('hard_billing'))
@@ -96,21 +95,22 @@ class Instance(Instance):
         infra_cfg = cloud_setup[ basic_data['cloud_connector'] ]
         cloud_cfg = infra_cfg.cloud_providers[ basic_data['cloud_provider'] ]
         self.vo = infra_cfg.vo
-        self.endpoint = cloud_cfg[ "endpoint" ]
-        self.flavour = cloud_cfg[ "flavours" ][ basic_data['flavour'] ]
+        self.endpoint = cloud_cfg[ 'endpoint' ]
+        self.flavour = cloud_cfg[ 'flavours' ][ basic_data['flavour'] ]
         self.app_name = basic_data['virtual_image']
-        self.app = cloud_cfg[ "apps" ][ self.app_name ]
+        self.app = cloud_cfg[ 'apps' ][ self.app_name ]
 
         communicator = import_module(COMMUNICATORS[ basic_data[ 'communicator' ] ] )
         com_obj = getattr( communicator , 'Communicator' ) ()
-        com_obj.username       = basic_data['username']
-        com_obj.frontend       = basic_data['frontend']
-        com_obj.private_key    = self.private_key
-        com_obj.public_key     = self.public_key #basic_data.get('public_key', self.private_key+'.pub')
-        com_obj.work_directory = basic_data.get('scratch', REMOTE_JOBS_DIR)
+        if basic_data[ 'communicator' ] != 'local' :
+            com_obj.username       = basic_data['username']
+            com_obj.frontend       = basic_data['frontend']
+            com_obj.private_key    = self.private_key
+            com_obj.public_key     = self.public_key #basic_data.get('public_key', self.private_key+'.pub')
+            com_obj.work_directory = basic_data.get('scratch', REMOTE_JOBS_DIR)
         self.com_object = com_obj
 
-        self.proxy_file = join( REMOTE_VOS_DIR , "x509up.%s" ) % self.vo
+        self.proxy_file = join( REMOTE_VOS_DIR , 'x509up.%s' ) % self.vo
 
         '''
         commented so that the context file is created everytime
@@ -148,11 +148,12 @@ class Instance(Instance):
         self.__dict__.update(dict)
         communicator = import_module(COMMUNICATORS[ self.data[ 'communicator' ] ] )
         com_obj = getattr( communicator , 'Communicator' ) ()
-        com_obj.username       = self.data['username']
-        com_obj.frontend       = self.data['frontend']
-        com_obj.private_key    = self.private_key
-        com_obj.public_key     = self.data.get('public_key', self.private_key+'.pub')
-        com_obj.work_directory = self.data.get('scratch', REMOTE_JOBS_DIR)
+        if self.data[ 'communicator' ] != 'local' :
+            com_obj.username       = self.data['username']
+            com_obj.frontend       = self.data['frontend']
+            com_obj.private_key    = self.private_key
+            com_obj.public_key     = self.data.get('public_key', self.private_key+'.pub')
+            com_obj.work_directory = self.data.get('scratch', REMOTE_JOBS_DIR)
         self.com_object=com_obj
 
     def _exec_remote_cmd(self, command):

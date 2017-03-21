@@ -120,12 +120,21 @@ class GwImMad (object):
             cloud_conn.create_num_instances(num_instances, resname, self._config.resources[resname])
         
         #get the number of pending jobs
-        command1 = "gwps -n -s i"
+        command = "gwps -n -s i"
+        pipe = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+        out, err = pipe.communicate()
+        if err:
+            raise Exception ("Couldn't get the number of pending jobs")
+        output_list = out.strip().split('\n')
+        pending_jobs = len(output_list)
+        if output_list.count(''):
+            pending_jobs -= 1
+        '''
         command2 = "wc -l"
-        pipe = subprocess.Popen(command1.split(), stdout=subprocess.PIPE)
         pending_jobs = subprocess.check_output(command2.split(), stdin=pipe.stdout)
         _, _ = pipe.communicate() #just to ensure that the process is closed
         pending_jobs = int(pending_jobs.strip())
+        '''
         
         if pending_jobs:
             if not self.pend_jobs_time:
@@ -174,17 +183,26 @@ class GwImMad (object):
     def vm_is_idle(self, vm_name):
         vm_is_idle = True
         for job_state in ['i', 'p', 'w', 'e']:
-            command1 = "gwps -n -r %s -s %s" % (vm_name, job_state)
+            command = "gwps -n -r %s -s %s" % (vm_name, job_state)
+            pipe = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+            out, err = pipe.communicate()
+            if err:
+                raise Exception ("Couldn't get the number of pending jobs")
+            output_list = out.strip().split('\n')
+            running_jobs = len(output_list)
+            if output_list.count(''):
+                running_jobs -= 1
+            '''
             command2 = "wc -l"
-            pipe = subprocess.Popen(command1.split(), stdout=subprocess.PIPE)
             running_jobs = subprocess.check_output(command2.split(), stdin=pipe.stdout)
             _, _ = pipe.communicate() #just to ensure that the process is closed
             running_jobs = int(running_jobs.strip())
+            '''
             #log3.info("%s's running jobs = %s" % (vm_name, running_jobs))
             #total_running_jobs += running_jobs
             if running_jobs:
                 vm_is_idle = False
-                break        
+                return vm_is_idle       
         return vm_is_idle
     
     def _dynamic_vm_deletion(self, resname):
