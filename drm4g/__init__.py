@@ -41,6 +41,7 @@ DRM4G_CONFIG_FILE = join( DRM4G_DIR , 'etc' , 'resources.conf' )
 DRM4G_LOGGER      = join( DRM4G_DIR , 'etc' , 'logger.conf')
 DRM4G_DAEMON      = join( DRM4G_DIR , 'etc' , 'gwd.conf')
 DRM4G_SCHED       = join( DRM4G_DIR , 'etc' , 'sched.conf')
+DRM4G_CLOUD       = join( DRM4G_DIR , 'etc' , 'cloudsetup.json')
 
 ##
 # Configure logger

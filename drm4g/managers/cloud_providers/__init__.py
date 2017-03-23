@@ -155,7 +155,7 @@ def start_instance( config, resource_name ) :
                     #if resource_id:
                     #with lock:
                     if data==0:
-                        cur.execute("INSERT INTO VM_Pricing (id, name, resource_id, state, pricing, start_time) VALUES ('%s', %s', %d, '%s', %f, %f)" % (instance.id, (resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
+                        cur.execute("INSERT INTO VM_Pricing (id, name, resource_id, state, pricing, start_time) VALUES ('%s', %s', %d, '%s', %f, %f)" % (instance.node_id, (resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
                     else:
                         cur.execute("UPDATE VM_Pricing SET resource_id = %d, state = '%s', pricing = %f, start_time = %f WHERE name = '%s'" % (resource_id, 'active', instance.instance_pricing, instance.start_time, (resource_name+"_"+instance.ext_ip)))
         except Exception as err :
@@ -167,7 +167,7 @@ def start_instance( config, resource_name ) :
         logger.error( "Error creating instance: %s" % str( err ) )
         try :
             logger.debug( "Destroying the instance" )
-            if instance.id:
+            if instance.node_id:
                 stop_instance(config, instance, resource_name)
             else:
                 conn = sqlite3.connect(resource_conf_db)
@@ -200,7 +200,7 @@ def start_instance_no_wait( config, resource_name ) :
         logger.error( "An error occurred while trying to create a VM instance\n%s" % str( err ) )
         raise
     try:   
-        if instance.volume:
+        if instance.volume_capacity:
             instance._create_volume()
         instance._create_resource()
         
@@ -223,10 +223,10 @@ def start_instance_no_wait( config, resource_name ) :
                     #cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resource_name)
                     #resource_id = cur.fetchone()[0]
                     if active:
-                        cur.execute("INSERT INTO VM_Pricing (id, name, resource_id, state, pricing, start_time) VALUES ('%s', %s', %d, '%s', %f, %f)" % (instance.id, (resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
+                        cur.execute("INSERT INTO VM_Pricing (id, name, resource_id, state, pricing, start_time) VALUES ('%s', %s', %d, '%s', %f, %f)" % (instance.node_id, (resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
                     else:
-                        cur.execute("INSERT INTO VM_Pricing (id, resource_id, state, pricing, start_time) VALUES ('%s', %d, '%s', %f, %f)" % (instance.id, resource_id, 'inactive', instance.instance_pricing, instance.start_time))
-                        cur.execute("INSERT INTO  Non_Active_VMs (vm_id, resource_name, cloud_connector) VALUES ('%s', '%s', '%s')" % (instance.id, resource_name, config['cloud_connector']))
+                        cur.execute("INSERT INTO VM_Pricing (id, resource_id, state, pricing, start_time) VALUES ('%s', %d, '%s', %f, %f)" % (instance.node_id, resource_id, 'inactive', instance.instance_pricing, instance.start_time))
+                        cur.execute("INSERT INTO  Non_Active_VMs (vm_id, resource_name, cloud_connector) VALUES ('%s', '%s', '%s')" % (instance.node_id, resource_name, config['cloud_connector']))
 
         except Exception as err :
             raise Exception( "Error updating instance information in the database %s: %s" % (resource_conf_db, str( err )) )
@@ -239,7 +239,7 @@ def start_instance_no_wait( config, resource_name ) :
         logger.error( "Error creating instance: %s" % str( err ) )
         try :
             logger.debug( "Destroying the instance" )
-            if instance.id:
+            if instance.node_id:
                 stop_instance(config, instance, resource_name)
             else:
                 conn = sqlite3.connect(resource_conf_db)
@@ -272,8 +272,8 @@ def is_vm_active(inacte_vm_list):
                             with lock:
                                 with conn:
                                     cur = conn.cursor()
-                                    cur.execute("UPDATE VM_Pricing SET name = '%s', state = '%s' WHERE id = '%s'" % ((resource_name+"_"+instance.ext_ip), 'active', instance.id))
-                                    cur.execute("DELETE FROM Non_Active_VMs WHERE vm_id = '%s'" % instance.id)
+                                    cur.execute("UPDATE VM_Pricing SET name = '%s', state = '%s' WHERE id = '%s'" % ((resource_name+"_"+instance.ext_ip), 'active', instance.node_id))
+                                    cur.execute("DELETE FROM Non_Active_VMs WHERE vm_id = '%s'" % instance.node_id)
                         except Exception as err :
                             raise Exception( "Error updating instance information in the database %s: %s" % (resource_conf_db, str( err )) )
                 cont += 1
@@ -381,12 +381,12 @@ def manage_instances(args, resource_name, config):
                 cur = conn.cursor()
                 cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resource_name))
                 vms = cur.fetchone()[0]
-                vms += int(config['min_nodes'])
+                vms += int(config['node_min_pool_size'])
                 cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resource_name))
                 #config.resources[ resource_name ][ 'vm_instances' ] = vms #I can't update this value from here
         '''                         
         threads = []
-        for number_of_th in range( int(config['min_nodes']) ):
+        for number_of_th in range( int(config['node_min_pool_size']) ):
             th = threading.Thread( target = start_instance_no_wait, args = ( config, resource_name ) )
             th.start()
             threads.append( th )
@@ -442,22 +442,58 @@ def manage_instances(args, resource_name, config):
 
 class Instance(object):
 
-    DEFAULT_USER = "drm4g_adm"
-    SECURITY_GROUP_NAME = "drm4g_group"
+    DEFAULT_VM_USER = 'drm4g_adm'
+    DEFAULT_VM_COMMUNICATOR = 'ssh' 
+    DEFAULT_LRMS = 'fork'
+    DEFAULT_PRIVATE_KEY = '~/.ssh/id_rsa'
+    DEFAULT_PUBLIC_KEY = '~/.ssh/id_rsa.pub'
+    DEFAULT_VM_CONFIG = join(DRM4G_DIR, 'etc', 'cloud_config.conf')
+    DEFAULT_NODE_SAFE_TIME = 5 
+    DEFAULT_VOLUME = 0
+    DEFAULT_MIN_NODE_POOL_SIZE = 0
+    DEFAULT_MAX_NODE_POOL_SIZE = 10
+    DEFAULT_PRICING = 0.0
+    DEFAULT_SOFT_BILLING = 0.0
+    DEFAULT_HARD_BILLING = 0.0
+    SECURITY_GROUP_NAME = 'drm4g_group'
     TIMEOUT = 600 # seconds
     WAIT_PERIOD = 3 # seconds
     instance_pricing = 0.0
     start_time = 0.0
 
     def __init__(self, basic_data=None):
+        self.node_id = None
+        self.volume_id = None
+        self.volume_capacity = None
         self.ext_ip = None
-        pass
 
     def create(self):
-        pass
+        raise NotImplementedError( "This function must be implemented" )
 
-    def destroy(self):
+    def _create_resource(self):
+        raise NotImplementedError( "This function must be implemented" )
+
+    def _create_volume(self):
+        raise NotImplementedError( "This function must be implemented" )
+    
+    def _wait_resource(self):
+        raise NotImplementedError( "This function must be implemented" )
+
+    def _wait_storage(self):
+        raise NotImplementedError( "This function must be implemented" )
+
+    def _create_link(self):
+        raise NotImplementedError( "This function must be implemented" )
+    
+    def _destroy_link(self):
+        #raise NotImplementedError( "This function must be implemented" )
         pass
+    
+    def destroy(self):
+        raise NotImplementedError( "This function must be implemented" )
+
+    def get_ip(self):
+        raise NotImplementedError( "This function must be implemented" )
 
     def get_public_ip(self):
         pass
@@ -470,6 +506,9 @@ class Instance(object):
 
     def wait_until_running(self):
         pass
+    
+    def is_resource_active(self):
+        raise NotImplementedError( "This function must be implemented" )
 
     def _start_time(self):
         self.start_time = time.time()
@@ -489,7 +528,7 @@ class Instance(object):
         Generate the cloud-config file to be used in the user_data
         """
         if not user:
-            user = self.DEFAULT_USER
+            user = self.DEFAULT_VM_USER
         with open( self.cloud_contextualisation_file, "r" ) as contex_file :
             cloud_config = contex_file.read()
         cloud_config = cloud_config % (user, user, public_key)

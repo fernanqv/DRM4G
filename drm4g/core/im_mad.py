@@ -113,7 +113,7 @@ class GwImMad (object):
         ##log3.info("\nTotal VMs creadas para %s: %s" % (resname, self._config.resources[resname]['vm_instances']))          
         #log3.info("_dynamic_vm_creation - %s's vm_instances = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
         
-        if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['min_nodes']):
+        if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_min_pool_size']):
             num_instances = int(self._config.resources[resname]['min_nodes']) - self._config.resources[resname]['vm_instances']
             #self._call_create_vms(resname, num_instances)
             self._config.resources[ resname ][ 'vm_instances' ] += num_instances
@@ -147,7 +147,7 @@ class GwImMad (object):
 
             #create VM if pending jobs is low but it's taking too long
             if pending_jobs < self.max_pend_jobs_limit and (time.time() - self.pend_jobs_time) >= self.node_poll_time * 3:
-                if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['max_nodes']):
+                if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_max_pool_size']):
                     #self._call_create_vms(resname, 1)
                     self._config.resources[ resname ][ 'vm_instances' ] += 1
                     cloud_conn.create_num_instances(1, resname, self._config.resources[resname])
@@ -159,7 +159,7 @@ class GwImMad (object):
             if self.max_pend_jobs_time == 0.0:
                 self.max_pend_jobs_time = time.time()
             elif (time.time() - self.max_pend_jobs_time) >= self.node_poll_time:
-                if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['max_nodes']):
+                if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_max_pool_size']):
                     #self._call_create_vms(resname, 1)
                     self._config.resources[ resname ][ 'vm_instances' ] += 1
                     cloud_conn.create_num_instances(1, resname, self._config.resources[resname])
@@ -211,7 +211,7 @@ class GwImMad (object):
         @param resname : name of the resource
         @type resname : string
         """
-        #if self._config.resources[ resname ][ 'vm_instances' ] > self._config.resources[ resname ][ 'max_nodes' ]:
+        #if self._config.resources[ resname ][ 'vm_instances' ] > self._config.resources[ resname ][ 'node_max_pool_size' ]:
         #    num_instances = self._config.resources[resname]['vm_instances'] - int(self._config.resources[resname]['min_nodes'])
         #    self._call_destroy_vms(resname, num_instances)
         if os.path.exists( resource_conf_db ):
@@ -320,6 +320,7 @@ class GwImMad (object):
             checked_for_non_active_vms = False
             for resname in sorted( self._resources.keys() ) :
                 if self._config.resources[ resname ][ 'enable' ].lower()  == 'false' :
+                    self.logger.debug("The resource %s is not enabled" % resname)
                     continue
                 if 'cloud_connector' in self._config.resources[ resname ].keys():
                     if not checked_for_non_active_vms: #this will only be checked once per im cycle
@@ -336,8 +337,8 @@ class GwImMad (object):
                                 cloud_conn.is_vm_active(data)
                         checked_for_non_active_vms = True
                     '''
-                    #log3.info(self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['max_nodes'])
-                    if self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['max_nodes']:
+                    #log3.info(self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['node_max_pool_size'])
+                    if self._config.resources[ resname ]['vm_instances'] < self._config.resources[ resname ]['node_max_pool_size']:
                         log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                         self._dynamic_vm_creation(resname)
                         log3.info("do_DISCOVER - %s's vm_instances after _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
@@ -373,7 +374,8 @@ class GwImMad (object):
             info = ""
             for resname, resdict in list(self._resources.items()) :
                 if self._config.resources[ resname ][ 'enable' ].lower() == 'false':
-                    raise Exception( "Resource '%s' is not enable" % resname )
+                    self.logger.debug( "Resource '%s' is not enable" % resname )
+                    continue
                 if 'cloud_connector' in self._config.resources[ resname ].keys():
                     continue
                 if HOST in resdict['Resource'].host_list :

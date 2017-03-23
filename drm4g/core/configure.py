@@ -61,12 +61,14 @@ class Configuration(object):
                                    'public_key', 'scratch', 'lrms', 'queue', 'max_jobs_in_queue',
                                    'max_jobs_running', 'parallel_env', 'project', 'vo', 'host_filter',
                                    'bdii', 'myproxy_server', 'vm_user', 'vm_communicator', 'vm_config',
-                                   'cloud_provider', 'flavour', 'virtual_image', 'instances', 'volume',
-                                   'max_nodes', 'min_nodes', 'access_id', 'secret_key', 'region', 'size',
-                                   'image', 'pricing', 'cloud_user', 'cloud_connector', 'cloud_config_script',
+                                   'instances', 'volume', 'region', 'size', 'image', 'volume_type',
+                                   'node_max_pool_size', 'node_min_pool_size', 'access_id', 'secret_key',
+                                   'pricing', 'cloud_user', 'cloud_connector', 'cloud_config_script',
                                    'soft_billing', 'hard_billing', 'node_safe_time', 'vm_instances']
-        if not os.path.exists( DRM4G_CONFIG_FILE ):
-            assert DRM4G_CONFIG_FILE, "resources.conf does not exist, please provide one"
+        assert_message = "The resource configuration file 'resources.conf' does not exist, please provide one\n" \
+                         "    If you wish to restore your entire configuration folder you can run the command \033[93m'drm4g start --clear-conf'\033[0m, " \
+                         "but bear in mind that this will overwrite or delete every configuration file in '%s'" % os.path.join(DRM4G_DIR, 'etc')
+        assert os.path.exists( DRM4G_CONFIG_FILE ), assert_message
         self.init_time = os.stat( DRM4G_CONFIG_FILE ).st_mtime
 
     def check_update(self):
