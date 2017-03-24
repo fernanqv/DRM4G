@@ -125,7 +125,6 @@ class Instance(Instance):
         cmd = "ls %s" % self.proxy_file #to check if it exists
         out,err = self.com_object.execCommand( cmd )
         if err:
-            #self._renew_voms_proxy()
             _renew_voms_proxy(self.com_object, self.myproxy_server, self.vo)
 
     #This is here to avoid the error "TypeError: can't pickle lock objects" when creating the pickled file
@@ -143,52 +142,14 @@ class Instance(Instance):
             com_obj.frontend       = self.data['frontend']
             com_obj.private_key    = self.private_key
             com_obj.public_key     = self.data.get('public_key', self.private_key+'.pub')
-            com_obj.work_directory = self.data.get('scratch', REMOTE_JOBS_DIR)
+            com_obj.work_directory = self.data.get('scratch', self.DEFAULT_SCRATCH)
         self.com_object=com_obj
 
     def _exec_remote_cmd(self, command):
-        logger.debug("~~~~~~~~~~~~~~~~ Going to execute remote command: ~~~~~~~~~~~~~~~~") #\n"+command)
+        logger.debug("~~~~~~~~~~~~~~~~ Going to execute remote command: ~~~~~~~~~~~~~~~~")
         out, err = self.com_object.execCommand( command )
         logger.debug("~~~~~~~~~~~~~~~~         Command executed         ~~~~~~~~~~~~~~~~")
         return out, err
-
-    '''
-    def _renew_voms_proxy(self, cont=0):
-        try:
-            logger.debug( "Running rocci's _renew_voms_proxy function" )
-            logger.debug( "_renew_voms_proxy count = %s" % str( cont ) )
-            logger.error( "The proxy '%s' has probably expired" %  self.proxy_file )
-            logger.info( "Renewing proxy certificate" )
-
-            cmd = "rm %s" % self.proxy_file
-            self.com_object.execCommand( cmd )
-            if self.myproxy_server:
-                LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s" % join ( REMOTE_VOS_DIR , self.myproxy_server )
-            else :
-                LOCAL_X509_USER_PROXY = "X509_USER_PROXY=%s/${MYPROXY_SERVER}" % ( REMOTE_VOS_DIR )
-            cmd = "%s voms-proxy-init -ignorewarn " \
-            "-timeout 30 -valid 24:00 -q -voms %s -noregen -out %s --rfc" % (
-                LOCAL_X509_USER_PROXY ,
-                self.vo ,
-                self.proxy_file )
-
-            out, err = self._exec_remote_cmd( cmd )
-            self.log_output("_renew_voms_proxy", out, err)
-
-            if err:
-                logger.debug( "Ending rocci's _renew_voms_proxy function with an error" )
-                logger.error( "Error renewing the proxy(%s): %s" % ( cmd , err ) )
-                raise Exception("Probably the proxy certificate hasn't been created. Be sure to run the the following command before trying again:" \
-                    "\n    \033[93mdrm4g id <resource_name> init\033[0m")
-            logger.info( "The proxy certificate will be operational for 24 hours" )
-            logger.debug( "Ending rocci's _renew_voms_proxy" )
-        except socket.timeout:
-            logger.debug("Captured a socket.time exception")
-            if cont<3:
-                self._renew_voms_proxy(cont+1)
-            else:
-                raise
-    '''
 
     def create(self):
         logger.debug( "Running rocci's create function" )
@@ -219,7 +180,6 @@ class Instance(Instance):
             time.sleep(self.WAIT_PERIOD)
             now += timedelta( seconds = self.WAIT_PERIOD )
         raise Exception("Timed out after after waiting for storage '%s' to be active for %s seconds" % (self.volume_id, self.TIMEOUT))
-        #logger.debug( "Ending rocci's _wait_storage function" )
 
     def _wait_resource(self):
         logger.debug( "Running rocci's _wait_resource function" )
@@ -238,7 +198,6 @@ class Instance(Instance):
             time.sleep(self.WAIT_PERIOD)
             now += timedelta( seconds = self.WAIT_PERIOD )
         raise Exception("Timed out after waiting for resource '%s' to be active for %s seconds" % (self.node_id, self.TIMEOUT))
-        #logger.debug( "Ending rocci's _wait_resource function" )
         
     def is_resource_active(self):
         logger.debug( "Running rocci's is_resource_active function" )

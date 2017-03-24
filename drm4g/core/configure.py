@@ -24,13 +24,14 @@ import sqlite3
 import logging
 import threading
 import drm4g.managers.cloud_providers
-from drm4g.utils.importlib import import_module
-from drm4g                 import ( DRM4G_CONFIG_FILE,
-                                    COMMUNICATORS,
-                                    RESOURCE_MANAGERS,
-                                    CLOUD_CONNECTORS,
-                                    REMOTE_JOBS_DIR,
-                                    DRM4G_DIR )
+from drm4g.managers.cloud_providers         import Instance
+from drm4g.utils.importlib                  import import_module
+from drm4g                                  import ( DRM4G_CONFIG_FILE,
+                                                     COMMUNICATORS,
+                                                     RESOURCE_MANAGERS,
+                                                     CLOUD_CONNECTORS,
+                                                     REMOTE_JOBS_DIR,
+                                                     DRM4G_DIR )
 try :
     import configparser
 except ImportError :
@@ -127,18 +128,13 @@ class Configuration(object):
                                             self.resources[ name+"_"+instance.ext_ip ] = insdict
                                             logger.debug("Resource '%s' defined by: %s.",
                                                     name+"_"+instance.ext_ip, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name+"_"+instance.ext_ip].items())]))
-                                #self.resources[ name ][ 'vm_instances' ] = len(instances)
                             except Exception as err :
                                 raise Exception( "Could not add %s VM's information to the resource list:\n%s" % (name,str(err)) )
-                        #else:
-                            #self.resources[ name ][ 'vm_instances' ] = 0
-                        
                         #if no database exists 
                         with self.lock:
                             if not os.path.exists( resource_conf_db ):
                                 if os.path.exists( os.path.join(DRM4G_DIR, "var") ):
                                     self.resources[ name ][ 'vm_instances' ] = 0
-                                    #with self.lock:
                                     conn = sqlite3.connect(resource_conf_db)
                                     with conn:
                                         cur = conn.cursor()
@@ -155,7 +151,6 @@ class Configuration(object):
                                     data=cur.fetchone()[0]
                                     #if database exists but it's the first time a resource is found
                                     if data==0:
-                                        #with self.lock:
                                         self.resources[ name ][ 'vm_instances' ] = 0
                                         cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
                                     else:
@@ -185,37 +180,104 @@ class Configuration(object):
             reslist = list(resdict.keys( ))
             for key in reslist:
                 if key not in self.configuration_keys :
-                    output = "'%s' resource has an invalid key : '%s'" % (resname, key)
+                    output = "    '%s' resource has an invalid key : '%s'" % (resname, key)
                     logger.error( output )
                     errors.append( output )
             for key in [ 'enable' , 'frontend' , 'lrms' , 'communicator' ] :
                 if not key in reslist :
-                    output = "'%s' resource does not have '%s' key" % (resname, key)
+                    output = "    '%s' resource does not have '%s' key" % (resname, key)
                     logger.error( output )
                     errors.append( output )
-            if ( resdict.get( 'cloud_connector' ) in CLOUD_CONNECTORS and not resdict.get( 'private_key' ) ) :
-                output = "'private_key' key has not been defined for '%s' resource" % resname
-                logger.error( output )
-                errors.append( output )
-            if 'pricing' in reslist :
-                #if ( not 'soft_billing' in reslist ) or ( not 'hard_billing' in reslist ):
-                #    output = "'soft_billing' and 'hard_billing' keys are mandatory for '%s' resource" % resname
-                #    logger.error( output )
-                #    errors.append( output )
-                if resdict[ 'soft_billing' ] > resdict[ 'hard_billing' ] :
-                    output = "'soft_billing' can't be larger than 'hard_billing', problem found in '%s' resource" % resname
+            if 'cloud_connector' in reslist:
+                if not resdict.get( 'cloud_connector' ) in CLOUD_CONNECTORS:
+                    output = "    'cloud_connector' has an incorrect value for resource '%s'" % resname
                     logger.error( output )
                     errors.append( output )
-                if resdict[ 'soft_billing' ] < 0 or resdict[ 'hard_billing' ] < 0 :
-                    output = "'soft_billing' and 'hard_billing' can't be smaller than 0, problem found in '%s' resource" % resname
+                if not resdict.get( 'private_key' ) :
+                    self.resources[resname]['private_key'] = '~/.ssh/id_rsa'
+                    resdict[ 'private_key' ] = '~/.ssh/id_rsa'
+                    output = "    'private_key' key will have a value of '~/.ssh/id_rsa' for the resource '%s'" % resname
+                    logger.debug( output )
+                if not resdict.get( 'public_key' ) :
+                    self.resources[resname]['public_key'] = '~/.ssh/id_rsa.pub'
+                    resdict[ 'public_key' ] = '~/.ssh/id_rsa.pub'
+                    output = "    'public_key' key will have a value of '~/.ssh/id_rsa.pub' for the resource '%s'" % resname
+                    logger.debug( output )
+                if resdict[ 'cloud_connector' ] == 'ec2':
+                    for key in [ 'access_id' , 'secret_key' ] :
+                        if not key in reslist :
+                            output = "    '%s' resource needs the '%s' key" % (resname, key)
+                            logger.error( output )
+                            errors.append( output )
+                for key in [ 'pricing' , 'soft_billing', 'hard_billing', 'node_min_pool_size', 'node_max_pool_size' ] :
+                    if key in reslist:
+                        if float( resdict[ key ] ) < 0:
+                            output = "    '%s' can't be smaller than 0, error found in '%s' resource" % ( key, resname )
+                            logger.error( output )
+                            errors.append( output )
+                if 'soft_billing' in reslist and 'hard_billing' in reslist:
+                    if float(resdict[ 'soft_billing' ]) > float(resdict[ 'hard_billing' ]) :
+                        output = "    'soft_billing' can't be larger than 'hard_billing', error found in '%s' resource" % resname
+                        logger.error( output )
+                        errors.append( output )
+                else:
+                    if not 'soft_billing' in reslist:
+                        self.resources[resname]['soft_billing'] = Instance.DEFAULT_SOFT_BILLING
+                        output = "    'soft_billing' key will have a value of %s for the resource '%s'" % (Instance.DEFAULT_SOFT_BILLING, resname)
+                        logger.debug( output )
+                        if not 'hard_billing' in reslist:
+                            self.resources[resname]['hard_billing'] = Instance.DEFAULT_HARD_BILLING
+                            output = "    'hard_billing' key will have a value of %s for the resource '%s'" % (Instance.DEFAULT_HARD_BILLING, resname)
+                            logger.debug( output )
+                    else:
+                        if not 'hard_billing' in reslist:
+                            self.resources[resname]['hard_billing'] = self.resources[resname]['soft_billing']
+                            output = "    'hard_billing' key will have the same value as 'soft_billing' for the resource '%s'" % resname
+                            logger.debug( output )
+                if resdict.get( 'vm_communicator' ) == 'local':
+                    output = "    'vm_communicator' key cannot have the value of 'local', error found in '%s' resource" % resname
                     logger.error( output )
                     errors.append( output )
+                if not 'node_min_pool_size' in reslist:
+                    if 'node_max_pool_size' in reslist:
+                        self.resources[resname]['node_min_pool_size'] = 0
+                        output = "    'node_min_pool_size' key will have a value of 0 for the resource '%s'" % resname
+                    else:
+                        self.resources[resname]['node_min_pool_size'] = 0
+                        self.resources[resname]['node_max_pool_size'] = 10
+                        output = "    'node_min_pool_size' key will have a value of 0 and 'node_max_pool_size'" \
+                                 " a value of 10 for the resource '%s'" % resname
+                    logger.debug( output )
+                else:
+                    if not 'node_max_pool_size' in reslist:
+                        self.resources[resname]['node_max_pool_size'] = self.resources[resname]['node_min_pool_size']
+                        output = "    'node_max_pool_size' key will have the same value as the 'node_min_pool_size' key for the resource '%s'" % resname
+                        logger.debug( output )
+                if 'node_min_pool_size' in reslist and 'node_max_pool_size' in reslist:
+                    if int(resdict[ 'node_min_pool_size' ]) > int(resdict[ 'node_max_pool_size' ]):
+                        output = "    'node_min_pool_size' key cannot have the value larger than 'node_max_pool_size', error found in '%s' resource" % resname
+                        logger.error( output )
+                        errors.append( output )
+                if not 'node_safe_time' in reslist:
+                    self.resources[resname]['node_safe_time'] = Instance.DEFAULT_NODE_SAFE_TIME
+                    output = "    'node_safe_time' key will have a value of %s for the resource '%s'" % (Instance.DEFAULT_NODE_SAFE_TIME, resname)
+                    logger.debug( output )
+                else:
+                    if int( resdict[ 'node_safe_time' ] ) < 0:
+                        output = "    'node_safe_time' can't be smaller than 0, error found in '%s' resource" % ( key, resname )
+                        logger.error( output )
+                        errors.append( output )
+                if 'volume' in reslist:
+                    if int(resdict[ 'volume' ]) < 0:
+                        output = "    'volume' can't be smaller than 0, error found in '%s' resource" % ( key, resname )
+                        logger.error( output )
+                        errors.append( output )
             if ( not 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
-                output = "'max_jobs_running' key is mandatory for '%s' resource" % resname
+                output = "    'max_jobs_running' key is mandatory for the resource '%s'" % resname
                 logger.error( output )
                 errors.append( output )
             if ( resdict[ 'lrms' ] != 'cream' and not resdict.get( 'max_jobs_running' ) ) :
-                output = "'max_jobs_running' key has a wrong value for '%s' resource" % resname
+                output = "    'max_jobs_running' key has a wrong value for the resource '%s'" % resname
                 logger.error( output )
                 errors.append( output )
             if ( not ( 'max_jobs_in_queue' in reslist ) and ( 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) ) :
@@ -223,42 +285,42 @@ class Configuration(object):
                 logger.debug( "'max_jobs_in_queue' will be the same as the 'max_jobs_running'" )
             if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 self.resources[resname]['queue'] = "default"
-                output = "'queue' key will be called 'default' for '%s' resource" % resname
+                output = "    'queue' key will be called 'default' for the resource '%s'" % resname
                 logger.debug( output )
             if 'max_jobs_running' in reslist and resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_in_queue' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
-                output = "The number of elements in 'max_jobs_in_queue' are different to the elements of 'queue'"
+                output = "    The number of elements in 'max_jobs_in_queue' are different to the elements of 'queue'"
                 logger.error( output )
                 errors.append( output )
             if 'max_jobs_running' in reslist and resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_running' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :
-                output = "The number of elements in 'max_jobs_running' are different to the elements of 'queue'"
+                output = "    The number of elements in 'max_jobs_running' are different to the elements of 'queue'"
                 logger.error( output )
                 errors.append( output )
             if resdict[ 'lrms' ] != 'cream' and ( 'host_filter' in reslist ) :
-                output = "'host_filter' key is only available for 'cream' lrms"
+                output = "    'host_filter' key is only available for 'cream' lrms"
                 logger.error( output )
                 errors.append( output )
             if resdict[ 'communicator' ] not in COMMUNICATORS :
-                output = "'%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
+                output = "    '%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
                 logger.error( output )
                 errors.append( output )
             if resdict[ 'communicator' ] != 'local' and 'username' not in resdict :
-                output = "'username' key is mandatory for '%s' communicator, '%s' resource" % (resdict[ 'communicator' ], resname)
+                output = "    'username' key is mandatory for '%s' communicator, '%s' resource" % (resdict[ 'communicator' ], resname)
                 logger.error( output )
                 errors.append( output )
             if resdict[ 'lrms' ] not in RESOURCE_MANAGERS :
-                output = "'%s' has a wrong lrms: '%s'" % ( resname , resdict[ 'lrms' ] )
+                output = "    '%s' has a wrong lrms: '%s'" % ( resname , resdict[ 'lrms' ] )
                 logger.error( output )
                 errors.append( output )
             if resdict[ 'communicator' ] != 'local' :
                 private_key = resdict.get( 'private_key' )
                 if not private_key :
-                    output = "'private_key' key is mandatory for '%s' resource" % resname
+                    output = "    'private_key' key is mandatory for the resource '%s'" % resname
                     logger.error( output )
                     errors.append( output )
                 else :
                     abs_private_key = os.path.expandvars( os.path.expanduser( private_key ) )
                     if not os.path.isfile( abs_private_key ) :
-                        output = "'%s' does not exist for '%s' resource" % ( private_key , resname )
+                        output = "    '%s' does not exist for the resource '%s'" % ( private_key , resname )
                         logger.error( output )
                         errors.append( output )
                     else :
@@ -269,7 +331,7 @@ class Configuration(object):
                     else :
                         abs_public_key = os.path.expandvars( os.path.expanduser( public_key ) )
                     if not os.path.isfile( abs_private_key ) :
-                        output = "'%s' does not exist for '%s' resource" % ( abs_public_key , resname )
+                        output = "    '%s' does not exist for the resource '%s'" % ( abs_public_key , resname )
                         logger.error( output )
                         errors.append( output )
                     else :
@@ -278,19 +340,11 @@ class Configuration(object):
             if grid_cert :
                 abs_grid_cert = os.path.expandvars( os.path.expanduser( grid_cert ) )
                 if not os.path.isfile( abs_grid_cert ) :
-                    output = "'%s' does not exist for '%s' resource" % ( abs_grid_cert , resname )
+                    output = "    '%s' does not exist for the resource '%s'" % ( abs_grid_cert , resname )
                     logger.error( output )
                     errors.append( output )
                 else :
                     self.resources[resname]['grid_cert'] = abs_grid_cert
-        '''
-        #This is quite redundant
-        #When running "drm4g resource edit", an exception appears if you have an error saying
-        #"Please, review your configuration file", that is thrown by drm4g/commands
-        if errors:
-            output="Modify your configuration file before trying again."
-            logger.error( output )
-        '''
         return errors
 
     def make_communicators(self):

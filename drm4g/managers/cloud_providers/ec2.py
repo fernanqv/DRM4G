@@ -89,7 +89,6 @@ class Instance(Instance):
         public_key_content = read_key( self.public_key )
         self.deployment = self.generate_cloud_config(public_key_content, user=self.vm_user,
                                                      user_cloud_config=basic_data.get('cloud_config_script'))
-
         #self.instance_pricing = float(basic_data.get('pricing', self.size.price))
         self.instance_pricing = float(basic_data.get('pricing', self.DEFAULT_PRICING))
         self.soft_billing = float(basic_data.get('soft_billing'))

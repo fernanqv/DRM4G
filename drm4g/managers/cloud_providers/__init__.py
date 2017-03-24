@@ -73,7 +73,6 @@ def pickle_remove(inst, resource_name, cloud_connector):
         instances = pickle_read(resource_name, cloud_connector)
         if instances:
             try:
-                #instances = pickle_read(resource_name, cloud_connector)
                 with lock:
                     with open( pickled_file % cloud_connector + "_" + resource_name, "w" ) as pf :
                         for instance in instances:
@@ -109,7 +108,6 @@ def create_num_instances(num_instances, resource_name, config):
     '''
     threads = []
     for number_of_th in range( num_instances ):
-        #th = threading.Thread( target = start_instance, args = ( config, resource_name, ) )
         th = threading.Thread( target = start_instance_no_wait, args = ( config, resource_name, ) )
         th.start()
         threads.append( th )
@@ -136,10 +134,8 @@ def start_instance( config, resource_name ) :
     try:   
         instance.create()
         instance.get_ip()        
-        
-        #if exists( resource_conf_db ): #the configure will always have had it's load() method executed, so this is not needed
+
         try:
-            #with lock:
             conn = sqlite3.connect(resource_conf_db)
             with lock:
                 with conn:
@@ -148,12 +144,8 @@ def start_instance( config, resource_name ) :
                     vms, resource_id = cur.fetchone()
                     vms += 1
                     cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resource_name))
-                    #cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resource_name)
-                    #resource_id = cur.fetchone()[0]
                     cur.execute("SELECT count(*) FROM VM_Pricing WHERE name = '%s'" % (resource_name+"_"+instance.ext_ip))
                     data=cur.fetchone()[0]
-                    #if resource_id:
-                    #with lock:
                     if data==0:
                         cur.execute("INSERT INTO VM_Pricing (id, name, resource_id, state, pricing, start_time) VALUES ('%s', %s', %d, '%s', %f, %f)" % (instance.node_id, (resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
                     else:
@@ -208,10 +200,8 @@ def start_instance_no_wait( config, resource_name ) :
         
         if active:
             instance.get_ip()
-            
-        #save into database, even if not active yet, so that the drm4g won't try to create more
+
         try:
-            #with lock:
             conn = sqlite3.connect(resource_conf_db)
             with lock:
                 with conn:
@@ -220,8 +210,6 @@ def start_instance_no_wait( config, resource_name ) :
                     vms, resource_id = cur.fetchone()
                     vms += 1
                     cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resource_name))
-                    #cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resource_name)
-                    #resource_id = cur.fetchone()[0]
                     if active:
                         cur.execute("INSERT INTO VM_Pricing (id, name, resource_id, state, pricing, start_time) VALUES ('%s', %s', %d, '%s', %f, %f)" % (instance.node_id, (resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
                     else:
@@ -231,9 +219,7 @@ def start_instance_no_wait( config, resource_name ) :
         except Exception as err :
             raise Exception( "Error updating instance information in the database %s: %s" % (resource_conf_db, str( err )) )
             
-        pickle_dump(instance, resource_name, config['cloud_connector'])
-        
-        #try to get ip automatically, if not available, wait until next im cycle (probably do it before saving things into the database) 
+        pickle_dump(instance, resource_name, config['cloud_connector']) 
     except Exception as err :
         ###############REVIEW THIS PART
         logger.error( "Error creating instance: %s" % str( err ) )
@@ -256,7 +242,7 @@ def start_instance_no_wait( config, resource_name ) :
 def is_vm_active(inacte_vm_list):
     for resource_name, cloud_connector in inacte_vm_list:
         updated_list=False
-        instances = pickle_read(resource_name, cloud_connector) ##think this through, is it necessary to read this every time??
+        instances = pickle_read(resource_name, cloud_connector) #think this through, is it necessary to read this every time?
         if instances:
             cont = 0
             for instance in instances:
@@ -279,7 +265,6 @@ def is_vm_active(inacte_vm_list):
                 cont += 1
             if updated_list:
                 try:
-                    #instances = pickle_read(resource_name, cloud_connector)
                     with lock:
                         with open( pickled_file % cloud_connector + "_" + resource_name, "w" ) as pf :
                             for instance in instances:
@@ -297,29 +282,10 @@ def destroy_vm_by_name(resource_name, vm_name, cloud_connector):
     '''
     Destroys a specific VM and removes it from the pickled file
     '''
-    '''
-    pattern = re.compile( "%s_(.*)" % resource_name )
-    mo = pattern.findall( vm_name ) #obtains the instance's IP
-    pickle_remove(inst, resource_name, cloud_connector)
-    '''
-    #with lock: #(it's only called by the im from inside a lock, so this one is redundant) not any more
     instances = pickle_read(resource_name, cloud_connector)
     if instances:
         vm_deleted = False
         try:
-            '''
-            instances=[]
-            with open( pickled_file+"_"+resource_name, "r" ) as pf :
-                while True :
-                    try:
-                        instances.append( pickle.load( pf ) )
-                    except EOFError :
-                        break
-            if not instances :
-                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % (pickled_file+"_"+resource_name) )
-                exit( 1 )
-            '''
-            #instances = pickle_read(resource_name, cloud_connector)
             with lock:
                 with open( pickled_file % cloud_connector + "_" + resource_name, "w" ) as pf :
                     for instance in instances:
@@ -328,7 +294,6 @@ def destroy_vm_by_name(resource_name, vm_name, cloud_connector):
                         else:
                             instance.destroy()
                             vm_deleted = True
-                            #delete_vm_from_db(instance, resource_name)
                 if len(instances) == 1 :
                     os.remove( pickled_file % cloud_connector + "_" + resource_name )
         except Exception as err:
@@ -344,7 +309,6 @@ def destroy_vm_by_name(resource_name, vm_name, cloud_connector):
     
 def delete_vm_from_db(instance, resource_name):
     try:
-        #with lock:
         conn = sqlite3.connect(resource_conf_db)
         with conn:
             with lock:
@@ -372,19 +336,7 @@ def manage_instances(args, resource_name, config):
     Either creates as many VMs as indicated by the resource configuration
     or destroys all VMs for a selected resource
     """
-    if args == "start" :
-        '''
-        conn = sqlite3.connect(resource_conf_db)
-        with lock:
-            with conn:
-                #this updates the number of VMs in the database for "resource_name", but only when creating VMs through the command "drm4g resource create"
-                cur = conn.cursor()
-                cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resource_name))
-                vms = cur.fetchone()[0]
-                vms += int(config['node_min_pool_size'])
-                cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resource_name))
-                #config.resources[ resource_name ][ 'vm_instances' ] = vms #I can't update this value from here
-        '''                         
+    if args == "start" :              
         threads = []
         for number_of_th in range( int(config['node_min_pool_size']) ):
             th = threading.Thread( target = start_instance_no_wait, args = ( config, resource_name ) )
@@ -406,25 +358,12 @@ def manage_instances(args, resource_name, config):
                         cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (0, resource_name))
                         cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resource_name)
                         resource_id = cur.fetchone()[0]
-                        #cur.execute("DELETE FROM VM_Pricing where name like '%s'" % (resource_name+'%'))
                         cur.execute("DELETE FROM VM_Pricing where resource_id = %d" % resource_id)
                         cur.execute("SELECT count(*) FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
                         data=cur.fetchone()[0]
                         if data:
                             cur.execute("DELETE FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
         else:
-            '''
-            instances = []
-            with open( pickled_file+"_"+resource_name, "r" ) as pf :
-                while True :
-                    try:
-                        instances.append( pickle.load( pf ) )
-                    except EOFError :
-                        break
-            if not instances :
-                logger.error( "There are no VMs defined in '%s' or the file is not well formed." % (pickled_file+"_"+resource_name) )
-                exit( 1 )
-            '''
             instances = pickle_read(resource_name, cloud_connector)
             if instances:
                 threads = []
@@ -433,8 +372,6 @@ def manage_instances(args, resource_name, config):
                     th.start()
                     threads.append( th )
                 [ th.join() for th in threads ]
-        #if exists(resource_conf_db):
-        #    os.remove( resource_conf_db ) 
     else :
         logger.error( "Invalid option" )
         exit( 1 )
