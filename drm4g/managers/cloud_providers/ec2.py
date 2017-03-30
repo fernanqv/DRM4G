@@ -41,6 +41,7 @@ class Instance(Instance):
     _lock = threading.Lock()
     
     def __init__(self, basic_data):
+        super(Instance, self).__init__()
         self.node = None
         self.volume = None
 

@@ -65,7 +65,7 @@ class Configuration(object):
                                    'instances', 'volume', 'region', 'size', 'image', 'volume_type',
                                    'node_max_pool_size', 'node_min_pool_size', 'access_id', 'secret_key',
                                    'pricing', 'cloud_user', 'cloud_connector', 'cloud_config_script',
-                                   'soft_billing', 'hard_billing', 'node_safe_time', 'vm_instances']
+                                   'soft_billing', 'hard_billing', 'node_safe_time', 'vm_instances', 'grid_cert']
         assert_message = "The resource configuration file 'resources.conf' does not exist, please provide one\n" \
                          "    If you wish to restore your entire configuration folder you can run the command \033[93m'drm4g start --clear-conf'\033[0m, " \
                          "but bear in mind that this will overwrite or delete every configuration file in '%s'" % os.path.join(DRM4G_DIR, 'etc')
@@ -129,7 +129,7 @@ class Configuration(object):
                                             logger.debug("Resource '%s' defined by: %s.",
                                                     name+"_"+instance.ext_ip, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name+"_"+instance.ext_ip].items())]))
                             except Exception as err :
-                                raise Exception( "Could not add %s VM's information to the resource list:\n%s" % (name,str(err)) )
+                                raise Exception( "Could not add %s VM's information to the resource list:\n%s" % (name, str(err)) )
                         #if no database exists 
                         with self.lock:
                             if not os.path.exists( resource_conf_db ):
@@ -138,10 +138,10 @@ class Configuration(object):
                                     conn = sqlite3.connect(resource_conf_db)
                                     with conn:
                                         cur = conn.cursor()
-                                        cur.execute("CREATE TABLE Resources (name text not null, vms integer, id integer primary key autoincrement, pending_vms integer)")
-                                        cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
+                                        cur.execute("CREATE TABLE Resources (id integer primary key autoincrement, name text not null, vms integer, past_expenditure real)")
+                                        cur.execute("INSERT INTO Resources (name, vms, past_expenditure) VALUES ('%s', %d, %f)" % (name, 0, 0))
                                         
-                                        cur.execute("CREATE TABLE VM_Pricing (id text primary key, name text, resource_id int, state text, pricing real, start_time real, foreign key(resource_id) references Resources(id))")
+                                        cur.execute("CREATE TABLE VM_Pricing (resource_id int, id text primary key, name text, state text, pricing real, start_time real, foreign key(resource_id) references Resources(id))")
                                         cur.execute("CREATE TABLE Non_Active_VMs (id integer primary key autoincrement, vm_id text, resource_name text, cloud_connector text, foreign key(vm_id) references VM_Pricing(id), foreign key(resource_name) references Resources(name))")
                             else:
                                 conn = sqlite3.connect(resource_conf_db)
@@ -152,7 +152,7 @@ class Configuration(object):
                                     #if database exists but it's the first time a resource is found
                                     if data==0:
                                         self.resources[ name ][ 'vm_instances' ] = 0
-                                        cur.execute("INSERT INTO Resources (name, vms) VALUES ('%s', %d)" % (name, 0))
+                                        cur.execute("INSERT INTO Resources (name, vms, past_expenditure) VALUES ('%s', %d, %f)" % (name, 0, 0))
                                     else:
                                         cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (name))
                                         vms = cur.fetchone()[0]
@@ -215,6 +215,11 @@ class Configuration(object):
                             output = "    '%s' can't be smaller than 0, error found in '%s' resource" % ( key, resname )
                             logger.error( output )
                             errors.append( output )
+                if not resdict.get( 'pricing' ):
+                    self.resources[resname]['pricing'] = str(Instance.instance_pricing)
+                    resdict[ 'pricing' ] = str(Instance.instance_pricing)
+                    output = "    'pricing' key will have a value of %s for the resource '%s'" % (Instance.instance_pricing, resname)
+                    logger.debug( output )
                 if 'soft_billing' in reslist and 'hard_billing' in reslist:
                     if float(resdict[ 'soft_billing' ]) > float(resdict[ 'hard_billing' ]) :
                         output = "    'soft_billing' can't be larger than 'hard_billing', error found in '%s' resource" % resname
@@ -222,16 +227,19 @@ class Configuration(object):
                         errors.append( output )
                 else:
                     if not 'soft_billing' in reslist:
-                        self.resources[resname]['soft_billing'] = Instance.DEFAULT_SOFT_BILLING
-                        output = "    'soft_billing' key will have a value of %s for the resource '%s'" % (Instance.DEFAULT_SOFT_BILLING, resname)
+                        self.resources[resname]['soft_billing'] = str(Instance.DEFAULT_SOFT_BILLING)
+                        resdict['soft_billing'] = str(Instance.DEFAULT_SOFT_BILLING)
+                        output = "    'soft_billing' key will have a value of '%s' for the resource '%s'" % (Instance.DEFAULT_SOFT_BILLING, resname)
                         logger.debug( output )
                         if not 'hard_billing' in reslist:
-                            self.resources[resname]['hard_billing'] = Instance.DEFAULT_HARD_BILLING
-                            output = "    'hard_billing' key will have a value of %s for the resource '%s'" % (Instance.DEFAULT_HARD_BILLING, resname)
+                            self.resources[resname]['hard_billing'] = str(Instance.DEFAULT_HARD_BILLING)
+                            resdict['hard_billing'] = str(Instance.DEFAULT_HARD_BILLING)
+                            output = "    'hard_billing' key will have a value of '%s' for the resource '%s'" % (Instance.DEFAULT_HARD_BILLING, resname)
                             logger.debug( output )
                     else:
                         if not 'hard_billing' in reslist:
                             self.resources[resname]['hard_billing'] = self.resources[resname]['soft_billing']
+                            resdict['hard_billing'] = self.resources[resname]['soft_billing']
                             output = "    'hard_billing' key will have the same value as 'soft_billing' for the resource '%s'" % resname
                             logger.debug( output )
                 if resdict.get( 'vm_communicator' ) == 'local':
@@ -240,27 +248,39 @@ class Configuration(object):
                     errors.append( output )
                 if not 'node_min_pool_size' in reslist:
                     if 'node_max_pool_size' in reslist:
-                        self.resources[resname]['node_min_pool_size'] = 0
-                        output = "    'node_min_pool_size' key will have a value of 0 for the resource '%s'" % resname
+                        self.resources[resname]['node_min_pool_size'] = '0'
+                        resdict['node_min_pool_size'] = '0'
+                        output = "    'node_min_pool_size' key will have a value of '0' for the resource '%s'" % resname
                     else:
-                        self.resources[resname]['node_min_pool_size'] = 0
-                        self.resources[resname]['node_max_pool_size'] = 10
-                        output = "    'node_min_pool_size' key will have a value of 0 and 'node_max_pool_size'" \
-                                 " a value of 10 for the resource '%s'" % resname
+                        self.resources[resname]['node_min_pool_size'] = '0'
+                        self.resources[resname]['node_max_pool_size'] = '10'
+                        resdict['node_min_pool_size'] = '0'
+                        resdict['node_max_pool_size'] = '10'
+                        output = "    'node_min_pool_size' key will have a value of '0' and 'node_max_pool_size'" \
+                                 " a value of '10' for the resource '%s'" % resname
                     logger.debug( output )
                 else:
                     if not 'node_max_pool_size' in reslist:
                         self.resources[resname]['node_max_pool_size'] = self.resources[resname]['node_min_pool_size']
+                        resdict['node_max_pool_size'] = self.resources[resname]['node_min_pool_size']
                         output = "    'node_max_pool_size' key will have the same value as the 'node_min_pool_size' key for the resource '%s'" % resname
                         logger.debug( output )
                 if 'node_min_pool_size' in reslist and 'node_max_pool_size' in reslist:
                     if int(resdict[ 'node_min_pool_size' ]) > int(resdict[ 'node_max_pool_size' ]):
-                        output = "    'node_min_pool_size' key cannot have the value larger than 'node_max_pool_size', error found in '%s' resource" % resname
+                        output = "    'node_min_pool_size' key cannot have a value larger than 'node_max_pool_size', error found in '%s' resource" % resname
                         logger.error( output )
                         errors.append( output )
+                if float(resdict[ 'pricing' ]) >= float(resdict[ 'hard_billing' ]) and not float(resdict[ 'pricing' ]) == 0 :
+                    output = "    'pricing' key cannot have a value larger than 'hard_billing' since no VMs will be created for the resource '%s'" % resname
+                    logger.error( output )
+                    errors.append( output )
+                if (float(resdict[ 'pricing' ]) * int(resdict[ 'node_min_pool_size' ]) >= float(resdict[ 'hard_billing' ])) and not float(resdict[ 'pricing' ]) == 0 :
+                    output = "    With the current values of the 'pricing' and 'node_min_pool_size' keys, the number of VMs created will not reach" \
+                             " 'node_min_pool_size' since 'pricing' * 'node_min_pool_size' >= 'hard_billing' for the resource '%s'" % resname
+                    logger.info( output )
                 if not 'node_safe_time' in reslist:
-                    self.resources[resname]['node_safe_time'] = Instance.DEFAULT_NODE_SAFE_TIME
-                    output = "    'node_safe_time' key will have a value of %s for the resource '%s'" % (Instance.DEFAULT_NODE_SAFE_TIME, resname)
+                    self.resources[resname]['node_safe_time'] = str(Instance.DEFAULT_NODE_SAFE_TIME)
+                    output = "    'node_safe_time' key will have a value of '%s' for the resource '%s'" % (Instance.DEFAULT_NODE_SAFE_TIME, resname)
                     logger.debug( output )
                 else:
                     if int( resdict[ 'node_safe_time' ] ) < 0:
@@ -272,19 +292,23 @@ class Configuration(object):
                         output = "    'volume' can't be smaller than 0, error found in '%s' resource" % ( key, resname )
                         logger.error( output )
                         errors.append( output )
-            if ( not 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
+            if ( resdict[ 'lrms' ] != 'cream' and not resdict.get( 'max_jobs_running' ) ) :
+                '''
                 output = "    'max_jobs_running' key is mandatory for the resource '%s'" % resname
                 logger.error( output )
                 errors.append( output )
-            if ( resdict[ 'lrms' ] != 'cream' and not resdict.get( 'max_jobs_running' ) ) :
-                output = "    'max_jobs_running' key has a wrong value for the resource '%s'" % resname
-                logger.error( output )
-                errors.append( output )
+                '''
+                self.resources[resname]['max_jobs_running'] = '1'
+                resdict['max_jobs_running'] = '1'
+                output = "    'max_jobs_running' key will have a value of 1 for the resource '%s'" % (resname)
+                logger.debug( output )
             if ( not ( 'max_jobs_in_queue' in reslist ) and ( 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) ) :
                 self.resources[resname]['max_jobs_in_queue'] = resdict['max_jobs_running']
+                resdict['max_jobs_in_queue'] = resdict['max_jobs_running']
                 logger.debug( "'max_jobs_in_queue' will be the same as the 'max_jobs_running'" )
             if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 self.resources[resname]['queue'] = "default"
+                resdict['queue'] = "default"
                 output = "    'queue' key will be called 'default' for the resource '%s'" % resname
                 logger.debug( output )
             if 'max_jobs_running' in reslist and resdict[ 'lrms' ] != 'cream' and resdict.get( 'max_jobs_in_queue' ).count( ',' ) !=  resdict.get( 'queue' ).count( ',' ) :

@@ -22,7 +22,7 @@
 Manage computing resources on DRM4G.
 
 Usage:
-    drm4g resource [ list [ --all ] | edit | check | create | destroy ] [ options ]
+    drm4g resource [ list [ --all ] | edit | check | create | destroy | reset <resource_name> ] [ options ]
 
  Options:
     -d --debug              Debug mode.
@@ -32,8 +32,9 @@ Commands:
     list                    Show resources available.
     edit                    Configure resouces.
     check                   Check if configured resources are accessible.
-    create                  Create new virtual machines
-    destroy                 Delete all virtual machines
+    create                  Create new virtual machines.
+    destroy                 Delete all virtual machines.
+    reset                   Resets the total expenditure of the resource to zero.
 """
 
 from drm4g                import logger
@@ -56,6 +57,8 @@ def run( arg ) :
                 resource.create_vms()
             elif arg[ 'destroy' ] :
                 resource.destroy_vms( )
+            elif arg[ 'reset' ] :
+                resource.reset_vm_expenditure( arg[ '<resource_name>' ] )
             elif arg[ '--all' ] :
                 resource.list_resources( )
             else :

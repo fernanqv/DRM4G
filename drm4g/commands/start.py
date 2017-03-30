@@ -42,7 +42,7 @@ def run( arg ) :
                 logger.debug( "Removing DRM4G local configuration in '%s'" %  DRM4G_DIR )
                 rmtree( DRM4G_DIR )
             logger.debug( "Creating a DRM4G local configuration in '%s'" %  DRM4G_DIR )
-            abs_dir = join ( DRM4G_DIR , 'var' , 'acct' )
+            abs_dir = join ( DRM4G_DIR , 'var' ) #, 'acct' )
             logger.info( "Creating '%s' directory" % abs_dir )
             makedirs( abs_dir )
             src  = abspath( join ( abspath( dirname( __file__ ) ), '..', 'conf' ) )

@@ -57,10 +57,29 @@ def pickle_read(resource_name, cloud_connector):
                     try:
                         instances.append(pickle.load(pf))
                     except EOFError:
-                        break    
-    if not instances:
-        logger.error("There are no VMs defined in '%s', the file doesn't exist or the file is not well formed." % (pickled_file % cloud_connector + "_" + resource_name))
-        exit(1)
+                        break
+        if not instances:
+            logger.error("There are no VMs defined in '%s' or the file is not well formed." % (pickled_file % cloud_connector + "_" + resource_name))
+    else:
+        #logger.warn( "The file '%s' doesn't exist" % (pickled_file % cloud_connector + "_" + resource_name) )
+        logger.error( "The file '%s' doesn't exist, so there are no available VMs for the resource %s" % ((pickled_file % cloud_connector + "_" + resource_name), resource_name) )
+        logger.debug( "Deleting all entries of the resource %s from the database" % resource_name )
+        conn = sqlite3.connect(resource_conf_db)
+        with lock:
+            with conn:
+                cur = conn.cursor()
+                cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resource_name)
+                data=cur.fetchone()[0]
+                if data:
+                    logger.debug( "    Since it's not possible to recover any instance information for the resource %s, their entries will be deleted from the %s database" % (resource_name, resource_conf_db) )
+                    cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (0, resource_name))
+                    cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resource_name)
+                    resource_id = cur.fetchone()[0]
+                    cur.execute("DELETE FROM VM_Pricing where resource_id = %d" % resource_id)
+                    cur.execute("SELECT count(*) FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
+                    data=cur.fetchone()[0]
+                    if data:
+                        cur.execute("DELETE FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
     return instances
 
 def pickle_remove(inst, resource_name, cloud_connector):
@@ -76,7 +95,7 @@ def pickle_remove(inst, resource_name, cloud_connector):
                 with lock:
                     with open( pickled_file % cloud_connector + "_" + resource_name, "w" ) as pf :
                         for instance in instances:
-                            if instance.ext_ip != inst.ext_ip :
+                            if instance.node_id != inst.node_id :
                                 pickle.dump( instance, pf )
                 
                     if len(instances) == 1 :
@@ -147,7 +166,7 @@ def start_instance( config, resource_name ) :
                     cur.execute("SELECT count(*) FROM VM_Pricing WHERE name = '%s'" % (resource_name+"_"+instance.ext_ip))
                     data=cur.fetchone()[0]
                     if data==0:
-                        cur.execute("INSERT INTO VM_Pricing (id, name, resource_id, state, pricing, start_time) VALUES ('%s', %s', %d, '%s', %f, %f)" % (instance.node_id, (resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
+                        cur.execute("INSERT INTO VM_Pricing (id, name, resource_id, state, pricing, start_time) VALUES ('%s', '%s', %d, '%s', %f, %f)" % (instance.node_id, (resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
                     else:
                         cur.execute("UPDATE VM_Pricing SET resource_id = %d, state = '%s', pricing = %f, start_time = %f WHERE name = '%s'" % (resource_id, 'active', instance.instance_pricing, instance.start_time, (resource_name+"_"+instance.ext_ip)))
         except Exception as err :
@@ -161,15 +180,6 @@ def start_instance( config, resource_name ) :
             logger.debug( "Destroying the instance" )
             if instance.node_id:
                 stop_instance(config, instance, resource_name)
-            else:
-                conn = sqlite3.connect(resource_conf_db)
-                with lock:
-                    with conn:
-                        cur = conn.cursor()
-                        cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resource_name))
-                        vms = cur.fetchone()[0]
-                        vms -= 1
-                        cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resource_name))
         except Exception as err :
             logger.error( "Error destroying instance\n%s" % str( err ) )
 
@@ -211,90 +221,92 @@ def start_instance_no_wait( config, resource_name ) :
                     vms += 1
                     cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resource_name))
                     if active:
-                        cur.execute("INSERT INTO VM_Pricing (id, name, resource_id, state, pricing, start_time) VALUES ('%s', %s', %d, '%s', %f, %f)" % (instance.node_id, (resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
+                        cur.execute("INSERT INTO VM_Pricing (id, name, resource_id, state, pricing, start_time) VALUES ('%s', '%s', %d, '%s', %f, %f)" % (instance.node_id, (resource_name+"_"+instance.ext_ip), resource_id, 'active', instance.instance_pricing, instance.start_time))
                     else:
                         cur.execute("INSERT INTO VM_Pricing (id, resource_id, state, pricing, start_time) VALUES ('%s', %d, '%s', %f, %f)" % (instance.node_id, resource_id, 'inactive', instance.instance_pricing, instance.start_time))
-                        cur.execute("INSERT INTO  Non_Active_VMs (vm_id, resource_name, cloud_connector) VALUES ('%s', '%s', '%s')" % (instance.node_id, resource_name, config['cloud_connector']))
+                        cur.execute("INSERT INTO Non_Active_VMs (vm_id, resource_name, cloud_connector) VALUES ('%s', '%s', '%s')" % (instance.node_id, resource_name, config['cloud_connector']))
 
         except Exception as err :
             raise Exception( "Error updating instance information in the database %s: %s" % (resource_conf_db, str( err )) )
             
         pickle_dump(instance, resource_name, config['cloud_connector']) 
     except Exception as err :
-        ###############REVIEW THIS PART
         logger.error( "Error creating instance: %s" % str( err ) )
         try :
             logger.debug( "Destroying the instance" )
             if instance.node_id:
                 stop_instance(config, instance, resource_name)
-            else:
-                conn = sqlite3.connect(resource_conf_db)
-                with lock:
-                    with conn:
-                        cur = conn.cursor()
-                        cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resource_name))
-                        vms = cur.fetchone()[0]
-                        vms -= 1
-                        cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (vms, resource_name))
         except Exception as err :
             logger.error( "Error destroying instance\n%s" % str( err ) )
 
-def is_vm_active(inacte_vm_list):
-    for resource_name, cloud_connector in inacte_vm_list:
-        updated_list=False
-        instances = pickle_read(resource_name, cloud_connector) #think this through, is it necessary to read this every time?
-        if instances:
-            cont = 0
-            for instance in instances:
-                if not instance.ext_ip:
-                    active = instance.is_resource_active()
-                    if active:
-                        instance.get_ip()
-                        instances[cont] = instance
-                        updated_list = True
-                        
-                        try:
-                            conn = sqlite3.connect(resource_conf_db)
-                            with lock:
-                                with conn:
-                                    cur = conn.cursor()
-                                    cur.execute("UPDATE VM_Pricing SET name = '%s', state = '%s' WHERE id = '%s'" % ((resource_name+"_"+instance.ext_ip), 'active', instance.node_id))
-                                    cur.execute("DELETE FROM Non_Active_VMs WHERE vm_id = '%s'" % instance.node_id)
-                        except Exception as err :
-                            raise Exception( "Error updating instance information in the database %s: %s" % (resource_conf_db, str( err )) )
-                cont += 1
-            if updated_list:
-                try:
-                    with lock:
-                        with open( pickled_file % cloud_connector + "_" + resource_name, "w" ) as pf :
-                            for instance in instances:
-                                pickle.dump( instance, pf )
-                except Exception as err:
-                    logger.error( "Error updating instances from pickled file %s\n%s" % (pickled_file % cloud_connector + "_" + resource_name, str( err )) )
-                    '''
-                        NOT SURE ABOUT THIS
-                    logger.debug( "Saving the instances back into the pickled file %s" % pickled_file % cloud_connector + "_" + resource_name )
-                    for instance in instances:
-                        pickle_dump(instance, resource_name, cloud_connector)
-                    '''
+def check_if_vms_active(inacte_vm_list):
+    try:
+        for resource_name, cloud_connector in inacte_vm_list:
+            updated_list=False
+            instances = pickle_read(resource_name, cloud_connector)
+            if instances:
+                cont = 0
+                for instance in instances:
+                    if not instance.ext_ip:
+                        active = instance.is_resource_active()
+                        if active:
+                            instance.get_ip()
+                            instances[cont] = instance
+                            updated_list = True
+                            
+                            try:
+                                conn = sqlite3.connect(resource_conf_db)
+                                with lock:
+                                    with conn:
+                                        cur = conn.cursor()
+                                        cur.execute("UPDATE VM_Pricing SET name = '%s', state = '%s' WHERE id = '%s'" % ((resource_name+"_"+instance.ext_ip), 'active', instance.node_id))
+                                        cur.execute("DELETE FROM Non_Active_VMs WHERE vm_id = '%s'" % instance.node_id)
+                            except Exception as err :
+                                raise Exception( "Error updating instance information in the database %s: %s" % (resource_conf_db, str( err )) )
+                    cont += 1
+                if updated_list:
+                    try:
+                        with lock:
+                            with open( pickled_file % cloud_connector + "_" + resource_name, "w" ) as pf :
+                                for instance in instances:
+                                    pickle.dump( instance, pf )
+                    except Exception as err:
+                        #logger.error( "Error updating instances from pickled file %s\n%s" % (pickled_file % cloud_connector + "_" + resource_name, str( err )) )
+                        raise Exception( "Error updating instances from pickled file %s: %s" % (pickled_file % cloud_connector + "_" + resource_name, str( err )) )
+                        '''
+                            NOT SURE ABOUT THIS
+                        logger.debug( "Saving the instances back into the pickled file %s" % pickled_file % cloud_connector + "_" + resource_name )
+                        for instance in instances:
+                            pickle_dump(instance, resource_name, cloud_connector)
+                        '''
+        return True
+    except Exception as err:
+        logger.error("It was not possible to check if any inactive VMs had been activated: %s" % str(err))
+        return False
 
 def destroy_vm_by_name(resource_name, vm_name, cloud_connector):
     '''
     Destroys a specific VM and removes it from the pickled file
     '''
+    logger.info("Destroying VM '%s' by name from resource %s" % (vm_name, resource_name))
     instances = pickle_read(resource_name, cloud_connector)
     if instances:
+        deleted_instance = None
         vm_deleted = False
         try:
             with lock:
                 with open( pickled_file % cloud_connector + "_" + resource_name, "w" ) as pf :
                     for instance in instances:
-                        if (resource_name+'_'+instance.ext_ip) != vm_name :
-                            pickle.dump( instance, pf )
-                        else:
-                            instance.destroy()
-                            vm_deleted = True
+                        if instance.ext_ip:
+                            logger.info("    Checking VM %s" % (resource_name+'_'+instance.ext_ip))
+                            if (resource_name+'_'+instance.ext_ip) != vm_name :
+                                pickle.dump( instance, pf )
+                            else:
+                                deleted_instance = instance
+                                instance.destroy()
+                                vm_deleted = True
                 if len(instances) == 1 :
+                    logger.info("    Deleting %s since there was only one VM left and it has been destroyed" % pickled_file % cloud_connector + "_" + resource_name)
                     os.remove( pickled_file % cloud_connector + "_" + resource_name )
         except Exception as err:
             logger.error( "Error destroying instance by name and deleting instance from pickled file %s\n%s" % (pickled_file % cloud_connector + "_" + resource_name, str( err )) )
@@ -303,23 +315,45 @@ def destroy_vm_by_name(resource_name, vm_name, cloud_connector):
                 pickle_dump(instance, resource_name, cloud_connector)
         try:
             if vm_deleted:
-                delete_vm_from_db(instance, resource_name)
+                delete_vm_from_db(deleted_instance, resource_name)
         except Exception as err:
             logger.error( "Destroyed instance by name and deleted instance from pickled file but not from the database: %s" % str(err) )
     
 def delete_vm_from_db(instance, resource_name):
+    logger.info("Deleting VM '%s' with the name %s from database" % (instance.node_id, (resource_name+"_"+instance.ext_ip)))
     try:
         conn = sqlite3.connect(resource_conf_db)
         with conn:
             with lock:
                 cur = conn.cursor()
+                '''
                 cur.execute("SELECT vms FROM Resources WHERE name = '%s'" % resource_name)
                 vms = cur.fetchone()[0]
-                cur.execute("UPDATE Resources SET vms= %d WHERE name = '%s'" % ((vms-1), resource_name))
-                cur.execute("DELETE FROM VM_Pricing where name = '%s'" % (resource_name+"_"+instance.ext_ip))
+                '''
+                cur.execute("SELECT vms, past_expenditure FROM Resources WHERE name = '%s'" % resource_name)
+                vms, past_expenditure = cur.fetchone()
+                past_expenditure += instance.current_balance()
+                cur.execute("UPDATE Resources SET vms = %d, past_expenditure = %f WHERE name = '%s'" % ((vms-1), past_expenditure, resource_name))
+                #cur.execute("DELETE FROM VM_Pricing where name = '%s'" % (resource_name+"_"+instance.ext_ip))
+                cur.execute("DELETE FROM VM_Pricing where id = '%s'" % (instance.node_id))
+                cur.execute("SELECT count(*) FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
+                data=cur.fetchone()[0]
+                if data:
+                    cur.execute("DELETE FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
     except Exception as err :
         raise Exception( "Error deleting instance information from the database %s: %s" % (resource_conf_db, str( err )) )
 
+def reset_vm_expenditure(resource_name):
+    logger.info("Reseting to zero the 'past_expenditure' for the resource '%s' in the database" % (resource_name))
+    try:
+        with lock:
+            conn = sqlite3.connect(resource_conf_db)
+            with conn:
+                cur = conn.cursor()
+                cur.execute("UPDATE Resources SET past_expenditure = %f WHERE name = '%s'" % (0, resource_name))
+    except Exception as err :
+        raise Exception( "Error reseting the 'past_expenditure' for the resource '%s' in the database %s: %s" % (resource_name, resource_conf_db, str( err )) )
+    
 def stop_instance( config, instance, resource_name ):
     """
     Destroys one VM and eliminates it from the pickled file
@@ -345,36 +379,16 @@ def manage_instances(args, resource_name, config):
         [ th.join() for th in threads ]
     elif args == "stop" :
         cloud_connector = config['cloud_connector']
-        if not exists( pickled_file % cloud_connector + "_" + resource_name ):
-            logger.error( "There are no available VMs to be deleted for the resource %s" % resource_name )
-            conn = sqlite3.connect(resource_conf_db)
-            with lock:
-                with conn:
-                    cur = conn.cursor()
-                    cur.execute("SELECT count(*) FROM Resources WHERE name = '%s'" % resource_name)
-                    data=cur.fetchone()[0]
-                    if data:
-                        logger.debug( "    Since it's not possible to recover any instance information for the resource %s, their entries will be deleted from the %s database" % (resource_name, resource_conf_db) )
-                        cur.execute("UPDATE Resources SET vms = %d WHERE name = '%s'" % (0, resource_name))
-                        cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resource_name)
-                        resource_id = cur.fetchone()[0]
-                        cur.execute("DELETE FROM VM_Pricing where resource_id = %d" % resource_id)
-                        cur.execute("SELECT count(*) FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
-                        data=cur.fetchone()[0]
-                        if data:
-                            cur.execute("DELETE FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
-        else:
-            instances = pickle_read(resource_name, cloud_connector)
-            if instances:
-                threads = []
-                for instance in instances :
-                    th = threading.Thread( target = stop_instance, args = ( config, instance, resource_name ) )
-                    th.start()
-                    threads.append( th )
-                [ th.join() for th in threads ]
+        instances = pickle_read(resource_name, cloud_connector)
+        if instances:
+            threads = []
+            for instance in instances :
+                th = threading.Thread( target = stop_instance, args = ( config, instance, resource_name ) )
+                th.start()
+                threads.append( th )
+            [ th.join() for th in threads ]
     else :
-        logger.error( "Invalid option" )
-        exit( 1 )
+        raise Exception("An invalid argument has been passed")
         
 
 class Instance(object):
@@ -385,7 +399,7 @@ class Instance(object):
     DEFAULT_PRIVATE_KEY = '~/.ssh/id_rsa'
     DEFAULT_PUBLIC_KEY = '~/.ssh/id_rsa.pub'
     DEFAULT_VM_CONFIG = join(DRM4G_DIR, 'etc', 'cloud_config.conf')
-    DEFAULT_NODE_SAFE_TIME = 5 
+    DEFAULT_NODE_SAFE_TIME = 5 # minutes
     DEFAULT_VOLUME = 0
     DEFAULT_MIN_NODE_POOL_SIZE = 0
     DEFAULT_MAX_NODE_POOL_SIZE = 10
@@ -393,8 +407,8 @@ class Instance(object):
     DEFAULT_SOFT_BILLING = 0.0
     DEFAULT_HARD_BILLING = 0.0
     SECURITY_GROUP_NAME = 'drm4g_group'
-    TIMEOUT = 600 # seconds
-    WAIT_PERIOD = 3 # seconds
+    TIMEOUT = 600.0 # seconds
+    WAIT_PERIOD = 3.0 # seconds
     instance_pricing = 0.0
     start_time = 0.0
 
@@ -454,7 +468,8 @@ class Instance(object):
         if not self.start_time:
             return 0
         else:
-            return (time.time() - self.start_time)/3600
+            #return (time.time() - self.start_time)/3600
+            return (time.time() - self.start_time)/360.0
 
     def current_balance(self):
         running_hours = ceil(self.running_time())

@@ -31,8 +31,7 @@ import datetime
 
 from drm4g.utils.importlib             import import_module
 from drm4g                             import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR, CLOUD_CONNECTORS
-#from drm4g.managers.cloud_providers    import rocci
-from drm4g.managers.cloud_providers    import manage_instances
+from drm4g.managers.cloud_providers    import manage_instances, reset_vm_expenditure
 from drm4g.core.im_mad                 import GwImMad
 from os.path                           import expanduser, join, dirname, exists, basename, expandvars
 
@@ -340,6 +339,12 @@ class Resource( object ):
                 #cloud_conn = import_module(CLOUD_CONNECTORS[ resdict.get( 'cloud_connector' ) ] )
                 #cloud_conn.manage_instances('stop', resname, resdict)
                 manage_instances('stop', resname, resdict)
+            
+    def reset_vm_expenditure(self, resource_name):
+        '''
+        Resets the total expenditure of the resource to zero
+        '''
+        reset_vm_expenditure(resource_name)
 
     def update_hosts(self):
         """
@@ -360,6 +365,7 @@ class Resource( object ):
         logger.info("Resources:")
         for resname, resdict in self.config.resources.items():
             logger.info("    "+str(resname))
+            logger.info("        enable:              "+str(resdict['enable']))
             logger.info("        communicator:        "+str(resdict['communicator']))
             if 'username' in resdict.keys():
                 logger.info("        username:            "+str(resdict['username']))

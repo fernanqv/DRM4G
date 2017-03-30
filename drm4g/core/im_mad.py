@@ -109,48 +109,66 @@ class GwImMad (object):
         cloud_conn.create_num_instances(num_instances, resname, self._config.resources[resname])
         
     def _dynamic_vm_creation(self, resname):
-        if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_min_pool_size']):
-            num_instances = int(self._config.resources[resname]['node_min_pool_size']) - self._config.resources[resname]['vm_instances']
-            self._config.resources[ resname ][ 'vm_instances' ] += num_instances
-            cloud_conn.create_num_instances(num_instances, resname, self._config.resources[resname])
-        
-        #get the number of pending jobs
-        command = "gwps -n -s i"
-        pipe = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
-        out, err = pipe.communicate()
-        if err:
-            raise Exception ("Couldn't get the number of pending jobs")
-        output_list = out.strip().split('\n')
-        pending_jobs = len(output_list)
-        if output_list.count(''):
-            pending_jobs -= 1
-        
-        if pending_jobs:
-            if not self.pend_jobs_time:
-                self.pend_jobs_time = time.time()
-            #create VM if node_min_pool_size == 0 and pending_jobs
-            if int(self._config.resources[resname]['node_min_pool_size']) == 0 and self._config.resources[resname]['vm_instances'] == 0:
-                self._config.resources[ resname ][ 'vm_instances' ] += 1
-                cloud_conn.create_num_instances(1, resname, self._config.resources[resname])
+        total_spent = 0
+        if os.path.exists( resource_conf_db ):
+            with self.lock:
+                conn = sqlite3.connect(resource_conf_db)
+                with conn:
+                    cur = conn.cursor()
+                    #cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resname )
+                    #resource_id = cur.fetchone()[0]
+                    cur.execute("SELECT id, past_expenditure FROM Resources WHERE name = '%s'" % resname )
+                    resource_id, total_spent = cur.fetchone()
+                    for row in cur.execute("SELECT pricing, start_time FROM VM_Pricing WHERE resource_id = %d" % resource_id ):
+                        pricing, start_time = row
+                        running_hours = self.running_time(start_time)
+                        total_spent += self.instance_expenditure(pricing, running_hours)
 
-            #create VM if pending jobs is low but it's taking too long
-            if pending_jobs < self.max_pend_jobs_limit and (time.time() - self.pend_jobs_time) >= self.node_poll_time * 3:
-                if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_max_pool_size']):
-                    self._config.resources[ resname ][ 'vm_instances' ] += 1
+        total_spent += float(self._config.resources[resname]['pricing'])
+        if total_spent == 0 or total_spent < float(self._config.resources[resname]['hard_billing']) :
+            if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_min_pool_size']) :
+                num_instances = int(self._config.resources[resname]['node_min_pool_size']) - self._config.resources[resname]['vm_instances']
+                if float(self._config.resources[resname]['pricing']) * num_instances < float(self._config.resources[resname]['hard_billing']) or float(self._config.resources[resname]['pricing']) == 0 :
+                    cloud_conn.create_num_instances(num_instances, resname, self._config.resources[resname])
+                    self._config.resources[ resname ][ 'vm_instances' ] += num_instances
+            
+            #get the number of pending jobs
+            command = "gwps -n -s i"
+            pipe = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+            out, err = pipe.communicate()
+            if err:
+                raise Exception ("Couldn't get the number of pending jobs")
+            output_list = out.strip().split('\n')
+            pending_jobs = len(output_list)
+            if output_list.count(''):
+                pending_jobs -= 1
+            
+            if pending_jobs:
+                if not self.pend_jobs_time:
+                    self.pend_jobs_time = time.time()
+                #create VM if node_min_pool_size == 0 and pending_jobs
+                if int(self._config.resources[resname]['node_min_pool_size']) == 0 and self._config.resources[resname]['vm_instances'] == 0:
                     cloud_conn.create_num_instances(1, resname, self._config.resources[resname])
-        else:
-            self.pend_jobs_time = 0.0
-
-        #create VM if pending jobs is too high
-        if pending_jobs >= self.max_pend_jobs_limit:
-            if self.max_pend_jobs_time == 0.0:
-                self.max_pend_jobs_time = time.time()
-            elif (time.time() - self.max_pend_jobs_time) >= self.node_poll_time:
-                if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_max_pool_size']):
                     self._config.resources[ resname ][ 'vm_instances' ] += 1
-                    cloud_conn.create_num_instances(1, resname, self._config.resources[resname])
-        else:
-            self.max_pend_jobs_time = 0.0
+    
+                #create VM if pending jobs is low but it's taking too long
+                if pending_jobs < self.max_pend_jobs_limit and (time.time() - self.pend_jobs_time) >= self.node_poll_time * 3:
+                    if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_max_pool_size']):
+                        cloud_conn.create_num_instances(1, resname, self._config.resources[resname])
+                        self._config.resources[ resname ][ 'vm_instances' ] += 1
+            else:
+                self.pend_jobs_time = 0.0
+    
+            #create VM if pending jobs is too high
+            if pending_jobs >= self.max_pend_jobs_limit:
+                if self.max_pend_jobs_time == 0.0:
+                    self.max_pend_jobs_time = time.time()
+                elif (time.time() - self.max_pend_jobs_time) >= self.node_poll_time:
+                    if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_max_pool_size']):
+                        cloud_conn.create_num_instances(1, resname, self._config.resources[resname])
+                        self._config.resources[ resname ][ 'vm_instances' ] += 1
+            else:
+                self.max_pend_jobs_time = 0.0
             
     def running_time(self, start_time):
         '''
@@ -159,11 +177,17 @@ class GwImMad (object):
         if not start_time:
             return 0
         else:
-            return (time.time() - start_time)/3600.0
-            #return (time.time() - start_time)/360.0
-        
+            #return (time.time() - start_time)/3600.0 #
+            return (time.time() - start_time)/360.0 #for every 6 min it will mark as if an hour had passed  
+
+    '''  
     def current_balance(self, pricing, start_time):
         running_hours = ceil(self.running_time(start_time))
+        return running_hours * pricing
+    '''
+
+    def instance_expenditure(self, pricing, running_hours):
+        running_hours = ceil(running_hours)
         return running_hours * pricing
 
     def vm_is_idle(self, vm_name):
@@ -190,23 +214,31 @@ class GwImMad (object):
         @type resname : string
         """
         if os.path.exists( resource_conf_db ):
-            total_spent = 0
-            conn = sqlite3.connect(resource_conf_db)
-            with conn:
-                cur = conn.cursor()
-                cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resname )
-                resource_id = cur.fetchone()[0]
-                for row in cur.execute("SELECT name, state, pricing, start_time FROM VM_Pricing WHERE resource_id = %d" % resource_id ):
-                    vm_name, state, pricing, start_time = row
-                    running_hours = self.running_time(start_time)
-                    current_balance = self.current_balance(pricing, start_time)
-                    total_spent = current_balance
-                    if total_spent != 0 and total_spent >= float(self._config.resources[resname]['hard_billing']) :
-                        log3.info("_dynamic_vm_deletion - deleting all vms because expenditure is over the limit")
-                        log3.info("Total spent : %s" % total_spent)
-                        log3.info("Maximum limit : %s" % self._config.resources[resname]['hard_billing'])
-                        self._config.resources[ resname ]['vm_instances'] = 0
-                        cloud_conn.manage_instances('stop', resname, self._config.resources[resname])
+            with self.lock:
+                conn = sqlite3.connect(resource_conf_db)
+                with conn:
+                    cur = conn.cursor()
+                    #cur.execute("SELECT id FROM Resources WHERE name = '%s'" % resname )
+                    #resource_id = cur.fetchone()[0]
+                    cur.execute("SELECT id, past_expenditure FROM Resources WHERE name = '%s'" % resname )
+                    resource_id, total_spent = cur.fetchone()
+                    #total_spent = 0
+                    rows = cur.execute("SELECT name, state, pricing, start_time FROM VM_Pricing WHERE resource_id = %d" % resource_id )
+            for row in rows:
+                vm_name, state, pricing, start_time = row
+                
+                #running_hours = self.running_time(start_time)
+                running_hours = self.running_time(start_time + (int(self._config.resources[ resname ]['node_safe_time'])*60.0))
+                total_spent += self.instance_expenditure(pricing, running_hours)
+                if total_spent != 0 and total_spent >= float(self._config.resources[resname]['hard_billing']) :
+                    log3.info("_dynamic_vm_deletion - deleting all vms because expenditure is over the limit")
+                    log3.info("Total spent : %s" % total_spent)
+                    log3.info("Maximum limit : %s" % self._config.resources[resname]['hard_billing'])
+                    self._config.resources[ resname ]['vm_instances'] = 0
+                    cloud_conn.manage_instances('stop', resname, self._config.resources[resname])
+                    break
+                if state == 'active':
+                    log3.info("%s _dynamic_vm_deletion - idle_vms before = %s" % (resname, self.idle_vms.items()))
                     if vm_name not in self.idle_vms.keys():
                         #set state to idle
                         if self.vm_is_idle(vm_name):
@@ -215,27 +247,28 @@ class GwImMad (object):
                         #after waiting for 3 times the node pole time (1'30"), it will then check each time if it's still idle, until it's not or it's deleted
                         if not self.vm_is_idle(vm_name):
                             del(self.idle_vms[vm_name])
-                            
-                    log3.info("_dynamic_vm_deletion - idle_vms = %s" % self.idle_vms.items())
-
-                    node_safe_time = int(self._config.resources[ resname ]['node_safe_time'])/60.0 #turns node_safe_time into hours
-                    six_min = 6/60.0
-                    one_min = 1/60.0
-                    one_hour = 1
-                    if self._config.resources[ resname ]['vm_instances'] > int(self._config.resources[ resname ]['node_min_pool_size']):
-                        #if time left for another hour to be reached is smaller than node_safe_time but bigger than one minute 
-                        if (one_hour-(running_hours-int(running_hours))) < node_safe_time and (one_hour-(running_hours-int(running_hours))) > one_min:
-                            #this verifies that the VM "vm_name" still exists, since it could have been destroyed with the command "drm4g resource destroy"
-                            cur.execute("SELECT count(*) FROM VM_Pricing WHERE name = '%s'" % vm_name)
-                            data = cur.fetchone()[0]
-                            if data:
-                                log3.info("data = %s for %s VM" % (data, vm_name))
-                                log3.info("self._config.resources[ resname ]['vm_instances'] before = %s" % self._config.resources[ resname ]['vm_instances'])
-                                self._config.resources[ resname ]['vm_instances'] -= 1
-                                log3.info("self._config.resources[ resname ]['vm_instances'] after = %s" % self._config.resources[ resname ]['vm_instances'])
-                                background_thread = Thread(target=cloud_conn.destroy_vm_by_name, args=(resname, vm_name, self._config.resources[resname]['cloud_connector']))
-                                background_thread.start()
-                            del(self.idle_vms[vm_name])
+                        else:
+                            #node_safe_time = int(self._config.resources[ resname ]['node_safe_time'])/60.0 #turns node_safe_time into hours
+                            node_safe_time = int(self._config.resources[ resname ]['node_safe_time'])/6.0
+                            #one_min = 1/60.0
+                            one_min = 1/6.0
+                            one_hour = 1
+                            if self._config.resources[ resname ]['vm_instances'] > int(self._config.resources[ resname ]['node_min_pool_size']):
+                                running_hours = self.running_time(start_time)
+                                #if time left for another hour to be reached is smaller than node_safe_time but bigger than one minute 
+                                if (one_hour-(running_hours-int(running_hours))) < node_safe_time and (one_hour-(running_hours-int(running_hours))) > one_min:
+                                    #this verifies that the VM "vm_name" still exists, since it could have been destroyed with the command "drm4g resource destroy"
+                                    cur.execute("SELECT count(*) FROM VM_Pricing WHERE name = '%s'" % vm_name)
+                                    data = cur.fetchone()[0]
+                                    if data:
+                                        log3.info("Deleting for been idle for too long - number of hits in VM_Pricing = %s for %s VM" % (data, vm_name))
+                                        log3.info("self._config.resources[ resname ]['vm_instances'] before = %s" % self._config.resources[ resname ]['vm_instances'])
+                                        background_thread = Thread(target=cloud_conn.destroy_vm_by_name, args=(resname, vm_name, self._config.resources[resname]['cloud_connector']))
+                                        background_thread.start()
+                                        self._config.resources[ resname ]['vm_instances'] -= 1
+                                        log3.info("self._config.resources[ resname ]['vm_instances'] after = %s" % self._config.resources[ resname ]['vm_instances'])
+                                    del(self.idle_vms[vm_name])
+                    log3.info("%s _dynamic_vm_deletion - idle_vms after = %s" % (resname, self.idle_vms.items()))
 
     def do_DISCOVER(self, args, output=True):
         """
@@ -260,7 +293,8 @@ class GwImMad (object):
                     self.logger.debug( "The resource %s is not enabled" % resname )
                     continue
                 if 'cloud_connector' in self._config.resources[ resname ].keys():
-                    if not checked_for_non_active_vms: #this will only be checked once per im cycle
+                    #this will only be checked once per IM cycle
+                    if not checked_for_non_active_vms:
                         if os.path.exists( resource_conf_db ):
                             data = []
                             with self.lock:
@@ -270,17 +304,17 @@ class GwImMad (object):
                                     cur.execute("SELECT resource_name, cloud_connector FROM Non_Active_VMs")
                                     data = cur.fetchall()
                             if data:
-                                cloud_conn.is_vm_active(data)
-                        checked_for_non_active_vms = True
+                                checked_for_non_active_vms = cloud_conn.check_if_vms_active(data)
+                        #checked_for_non_active_vms = True
                     if self._config.resources[ resname ]['vm_instances'] <= self._config.resources[ resname ]['node_max_pool_size']:
                         log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                         self._dynamic_vm_creation(resname)
                         log3.info("do_DISCOVER - %s's vm_instances after _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                     #if there are existing VMs for this resname
                     if os.path.exists(pickled_file % self._config.resources[ resname ]['cloud_connector'] + "_" + resname):
-                        log3.info("do_DISCOVER - before _dynamic_vm_deletion")
+                        log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_deletion = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                         self._dynamic_vm_deletion(resname)
-                        log3.info("do_DISCOVER - after _dynamic_vm_deletion")
+                        log3.info("do_DISCOVER - %s's vm_instances after _dynamic_vm_deletion = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                     continue
                 try :
                     self._resources[ resname ][ 'Resource' ].Communicator = communicators[ resname ]

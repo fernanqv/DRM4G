@@ -70,7 +70,7 @@ def run( arg ) :
         if arg['<resource_name>'] not in config.resources :
             raise Exception( "'%s' is not a configured resource." % ( arg['<resource_name>'] ) )
         lrms         = config.resources.get( arg['<resource_name>'] )[ 'lrms' ]
-        cloud_connector = config.resources.get( arg['<resource_name>'] )[ 'cloud_connector' ]
+        cloud_connector = config.resources.get( arg['<resource_name>'] ).get( 'cloud_connector' )
         communicator = config.resources.get( arg['<resource_name>'] )[ 'communicator' ]
         if lrms != 'cream' and cloud_connector != 'rocci' and communicator == 'local' :
             raise Exception( "'%s' does not have an identity to configure." % ( arg['<resource_name>'] ) )

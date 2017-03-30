@@ -21,7 +21,6 @@
 import re
 import time
 import uuid
-#import socket
 from datetime                                   import timedelta, datetime
 from os.path                                    import join, basename, expanduser
 from drm4g.utils.importlib                      import import_module
@@ -56,8 +55,11 @@ class Instance(Instance):
     DEFAULT_REGION = 'EGI FedCloud - CESNET-METACLOUD'
     DEFAULT_SIZE ='Small'
     DEFAULT_IMAGE = 'Ubuntu-14.04'
+    TIMEOUT = 3600.0 # seconds
+    WAIT_PERIOD = 10.0 # seconds
     
     def __init__(self, basic_data):
+        super(Instance, self).__init__()
         self.data = basic_data
         self.link_id = None
         self.int_ip = None
@@ -74,6 +76,17 @@ class Instance(Instance):
         self.context_file = basename(self.private_key) + '.login'
         self.cloud_contextualisation_file = basic_data.get('vm_config', self.DEFAULT_VM_CONFIG)
         pub = read_key( self.public_key )
+        
+        #'pricing', 'soft_billing' and 'hard_billing' should always be 0 for a rocci VM
+        self.instance_pricing = float(basic_data.get('pricing', self.DEFAULT_PRICING))
+        self.soft_billing = float(basic_data.get('soft_billing'))
+        self.hard_billing = float(basic_data.get('hard_billing'))
+        if not self.soft_billing and not self.hard_billing :
+            self.soft_billing = self.hard_billing = self.DEFAULT_HARD_BILLING
+        elif self.hard_billing and not self.soft_billing :
+            self.soft_billing = self.hard_billing
+        elif self.soft_billing and not self.hard_billing :
+            self.hard_billing = self.soft_billing
 
         try :
             cloud_setup = {}
@@ -415,7 +428,8 @@ class Instance(Instance):
                         #http://stack-server-02.ct.infn.it:8787/network/interface/c6886e72-86bd-4a08-ab2b-f0769854a38a_90.147.16.53
                         #which is what the link commmand returns without that last "mixin" option
                         cond=True
-                        logger.debug("\n\n\nI don't know if I will ever get to this point since I'm still not sure what's returned by the last executed command (since it's never worked until now)\n\n\n")
+                        logger.debug("\n\n\nI don't know if I will ever get to this point since I'm still not sure what's returned by" \
+                                     " the last executed command (since it's never worked until now)\n\n\n")
                     else:
                         logger.debug("There wasn't either an output or an error for the execution of the 'get_public_ip' function")
             else:
