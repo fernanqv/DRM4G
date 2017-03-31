@@ -74,7 +74,7 @@ class Instance(Instance):
         self.volume_capacity = int(basic_data.get('volume', self.DEFAULT_VOLUME))
         self.max_jobs_running = basic_data[ 'max_jobs_running' ]
         self.context_file = basename(self.private_key) + '.login'
-        self.cloud_contextualisation_file = basic_data.get('vm_config', self.DEFAULT_VM_CONFIG)
+        self.cloud_contextualisation_file = expanduser(basic_data.get('vm_config', self.DEFAULT_VM_CONFIG))
         pub = read_key( self.public_key )
         
         #'pricing', 'soft_billing' and 'hard_billing' should always be 0 for a rocci VM

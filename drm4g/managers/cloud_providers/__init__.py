@@ -212,8 +212,9 @@ def start_instance_no_wait( config, resource_name ) :
             instance.get_ip()
 
         try:
-            conn = sqlite3.connect(resource_conf_db)
+            #conn = sqlite3.connect(resource_conf_db)
             with lock:
+                conn = sqlite3.connect(resource_conf_db)
                 with conn:
                     cur = conn.cursor()
                     cur.execute("SELECT vms, id FROM Resources WHERE name='%s'" % (resource_name))
@@ -320,7 +321,10 @@ def destroy_vm_by_name(resource_name, vm_name, cloud_connector):
             logger.error( "Destroyed instance by name and deleted instance from pickled file but not from the database: %s" % str(err) )
     
 def delete_vm_from_db(instance, resource_name):
-    logger.info("Deleting VM '%s' with the name %s from database" % (instance.node_id, (resource_name+"_"+instance.ext_ip)))
+    if instance.ext_ip:
+        logger.info("    Deleting VM '%s' with the name %s from database" % (instance.node_id, (resource_name+"_"+instance.ext_ip)))
+    else:
+        logger.info("    Deleting VM '%s' from database" % instance.node_id)
     try:
         conn = sqlite3.connect(resource_conf_db)
         with conn:

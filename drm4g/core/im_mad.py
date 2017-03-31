@@ -129,6 +129,7 @@ class GwImMad (object):
             if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_min_pool_size']) :
                 num_instances = int(self._config.resources[resname]['node_min_pool_size']) - self._config.resources[resname]['vm_instances']
                 if float(self._config.resources[resname]['pricing']) * num_instances < float(self._config.resources[resname]['hard_billing']) or float(self._config.resources[resname]['pricing']) == 0 :
+                    log3.info("Creating %s VMs for the resource %s" % (num_instances, resname))
                     cloud_conn.create_num_instances(num_instances, resname, self._config.resources[resname])
                     self._config.resources[ resname ][ 'vm_instances' ] += num_instances
             
@@ -306,7 +307,7 @@ class GwImMad (object):
                             if data:
                                 checked_for_non_active_vms = cloud_conn.check_if_vms_active(data)
                         #checked_for_non_active_vms = True
-                    if self._config.resources[ resname ]['vm_instances'] <= self._config.resources[ resname ]['node_max_pool_size']:
+                    if self._config.resources[ resname ]['vm_instances'] <= int(self._config.resources[ resname ]['node_max_pool_size']):
                         log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                         self._dynamic_vm_creation(resname)
                         log3.info("do_DISCOVER - %s's vm_instances after _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))

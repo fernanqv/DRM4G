@@ -86,7 +86,7 @@ class Instance(Instance):
         self.volume_capacity = int(basic_data.get('volume', self.DEFAULT_VOLUME))
         self.volume_type = basic_data.get('volume_type', self.DEFAULT_VOLUME_TYPE)
         self.max_jobs_running = basic_data['max_jobs_running']
-        self.cloud_contextualisation_file = basic_data.get('vm_config', self.DEFAULT_VM_CONFIG)
+        self.cloud_contextualisation_file = expanduser(basic_data.get('vm_config', self.DEFAULT_VM_CONFIG))
         public_key_content = read_key( self.public_key )
         self.deployment = self.generate_cloud_config(public_key_content, user=self.vm_user,
                                                      user_cloud_config=basic_data.get('cloud_config_script'))
