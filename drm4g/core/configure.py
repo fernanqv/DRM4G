@@ -39,7 +39,7 @@ except ImportError :
 
 
 logger = logging.getLogger(__name__)
-pickled_file = os.path.join(DRM4G_DIR, "var", "%s_pickled")
+pickled_file = os.path.join(DRM4G_DIR, "var", "%s_pickled.pkl")
 resource_conf_db = os.path.join(DRM4G_DIR, "var", "resource_conf.db")
 
 class ConfigureException(Exception):
@@ -104,11 +104,11 @@ class Configuration(object):
 
                     if 'cloud_connector' in self.resources[ name ].keys():
                         cloud_connector = self.resources[ name ]['cloud_connector']
-                        if os.path.exists( pickled_file % cloud_connector + "_" + name ):
+                        if os.path.exists( pickled_file % (cloud_connector + "_" + name) ):
                             try:
                                 instances = []
                                 with self.lock:
-                                    with open( pickled_file % cloud_connector + "_" + name, "r" ) as pf :
+                                    with open( pickled_file % (cloud_connector + "_" + name), "r" ) as pf :
                                         while True :
                                             try:
                                                 instances.append( pickle.load( pf ) )
@@ -305,7 +305,7 @@ class Configuration(object):
             if ( not ( 'max_jobs_in_queue' in reslist ) and ( 'max_jobs_running' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) ) :
                 self.resources[resname]['max_jobs_in_queue'] = resdict['max_jobs_running']
                 resdict['max_jobs_in_queue'] = resdict['max_jobs_running']
-                logger.debug( "'max_jobs_in_queue' will be the same as the 'max_jobs_running'" )
+                logger.debug( "    'max_jobs_in_queue' will be the same as the 'max_jobs_running'" )
             if ( not 'queue' in reslist ) and ( resdict[ 'lrms' ] != 'cream' ) :
                 self.resources[resname]['queue'] = "default"
                 resdict['queue'] = "default"
@@ -327,6 +327,11 @@ class Configuration(object):
                 output = "    '%s' has a wrong communicator: '%s'" % (resname , resdict[ 'communicator' ] )
                 logger.error( output )
                 errors.append( output )
+            if 'vm_communicator' in reslist:
+                if resdict[ 'vm_communicator' ] not in COMMUNICATORS :
+                    output = "    '%s' has a wrong vm_communicator: '%s'" % (resname , resdict[ 'vm_communicator' ] )
+                    logger.error( output )
+                    errors.append( output )
             if resdict[ 'communicator' ] != 'local' and 'username' not in resdict :
                 output = "    'username' key is mandatory for '%s' communicator, '%s' resource" % (resdict[ 'communicator' ], resname)
                 logger.error( output )

@@ -35,7 +35,7 @@ from drm4g.utils.importlib              import import_module
 #from drm4g.managers.cloud_providers     import rocci
 from math                               import ceil
 
-pickled_file = os.path.join(DRM4G_DIR, "var", "%s_pickled")
+pickled_file = os.path.join(DRM4G_DIR, "var", "%s_pickled.pkl")
 resource_conf_db = os.path.join(DRM4G_DIR, "var", "resource_conf.db")
 
 class GwImMad (object):
@@ -94,8 +94,8 @@ class GwImMad (object):
 
     def _call_create_vms(self, resname, num_instances):
         try:
-            conn = sqlite3.connect(resource_conf_db)
             with self.lock:
+                conn = sqlite3.connect(resource_conf_db)
                 with conn:
                     cur = conn.cursor()
                     cur.execute("SELECT vms FROM Resources WHERE name='%s'" % (resname))
@@ -123,7 +123,6 @@ class GwImMad (object):
                         pricing, start_time = row
                         running_hours = self.running_time(start_time)
                         total_spent += self.instance_expenditure(pricing, running_hours)
-
         total_spent += float(self._config.resources[resname]['pricing'])
         if total_spent == 0 or total_spent < float(self._config.resources[resname]['hard_billing']) :
             if self._config.resources[resname]['vm_instances'] < int(self._config.resources[resname]['node_min_pool_size']) :
@@ -132,7 +131,6 @@ class GwImMad (object):
                     log3.info("Creating %s VMs for the resource %s" % (num_instances, resname))
                     cloud_conn.create_num_instances(num_instances, resname, self._config.resources[resname])
                     self._config.resources[ resname ][ 'vm_instances' ] += num_instances
-            
             #get the number of pending jobs
             command = "gwps -n -s i"
             pipe = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
@@ -307,12 +305,13 @@ class GwImMad (object):
                             if data:
                                 checked_for_non_active_vms = cloud_conn.check_if_vms_active(data)
                         #checked_for_non_active_vms = True
+                    #'''
                     if self._config.resources[ resname ]['vm_instances'] <= int(self._config.resources[ resname ]['node_max_pool_size']):
                         log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                         self._dynamic_vm_creation(resname)
                         log3.info("do_DISCOVER - %s's vm_instances after _dynamic_vm_creation = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                     #if there are existing VMs for this resname
-                    if os.path.exists(pickled_file % self._config.resources[ resname ]['cloud_connector'] + "_" + resname):
+                    if os.path.exists(pickled_file % (self._config.resources[ resname ]['cloud_connector'] + "_" + resname)):
                         log3.info("do_DISCOVER - %s's vm_instances before _dynamic_vm_deletion = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
                         self._dynamic_vm_deletion(resname)
                         log3.info("do_DISCOVER - %s's vm_instances after _dynamic_vm_deletion = %s" % (resname, self._config.resources[ resname ]['vm_instances']))
