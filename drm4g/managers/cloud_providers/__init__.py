@@ -111,6 +111,23 @@ def pickle_dump(instance, resource_name, cloud_connector):
     @param: inst : VMs to be eliminated
     @param resource_name: name of the resource
     '''
+    instances = []
+    with lock:
+        if exists(pickled_file % ( cloud_connector + "_" + resource_name )):
+            with open(pickled_file % ( cloud_connector + "_" + resource_name ), "r") as pf:
+                while True:
+                    try:
+                        instances.append(pickle.load(pf))
+                    except EOFError:
+                        break
+        instances.append(instance)
+        try:
+            with open(pickled_file % ( cloud_connector + "_" + resource_name ), "w") as pf:
+                for inst in instances:
+                    pickle.dump(inst, pf)
+        except Exception as err:
+            logger.error( "Error adding instance into pickled file %s\n%s" % (pickled_file % ( cloud_connector + "_" + resource_name ), str( err )) )
+    '''
     lock.acquire()
     try:
         with open(pickled_file % ( cloud_connector + "_" + resource_name ), "a") as pf:
@@ -119,7 +136,8 @@ def pickle_dump(instance, resource_name, cloud_connector):
         logger.error( "Error adding instance into pickled file %s\n%s" % (pickled_file % ( cloud_connector + "_" + resource_name ), str( err )) )
     finally:
         lock.release()
-        
+    '''
+      
 def create_num_instances(num_instances, resource_name, config):
     '''
     Creates a specified number of VMs for a selected resource configuration
@@ -236,9 +254,9 @@ def start_instance_no_wait( config, resource_name ) :
         except Exception as err :
             logger.error( "Error destroying instance\n%s" % str( err ) )
 
-def check_if_vms_active(inacte_vm_list):
+def check_if_vms_active(inactive_vm_list):
     try:
-        for resource_name, cloud_connector in inacte_vm_list:
+        for resource_name, cloud_connector in inactive_vm_list:
             updated_list=False
             instances = pickle_read(resource_name, cloud_connector)
             if instances:
@@ -256,7 +274,7 @@ def check_if_vms_active(inacte_vm_list):
                                     conn = sqlite3.connect(resource_conf_db)
                                     with conn:
                                         cur = conn.cursor()
-                                        cur.execute("UPDATE VM_Pricing SET name = '%s', state = '%s' WHERE id = '%s'" % ((resource_name+"_"+instance.ext_ip), 'active', instance.node_id))
+                                        cur.execute("UPDATE VM_Pricing SET name = '%s', state = '%s', active_time = %f WHERE id = '%s'" % ((resource_name+"_"+instance.ext_ip), 'active', time.time(), instance.node_id))
                                         cur.execute("DELETE FROM Non_Active_VMs WHERE vm_id = '%s'" % instance.node_id)
                             except Exception as err :
                                 raise Exception( "Error updating instance information in the database %s: %s" % (resource_conf_db, str( err )) )
@@ -317,9 +335,9 @@ def destroy_vm_by_name(resource_name, vm_name, cloud_connector):
     
 def delete_vm_from_db(instance, resource_name):
     if instance.ext_ip:
-        logger.info("    Deleting VM '%s' with the name %s from database" % (instance.node_id, (resource_name+"_"+instance.ext_ip)))
+        logger.info("    Deleting VM '%s' with the name %s from the database" % (instance.node_id, (resource_name+"_"+instance.ext_ip)))
     else:
-        logger.info("    Deleting VM '%s' from database" % instance.node_id)
+        logger.info("    Deleting VM '%s' from the database" % instance.node_id)
     try:
         with lock:
             conn = sqlite3.connect(resource_conf_db)
@@ -331,14 +349,17 @@ def delete_vm_from_db(instance, resource_name):
                 '''
                 cur.execute("SELECT vms, past_expenditure FROM Resources WHERE name = '%s'" % resource_name)
                 vms, past_expenditure = cur.fetchone()
+                vms -= 1
                 past_expenditure += instance.current_balance()
-                cur.execute("UPDATE Resources SET vms = %d, past_expenditure = %f WHERE name = '%s'" % ((vms-1), past_expenditure, resource_name))
+                cur.execute("UPDATE Resources SET vms = %d, past_expenditure = %f WHERE name = '%s'" % (vms, past_expenditure, resource_name))
                 #cur.execute("DELETE FROM VM_Pricing where name = '%s'" % (resource_name+"_"+instance.ext_ip))
                 cur.execute("DELETE FROM VM_Pricing where id = '%s'" % (instance.node_id))
-                cur.execute("SELECT count(*) FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
+                #cur.execute("SELECT count(*) FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
+                cur.execute("SELECT count(*) FROM Non_Active_VMs WHERE vm_id = '%s'" % instance.node_id)
                 data=cur.fetchone()[0]
                 if data:
-                    cur.execute("DELETE FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
+                    #cur.execute("DELETE FROM Non_Active_VMs WHERE resource_name = '%s'" % resource_name)
+                    cur.execute("DELETE FROM Non_Active_VMs WHERE vm_id = '%s'" % instance.node_id)
     except Exception as err :
         raise Exception( "Error deleting instance information from the database %s: %s" % (resource_conf_db, str( err )) )
 
@@ -397,6 +418,7 @@ class Instance(object):
     DEFAULT_LRMS = 'fork'
     DEFAULT_PRIVATE_KEY = '~/.ssh/id_rsa'
     DEFAULT_PUBLIC_KEY = '~/.ssh/id_rsa.pub'
+    DEFAULT_MYPROXY_SERVER = 'myproxy1.egee.cesnet.cz'
     DEFAULT_VM_CONFIG = join(DRM4G_DIR, 'etc', 'cloud_config.conf')
     DEFAULT_NODE_SAFE_TIME = 5 # minutes
     DEFAULT_VOLUME = 0
@@ -482,7 +504,8 @@ class Instance(object):
             user = self.DEFAULT_VM_USER
         with open( self.cloud_contextualisation_file, "r" ) as contex_file :
             cloud_config = contex_file.read()
-        cloud_config = cloud_config % (user, user, public_key)
+        if self.cloud_contextualisation_file == self.DEFAULT_VM_CONFIG:
+            cloud_config = cloud_config % (user, user, public_key)
         if user_cloud_config:
             cloud_config += "\n%s\n\n" % user_cloud_config.replace("\\n", "\n")
         return cloud_config

@@ -50,7 +50,6 @@ users:
 class Instance(Instance):
 
     DEFAULT_COMMUNICATOR = 'local'
-    DEFAULT_MYPROXY_SERVER = 'myproxy1.egee.cesnet.cz'
     DEFAULT_SCRATCH = REMOTE_JOBS_DIR
     DEFAULT_REGION = 'EGI FedCloud - CESNET-METACLOUD'
     DEFAULT_SIZE ='Small'
@@ -133,7 +132,7 @@ class Instance(Instance):
             cmd = "echo '%s' > %s" % (content, self.context_file)
             out,err = self.com_object.execCommand( cmd )
             if err:
-                raise Exception("Wasn't able to create the context file %s." % self.context_file + err)
+                raise Exception("Wasn't able to create the context file %s. %s" % (self.context_file, err))
 
         cmd = "ls %s" % self.proxy_file #to check if it exists
         out,err = self.com_object.execCommand( cmd )

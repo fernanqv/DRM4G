@@ -64,7 +64,7 @@ class Configuration(object):
                                    'bdii', 'myproxy_server', 'vm_user', 'vm_communicator', 'vm_config',
                                    'instances', 'volume', 'region', 'size', 'image', 'volume_type',
                                    'node_max_pool_size', 'node_min_pool_size', 'access_id', 'secret_key',
-                                   'pricing', 'cloud_user', 'cloud_connector', 'cloud_config_script',
+                                   'pricing', 'cloud_user', 'cloud_connector', 'cloud_config_script', 'is_vm',
                                    'soft_billing', 'hard_billing', 'node_safe_time', 'vm_instances', 'grid_cert']
         assert_message = "The resource configuration file 'resources.conf' does not exist, please provide one\n" \
                          "    If you wish to restore your entire configuration folder you can run the command \033[93m'drm4g start --clear-conf'\033[0m, " \
@@ -125,6 +125,7 @@ class Configuration(object):
                                             insdict['enable'] = 'true'
                                             insdict['lrms'] = instance.lrms 
                                             insdict['max_jobs_running'] = instance.max_jobs_running
+                                            insdict['is_vm'] = 'true'
                                             self.resources[ name+"_"+instance.ext_ip ] = insdict
                                             logger.debug("Resource '%s' defined by: %s.",
                                                     name+"_"+instance.ext_ip, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name+"_"+instance.ext_ip].items())]))
@@ -141,7 +142,7 @@ class Configuration(object):
                                         cur.execute("CREATE TABLE Resources (id integer primary key autoincrement, name text not null, vms integer, past_expenditure real)")
                                         cur.execute("INSERT INTO Resources (name, vms, past_expenditure) VALUES ('%s', %d, %f)" % (name, 0, 0))
                                         
-                                        cur.execute("CREATE TABLE VM_Pricing (resource_id int, id text primary key, name text, state text, pricing real, start_time real, foreign key(resource_id) references Resources(id))")
+                                        cur.execute("CREATE TABLE VM_Pricing (resource_id int, id text primary key, name text, state text, pricing real, start_time real, active_time real, foreign key(resource_id) references Resources(id))")
                                         cur.execute("CREATE TABLE Non_Active_VMs (id integer primary key autoincrement, vm_id text, resource_name text, cloud_connector text, foreign key(vm_id) references VM_Pricing(id), foreign key(resource_name) references Resources(name))")
                             else:
                                 conn = sqlite3.connect(resource_conf_db)
@@ -209,6 +210,12 @@ class Configuration(object):
                             output = "    '%s' resource needs the '%s' key" % (resname, key)
                             logger.error( output )
                             errors.append( output )
+                if resdict[ 'cloud_connector' ] == 'rocci':
+                    if not 'myproxy_server' in reslist:
+                        self.resources[resname]['myproxy_server'] = Instance.DEFAULT_MYPROXY_SERVER
+                        resdict[ 'myproxy_server' ] = Instance.DEFAULT_MYPROXY_SERVER
+                        output = "    'myproxy_server' key will have a value of %s for the resource '%s'" % (Instance.DEFAULT_MYPROXY_SERVER, resname)
+                        logger.debug( output )
                 for key in [ 'pricing' , 'soft_billing', 'hard_billing', 'node_min_pool_size', 'node_max_pool_size' ] :
                     if key in reslist:
                         if float( resdict[ key ] ) < 0:

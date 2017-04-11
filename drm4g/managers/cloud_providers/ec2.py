@@ -52,7 +52,7 @@ class Instance(Instance):
             raise Exception( "No correct auth data has been specified."
                              "Please review your 'access_id' and 'secret_key'" )
 
-        self.region = basic_data.get('region', self.DEFAILT_REGION)
+        self.region = basic_data.get('region', self.DEFAULT_REGION)
         cls = get_driver(Provider.EC2)
         try:
             self.driver = cls( self.access_id, self.secret_key, region = self.region )
@@ -61,14 +61,14 @@ class Instance(Instance):
             raise Exception( "No correct region has been specified."
                              "Please review your 'region'" )
 
-        size_id = basic_data.get('size', self.DEFAILT_SIZE) #http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
+        size_id = basic_data.get('size', self.DEFAULT_SIZE) #http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html
         try:
             self.size = [s for s in self.driver.list_sizes() if s.id == size_id ][0]
         except:
             raise Exception( "No correct size_id has been specified."
                              "Please review your 'size_id'" )
 
-        image_id = basic_data.get('image', self.DEFAILT_IMAGE)
+        image_id = basic_data.get('image', self.DEFAULT_IMAGE)
         try:
             self.image = self.driver.get_image( image_id )
         except:
@@ -119,11 +119,11 @@ class Instance(Instance):
         self.driver = cls( self.access_id, self.secret_key, region = self.region )
         self.node = self.driver.list_nodes([self.node_id])[0]
         self.location = [l for l in self.driver.list_locations() if l.availability_zone.region_name == self.region][0]
-        if self.data['volume']:
+        if self.volume_capacity:
             self.volume = [v for v in self.driver.list_volumes() if v.id == self.volume_id][0]
-        size_id = self.data.get('size', self.DEFAILT_SIZE)
+        size_id = self.data.get('size', self.DEFAULT_SIZE)
         self.size = [s for s in self.driver.list_sizes() if s.id == size_id ][0]
-        self.image = self.driver.get_image( self.data.get('image', self.DEFAILT_IMAGE) )
+        self.image = self.driver.get_image( self.data.get('image', self.DEFAULT_IMAGE) )
         
     def create_security_group(self):
         if not self.SECURITY_GROUP_NAME in self.driver.ex_list_security_groups():
