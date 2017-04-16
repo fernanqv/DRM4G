@@ -79,10 +79,12 @@ def read_key( file_name ) :
     """
     Function to read a file key.
     """
-    with open( file_name, "r" ) as file :
-        pub = file.readline().rstrip()
+    with open( file_name, "r" ) as fp:
+        pub = fp.readline().rstrip()
+    #with open( file_name ) as fp:
+    #    pub = fp.read().strip()
     return pub
-
+    
 def save_pkl( obj_config, file_name ) :
     """
     Save a python object into a pickle file.

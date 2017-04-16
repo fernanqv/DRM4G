@@ -20,7 +20,7 @@
 
 import sys
 import os
-from os.path     import join, expanduser, exists, basename
+from os.path                import join, expanduser, exists, basename
 
 import io
 import re
@@ -34,7 +34,7 @@ from drm4g.commands         import Agent
 from drm4g.communicators    import logger
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT, DRM4G_DIR
 from drm4g.utils.url        import urlparse
-from openssh_wrapper import SSHConnection
+from openssh_wrapper        import SSHConnection
 
 
 class Communicator(drm4g.communicators.Communicator):
