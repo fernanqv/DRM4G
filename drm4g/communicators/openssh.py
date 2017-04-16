@@ -20,7 +20,7 @@
 
 import sys
 import os
-from os.path     import join, expanduser, exists, basename
+from os.path                import join, expanduser, exists, basename
 
 import io
 import re
@@ -34,7 +34,7 @@ from drm4g.commands         import Agent
 from drm4g.communicators    import logger
 from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT, DRM4G_DIR
 from drm4g.utils.url        import urlparse
-from openssh_wrapper import SSHConnection
+from openssh_wrapper        import SSHConnection
 
 
 class Communicator(drm4g.communicators.Communicator):
@@ -74,6 +74,7 @@ class Communicator(drm4g.communicators.Communicator):
             Communicator.socket_dir=join(DRM4G_DIR, 'var', 'sockets')
 
     def get_parent_module(self):
+        #the "rocci" connection is used to connect to the remote computer that will create its VMs
         module_dict = {'rocci.py':'rocci', 'im_mad.py':'im', 'tm_mad.py':'tm', 'em_mad.py':'em'}
         #t=repr(traceback.format_stack())
         trace = traceback.extract_stack()
@@ -98,7 +99,7 @@ class Communicator(drm4g.communicators.Communicator):
             "    ControlPath %s/%s-%s\n"
             "    ControlPersist 10m\n"
             "    StrictHostKeyChecking no")
-
+        #the "rocci" connection is used to connect to the remote computer that will create its VMs
         for manager in ['im', 'tm', 'em', 'rocci']:
             with io.FileIO(join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % manager), 'w') as conf_file:
                 conf_file.write(conf_text % (Communicator.socket_dir, manager, '%r@%h:%p'))
@@ -125,7 +126,7 @@ class Communicator(drm4g.communicators.Communicator):
             #    print line
 
             #logger.debug("Running connect function\n    - called from "+p_module+"\n    - by function "+p_function)
-            logger.debug("\n\nRunning connect function from %s\n    - called from %s\n    - by function %s\nTraceback :\n%s\n" % (self.parent_module, p_module, p_function, t))
+            logger.debug("Running connect function from %s\n    - called from %s\n    - by function %s\n    - Traceback:\n%s" % (self.parent_module, p_module, p_function, t))
             #logger.debug("\np_module = %s\np_function = %s\n" % (p_module, p_function))
 
             if not self.configfile:
@@ -140,11 +141,13 @@ class Communicator(drm4g.communicators.Communicator):
                 logger.debug("No master conncection exists for %s so a new one will be created" % self.parent_module)
                 def first_ssh():
                     try:
-                        logger.debug("Running first_ssh function\n    - Creating first connection for %s" % self.parent_module)
+                        logger.debug("Running first_ssh function")
+                        logger.debug("    - Creating first connection for %s" % self.parent_module)
                         #this is here because the threads are created at the same time, so the moment one creates the conection, the rest are going to cause an UnboundLocalError exception
                         #(which probably shouldn't be ocurring since ControlMaster is set to auto - only if they execute this at the same time)
                         if not exists(join(Communicator.socket_dir, '%s-%s@%s:%s' % (self.parent_module ,self.username, self.frontend, self.port))):
                             command = 'ssh -F %s -i %s -p %s -T %s@%s' % (self.configfile, self.private_key, str(self.port), self.username, self.frontend)
+                            logger.debug("    - Executing command '%s'" % command)
                         pipe = subprocess.Popen(command.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         out,err = pipe.communicate()
 

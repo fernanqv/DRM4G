@@ -30,7 +30,7 @@ def _renew_voms_proxy(com_object, myproxy_server, vo, cont=0):
     try:
         proxy_file = join( REMOTE_VOS_DIR , 'x509up.%s ' ) % vo
         
-        logger.debug( "Running rocci's _renew_voms_proxy function" )
+        logger.debug( "Running _renew_voms_proxy function" )
         logger.debug( "_renew_voms_proxy count = %s" % str( cont ) )
         logger.warning( "The proxy '%s' has probably expired" %  proxy_file )
         logger.info( "Renewing proxy certificate" )
@@ -55,15 +55,15 @@ def _renew_voms_proxy(com_object, myproxy_server, vo, cont=0):
             logger.error( "Error renewing the proxy(%s): %s" % ( cmd , err ) )
             if cont<4:
                 sleep(2.0)
-                _renew_voms_proxy(com_object, proxy_file, myproxy_server, vo, cont+1)
+                _renew_voms_proxy(com_object, myproxy_server, vo, cont+1)
             else:
                 raise Exception("Probably the proxy certificate hasn't been created. Be sure to run the the following command before trying again:" \
                 "\n    \033[93mdrm4g id <resource_name> init\033[0m")
-        logger.info( "The proxy certificate will be operational for 24 hours" )
+        logger.info( "    The proxy certificate will be operational for 24 hours" )
     except socket.timeout:
         logger.debug("Captured a socket.time exception")
         if cont<4:
-            _renew_voms_proxy(com_object, proxy_file, myproxy_server, vo, cont+1)
+            _renew_voms_proxy(com_object, myproxy_server, vo, cont+1)
         else:
             raise
         

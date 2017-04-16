@@ -230,7 +230,7 @@ class GwTmMad (object):
                 raise Exception ( ' '.join( errors ) )
             for resname, resdict in list(self._configure.resources.items()) :
                 self.logger.debug( "    The current resource to which it's being compared is %s" % resname )
-                if 'cloud_provider' in self._configure.resources[ resname ].keys():
+                if 'cloud_connector' in self._configure.resources[ resname ].keys():
                     continue
                 elif '::' in host :
                     _resname , _ = host.split( '::' )

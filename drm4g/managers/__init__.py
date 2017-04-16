@@ -139,7 +139,7 @@ class Job (object):
         if not err:
             return out.strip('\n')
         else:
-            output = "Could not obtain  the '%s' directory : %s" % ( directory , str ( err ) )
+            output = "Could not obtain the '%s' directory : %s" % ( directory , str ( err ) )
             logger.error( output )
             raise JobException( output )
 

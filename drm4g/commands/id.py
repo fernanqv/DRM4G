@@ -70,10 +70,11 @@ def run( arg ) :
         if arg['<resource_name>'] not in config.resources :
             raise Exception( "'%s' is not a configured resource." % ( arg['<resource_name>'] ) )
         lrms         = config.resources.get( arg['<resource_name>'] )[ 'lrms' ]
+        cloud_connector = config.resources.get( arg['<resource_name>'] ).get( 'cloud_connector' )
         communicator = config.resources.get( arg['<resource_name>'] )[ 'communicator' ]
-        if lrms != 'cream' and lrms != 'rocci' and communicator == 'local' :
+        if lrms != 'cream' and cloud_connector != 'rocci' and communicator == 'local' :
             raise Exception( "'%s' does not have an identity to configure." % ( arg['<resource_name>'] ) )
-        if lrms == 'cream' or lrms == 'rocci' :
+        if lrms == 'cream' or cloud_connector == 'rocci' :
             comm = config.make_communicators()[ arg['<resource_name>'] ]
             if communicator == 'op_ssh' :
                 #paramiko will always be used to renew the grid certificate
@@ -91,18 +92,18 @@ def run( arg ) :
                 agent.start( )
                 agent.add_key( arg[ '--lifetime' ] )
                 agent.copy_key( )
-            if lrms == 'cream' or lrms == 'rocci' :
+            if lrms == 'cream' or cloud_connector == 'rocci' :
                 proxy.configure( )
                 proxy.create( arg[ '--lifetime' ] )
         elif arg[ 'delete' ] :
-            if lrms == 'cream' or lrms == 'rocci' :
+            if lrms == 'cream' or cloud_connector == 'rocci' :
                 proxy.destroy( )
             if communicator != 'local' :
                 agent.delete_key( )
         else :
             if communicator != 'local' :
                 agent.list_key( )
-            if lrms == 'cream' or lrms == 'rocci' :
+            if lrms == 'cream' or cloud_connector == 'rocci' :
                 proxy.check( )
     except Exception as err :
         logger.error( str( err ) )
