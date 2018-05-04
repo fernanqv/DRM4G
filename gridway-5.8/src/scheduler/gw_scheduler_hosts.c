@@ -347,16 +347,16 @@ void gw_scheduler_host_policies (gw_scheduler_t * sched, int jid)
     }
 
     qsort(mhosts,nhosts,sizeof(gw_sch_queue_t),queue_cmp);
-                  
-    gw_scheduler_print('I',"---------------------------------------------------\n");                
-    gw_scheduler_print('I',"               HOST LIST for JOB %i\n",sched->jobs[jid].jid);
-    gw_scheduler_print('I',"---------------------------------------------------\n");
-    gw_scheduler_print('I',"%-3s %-9s %-6s %-5s %-6s %-5s %9s %5s\n" ,"HID","TOTAL    ","FP    ","NFP  ","RK    ","NRK  ","UG       ","NUG");
-    gw_scheduler_print('I',"%-3s-%-9s-%-6s-%-5s-%-6s-%-5s-%9s-%5s\n" ,"---","---------","------","-----","------","-----","---------","-----");
+#ifdef GWSCHEDDEBUG                  
+    gw_scheduler_print('D',"-----------------------------------------------------\n");                
+    gw_scheduler_print('D',"               HOST LIST for JOB %i\n",sched->jobs[jid].jid);
+    gw_scheduler_print('D',"-----------------------------------------------------\n");
+    gw_scheduler_print('D',"%-3s %-9s %-6s %-5s %-6s %-5s %9s %5s\n" ,"HID","TOTAL    ","FP    ","NFP  ","RK    ","NRK  ","UG       ","NUG");
+    gw_scheduler_print('D',"%-3s-%-9s-%-6s-%-5s-%-6s-%-5s-%9s-%5s\n" ,"---","---------","------","-----","------","-----","---------","-----");
                 
     for (j=0; j<nhosts ; j++)
     {
-        gw_scheduler_print('I',"%-3i %-9.2f %-6i %.3f %-6i %.3f %-9.3f %.3f\n",
+        gw_scheduler_print('D',"%-3i %-9.2f %-6i %.3f %-6i %.3f %-9.3f %.3f\n",
                     sched->hosts[mhosts[j].ha_id].hid,
                     mhosts[j].priority,
                     mhosts[j].fixed,
@@ -366,5 +366,6 @@ void gw_scheduler_host_policies (gw_scheduler_t * sched, int jid)
                     mhosts[j].usage,
                     mhosts[j].nusage);
     }
+#endif    
 }
 
