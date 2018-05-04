@@ -19,10 +19,6 @@
 # permissions and limitations under the Licence.
 #
 
-__version__  = '2.6.4'
-__author__   = 'Carlos Blanco'
-__revision__ = "$Id$"
-
 from drm4g.core.em_mad import GwEmMad
 from drm4g             import DRM4G_LOGGER, DRM4G_DIR
 from optparse import OptionParser

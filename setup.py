@@ -27,6 +27,7 @@ import subprocess
 import glob
 import sys
 import ast
+import drm4g
 
 #To ensure a script runs with a minimal version requirement of the Python interpreter
 #assert sys.version_info >= (2,5)
@@ -178,9 +179,9 @@ setup(
         'gridway-5.8/src/cmds/gwhost', 'gridway-5.8/src/cmds/gwhistory', 'gridway-5.8/src/cmds/gwsubmit', 
         'gridway-5.8/src/cmds/gwps', 'gridway-5.8/src/cmds/gwkill', 'gridway-5.8/src/gwd/gwd', 
         'gridway-5.8/src/scheduler/gw_flood_scheduler', 'gridway-5.8/src/scheduler/gw_sched'])],
-    version='2.6.4',
+    version=drm4g.__version__,
     author='Meteorology Group UC',
-    author_email='josecarlos.blanco@unican.es',
+    author_email='antonio.cofino@unican.es',
     url='https://meteo.unican.es/trac/wiki/DRM4G',
     license='European Union Public License 1.1',
     description='DRM4G is an open platform for DCIs.',
