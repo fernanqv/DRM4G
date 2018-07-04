@@ -46,13 +46,11 @@ drm4g commands are:
 
 See 'drm4g <command> --help' for more information on a specific command.
 """
-__version__  = '2.6.4'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
 
 from docopt import docopt
 from difflib import get_close_matches
 import logging
+import drm4g
 
 commands_list = [
     'start',
@@ -84,7 +82,7 @@ class CommandError(Exception):
     pass
 
 if __name__ == "__main__":
-    args = docopt( __doc__, version = __version__ , options_first = True )
+    args = docopt( __doc__, version = drm4g.__version__ , options_first = True )
     argv = [ args[ '<command>' ] ] + args[ '<args>' ]
     #if args['<command>'] in "start stop status restart clear conf id resource host job".split() :
     if args['<command>'] in commands_list :

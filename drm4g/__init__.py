@@ -20,9 +20,8 @@
 
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
-__version__  = '2.6.4'
-__author__   = 'Carlos Blanco and Antonio Minondo'
-__revision__ = "$Id$"
+__version__  = '2.6.6'
+__author__   = 'Carlos Blanco, Antonio Minondo and Antonio S. Cofino'
 
 import sys
 import os
