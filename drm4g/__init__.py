@@ -20,7 +20,7 @@
 
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
-__version__  = '2.6.6'
+__version__  = '2.6.7'
 __author__   = 'Carlos Blanco, Antonio Minondo and Antonio S. Cofino'
 
 import sys
