@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad de Cantabria
+# Copyright 2021 Santander Meteorology Group (UC-CSIC)
 #
 # Licensed under the EUPL, Version 1.1 only (the
 # "Licence");
@@ -20,16 +20,16 @@
 
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
-__version__  = '2.6.7'
-__author__   = 'Carlos Blanco, Antonio Minondo and Antonio S. Cofino'
+__version__  = '2.6.9'
+__author__   = 'Antonio S. Cofino, Carlos Blanco and Antonio Minondo'
 
 import sys
 import os
 import logging.config
 from os.path import dirname , join , expandvars , exists , abspath
 
-if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,3)):
-    exit( 'The version number of Python has to be > = 2.6 and < = 3.3' )
+if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,9)):
+    exit( 'The version number of Python has to be > = 2.6 and < = 3.9' )
 
 ########################################
 # Default values used in DRM4G package.#
