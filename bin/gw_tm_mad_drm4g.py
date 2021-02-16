@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2016 Universidad de Cantabria
+# Copyright 2021 Santander Meteorology Group (UC-CSIC)
 #
 # Licensed under the EUPL, Version 1.1 only (the
 # "Licence");

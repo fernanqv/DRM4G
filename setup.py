@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad de Cantabria
+# Copyright 2021 Santander Meteorology Group (UC-CSIC)
 #
 # Licensed under the EUPL, Version 1.1 only (the 
 # "Licence"); 
@@ -180,7 +180,7 @@ setup(
         'gridway-5.8/src/cmds/gwps', 'gridway-5.8/src/cmds/gwkill', 'gridway-5.8/src/gwd/gwd', 
         'gridway-5.8/src/scheduler/gw_flood_scheduler', 'gridway-5.8/src/scheduler/gw_sched'])],
     version=drm4g.__version__,
-    author='Meteorology Group UC',
+    author='Santander Meteorology Group (UC-CSIC)',
     author_email='antonio.cofino@unican.es',
     url='https://meteo.unican.es/trac/wiki/DRM4G',
     license='European Union Public License 1.1',
@@ -197,6 +197,8 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     install_requires=['paramiko<2.0', 'docopt', 'openssh-wrapper'],
     scripts=bin_scripts,
