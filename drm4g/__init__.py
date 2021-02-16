@@ -20,13 +20,8 @@
 
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
-<<<<<<< HEAD
-__version__  = '2.6.7'
-__author__   = 'Carlos Blanco, Antonio Minondo and Antonio S. Cofino'
-=======
-__version__  = '2.6.9'
+__version__  = '2.6.10'
 __author__   = 'Antonio S. Cofino, Carlos Blanco and Antonio Minondo'
->>>>>>> drm4g-2.6.9
 
 import sys
 import os
