@@ -133,6 +133,7 @@ class GwEmMad (object):
             out = 'SUBMIT %s SUCCESS %s:%s' % ( JID, HOST, job.JobId )
         except Exception as err:
             out = 'SUBMIT %s FAILURE %s' % ( JID, str( err ) )
+            self.logger.error( err , exc_info=1 )
         self.message.stdout(out)
         self.logger.debug(out, exc_info=1 )
 
@@ -163,6 +164,7 @@ class GwEmMad (object):
                 out = 'POLL %s FAILURE Job not submitted' % ( JID )
         except Exception as err:
             out = 'POLL %s FAILURE %s' % ( JID, str( err ) )
+            self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
         self.logger.debug( out )
 
@@ -183,6 +185,7 @@ class GwEmMad (object):
             out = 'RECOVER %s SUCCESS %s' % ( JID, job.getStatus( ) )
         except Exception as err:
             out = 'RECOVER %s FAILURE %s' % ( JID, str( err ) )
+            self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
         self.logger.debug( out, exc_info=1 )
 
@@ -208,8 +211,8 @@ class GwEmMad (object):
                         self.logger.debug( out )
                 except Exception as err:
                     out = 'CALLBACK %s FAILURE %s' % ( JID, str( err ) )
+                    self.logger.error( err , exc_info=1 )
                     self.message.stdout( out )
-                    self.logger.debug( out, exc_info=1 )
 
     def do_CANCEL(self, args):
         """
@@ -224,8 +227,9 @@ class GwEmMad (object):
                 out = 'CANCEL %s SUCCESS -' % (JID)
             else:
                 out = 'CANCEL %s FAILURE Job not submitted' % (JID)
-        except Exception as e:
+        except Exception as err:
             out = 'CANCEL %s FAILURE %s' % ( JID, str(e) )
+            self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
         self.logger.debug( out )
 
@@ -260,7 +264,7 @@ class GwEmMad (object):
                     self.message.stdout( out )
                     self.logger.debug( out )
         except Exception as err:
-            self.logger.warning( str( err ) )
+            self.logger.warning( str ( err ) , exc_info=1 )
 
     def _update_resource(self, host):
         with self._lock :

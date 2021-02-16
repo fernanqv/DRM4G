@@ -58,8 +58,8 @@ if exists( DRM4G_DIR ) is False  :
     logger.info( "Coping from '%s' to '%s'" % ( src , dest ) )
     copytree( src , dest )
 
-REMOTE_JOBS_DIR = "~/.drm4g/jobs"
-REMOTE_VOS_DIR  = "~/.drm4g/security"
+REMOTE_JOBS_DIR = join( DRM4G_DIR , 'jobs')
+REMOTE_VOS_DIR  = join( DRM4G_DIR , 'security')
 
 # ssh communicator
 SSH_PORT            = 22
@@ -87,7 +87,7 @@ RESOURCE_MANAGERS = {
                      "mnslurm"      : "drm4g.managers.marenostrum",
                      "slurm_res"    : "drm4g.managers.slurm_res",
                      "neptuno"      : "drm4g.managers.neptuno",
-                     "rocci"        : "drm4g.managers.rocci",
+                     #"rocci"        : "drm4g.managers.rocci",
                      }
 
 

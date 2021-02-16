@@ -30,10 +30,8 @@ from drm4g.utils.url     import urlparse
 
 logger  = logging.getLogger(__name__)
 
-if sys.version_info[0] == 2 :
-    execution_permissions = 0755
-else :
-    execution_permissions = 0o755
+import stat
+execution_permissions = stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH
 
 class Communicator(drm4g.communicators.Communicator):
     """
@@ -58,7 +56,7 @@ class Communicator(drm4g.communicators.Communicator):
                 stdout, stderr = command_proc.communicate("%s\n" % line)
         else :
             stdout, stderr = command_proc.communicate()
-        return stdout , stderr
+        return stdout.decode() , stderr.decode()
 
     def mkDirectory(self, url):
         to_dir = self._set_dir(urlparse(url).path)

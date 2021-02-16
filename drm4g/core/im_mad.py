@@ -102,6 +102,7 @@ class GwImMad (object):
             out = 'DISCOVER %s SUCCESS %s' % ( HID , hosts  )
         except Exception as err :
             out = 'DISCOVER - FAILURE %s' % str( err )
+            self.logger.error( err , exc_info=1 )
         if output:
             self.message.stdout( out )
         self.logger.debug( out , exc_info=1 )
@@ -126,6 +127,7 @@ class GwImMad (object):
             out = 'MONITOR %s SUCCESS %s' % (HID , info )
         except Exception as err :
             out = 'MONITOR %s FAILURE %s' % (HID , str(err) )
+            self.logger.error( err , exc_info=1 )
         if output:
             self.message.stdout(out)
         self.logger.debug( out , exc_info=1 )
@@ -162,6 +164,6 @@ class GwImMad (object):
                     out = 'WRONG COMMAND'
                     self.message.stdout(out)
                     self.logger.debug(out)
-        except Exception as e:
-            self.logger.warning(str(e))
+        except Exception as err:
+            self.logger.warning( str ( err ) , exc_info=1 )
 
