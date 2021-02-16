@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad de Cantabria
+# Copyright 2021 Santander Meteorology Group (UC-CSIC)
 #
 # Licensed under the EUPL, Version 1.1 only (the
 # "Licence");
@@ -139,6 +139,7 @@ class GwTmMad (object):
             out = 'MKDIR %s - SUCCESS -' % ( JID )
         except Exception as err :
             out = 'MKDIR %s - FAILURE %s' % ( JID , str( err ) )
+            self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
         self.logger.debug( out , exc_info=1 )
 
@@ -158,6 +159,7 @@ class GwTmMad (object):
                 out = 'RMDIR %s ignored because lock exists - SUCCESS -' % (JID)
         except Exception as err :
             out = 'RMDIR %s - FAILURE %s' % ( JID , str( err ) )
+            self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
         self.logger.debug( out, exc_info=1 )
 
@@ -179,6 +181,7 @@ class GwTmMad (object):
             out = 'CP %s %s SUCCESS -' % ( JID , TID )
         except Exception as err :
             out = 'CP %s %s FAILURE %s' % ( JID , TID , str( err ) )
+            self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
         self.logger.debug(out , exc_info=1 )
 

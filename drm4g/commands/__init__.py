@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad de Cantabria
+# Copyright 2021 Santander Meteorology Group (UC-CSIC)
 #
 # Licensed under the EUPL, Version 1.1 only (the
 # "Licence");
@@ -30,7 +30,7 @@ import subprocess
 import datetime
 
 from drm4g             import REMOTE_VOS_DIR, DRM4G_CONFIG_FILE, DRM4G_DIR
-from drm4g.managers    import rocci
+#from drm4g.managers    import rocci
 from drm4g.core.im_mad import GwImMad
 from os.path           import expanduser, join, dirname, exists, basename, expandvars
 
@@ -67,7 +67,7 @@ def exec_cmd( cmd , stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                   env=env
                                   )
     out , err =  cmd_to_exec.communicate()
-    return out , err
+    return out.decode() , err.decode()
 
 def yes_no_choice( message ,  default = 'y' ) :
     """

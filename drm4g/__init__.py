@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad de Cantabria
+# Copyright 2021 Santander Meteorology Group (UC-CSIC)
 #
 # Licensed under the EUPL, Version 1.1 only (the
 # "Licence");
@@ -20,16 +20,21 @@
 
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
+<<<<<<< HEAD
 __version__  = '2.6.7'
 __author__   = 'Carlos Blanco, Antonio Minondo and Antonio S. Cofino'
+=======
+__version__  = '2.6.9'
+__author__   = 'Antonio S. Cofino, Carlos Blanco and Antonio Minondo'
+>>>>>>> drm4g-2.6.9
 
 import sys
 import os
 import logging.config
 from os.path import dirname , join , expandvars , exists , abspath
 
-if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,3)):
-    exit( 'The version number of Python has to be > = 2.6 and < = 3.3' )
+if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,9)):
+    exit( 'The version number of Python has to be > = 2.6 and < = 3.9' )
 
 ########################################
 # Default values used in DRM4G package.#
@@ -58,8 +63,8 @@ if exists( DRM4G_DIR ) is False  :
     logger.info( "Coping from '%s' to '%s'" % ( src , dest ) )
     copytree( src , dest )
 
-REMOTE_JOBS_DIR = "~/.drm4g/jobs"
-REMOTE_VOS_DIR  = "~/.drm4g/security"
+REMOTE_JOBS_DIR = join( DRM4G_DIR , 'jobs')
+REMOTE_VOS_DIR  = join( DRM4G_DIR , 'security')
 
 # ssh communicator
 SSH_PORT            = 22
@@ -87,7 +92,7 @@ RESOURCE_MANAGERS = {
                      "mnslurm"      : "drm4g.managers.marenostrum",
                      "slurm_res"    : "drm4g.managers.slurm_res",
                      "neptuno"      : "drm4g.managers.neptuno",
-                     "rocci"        : "drm4g.managers.rocci",
+                     #"rocci"        : "drm4g.managers.rocci",
                      }
 
 

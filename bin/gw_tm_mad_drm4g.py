@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2016 Universidad de Cantabria
+# Copyright 2021 Santander Meteorology Group (UC-CSIC)
 #
 # Licensed under the EUPL, Version 1.1 only (the
 # "Licence");
@@ -22,7 +22,7 @@
 from drm4g             import DRM4G_LOGGER, DRM4G_DIR
 from drm4g.core.tm_mad import GwTmMad
 from optparse import OptionParser
-import exceptions, sys, traceback, logging
+import sys, traceback, logging
 
 def main():
     parser = OptionParser(description = 'Transfer manager MAD',
@@ -35,7 +35,7 @@ def main():
         except :
             pass
         GwTmMad().processLine()
-    except exceptions.KeyboardInterrupt as e:
+    except KeyboardInterrupt as e:
         sys.exit(-1)
     except Exception as e:
         traceback.print_exc(file=sys.stdout)
