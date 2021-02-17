@@ -63,18 +63,19 @@ REMOTE_VOS_DIR  = join( DRM4G_DIR , 'security')
 
 # ssh communicator
 SSH_PORT            = 22
-SSH_CONNECT_TIMEOUT = 60 # seconds
+SSH_CONNECT_TIMEOUT = 120 # seconds
 SFTP_CONNECTIONS    = 3
 
 # Proxy
 PROXY_THRESHOLD     = 178 # Proxy threshold in hours.
 
 COMMUNICATORS = {
-                 "ssh"    : "drm4g.communicators.ssh",
-                 "pk_ssh" : "drm4g.communicators.ssh",
-                 "op_ssh" : "drm4g.communicators.openssh",
-                 "local"  : "drm4g.communicators.local",
-                 }
+    "ssh": "drm4g.communicators.ssh",
+    "ssh_fabric": "drm4g.communicators.ssh_fabric",
+    "pk_ssh": "drm4g.communicators.ssh",
+    "op_ssh": "drm4g.communicators.openssh",
+    "local": "drm4g.communicators.local",
+}
 RESOURCE_MANAGERS = {
                      "pbs"          : "drm4g.managers.pbs",
                      "sge"          : "drm4g.managers.sge",
