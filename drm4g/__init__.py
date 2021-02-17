@@ -28,8 +28,8 @@ import os
 import logging.config
 from os.path import dirname , join , expandvars , exists , abspath
 
-if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,9)):
-    exit( 'The version number of Python has to be > = 2.6 and < = 3.9' )
+if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,3)):
+    exit( 'The version number of Python has to be >= 2.6 or >= 3.3' )
 
 ########################################
 # Default values used in DRM4G package.#
