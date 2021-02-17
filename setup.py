@@ -162,9 +162,9 @@ setup(
     name='drm4g',
     packages=find_packages(),
     include_package_data=True,
-    package_data={'drm4g' : ['conf/*.conf','conf/job_template.default', 
-                             'conf/*.sh']},
-    data_files=[('bin', ['gridway-5.8/src/cmds/gwuser', 'gridway-5.8/src/cmds/gwacct', 'gridway-5.8/src/cmds/gwwait', 
+    package_data={'drm4g' : ['conf/*.conf', 'conf/job_template.default', 'conf/*.sh']},
+    data_files=[('bin', [
+        'gridway-5.8/src/cmds/gwuser', 'gridway-5.8/src/cmds/gwacct', 'gridway-5.8/src/cmds/gwwait', 
         'gridway-5.8/src/cmds/gwhost', 'gridway-5.8/src/cmds/gwhistory', 'gridway-5.8/src/cmds/gwsubmit', 
         'gridway-5.8/src/cmds/gwps', 'gridway-5.8/src/cmds/gwkill', 'gridway-5.8/src/gwd/gwd', 
         'gridway-5.8/src/scheduler/gw_flood_scheduler', 'gridway-5.8/src/scheduler/gw_sched'])],
@@ -190,7 +190,7 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
-    install_requires=['paramiko<2.0', 'docopt', 'openssh-wrapper'],
+    install_requires=['fabric', 'docopt', 'openssh-wrapper'],
     scripts=bin_scripts,
     cmdclass={
         'install': build_wrapper,

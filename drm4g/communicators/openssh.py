@@ -98,7 +98,8 @@ class Communicator(drm4g.communicators.Communicator):
             "    ControlMaster auto\n"
             "    ControlPath %s/%s-%s\n"
             "    ControlPersist 10m\n"
-            "    StrictHostKeyChecking no")
+            "    StrictHostKeyChecking no\n"
+            "    LogLevel ERROR")
 
         for manager in ['im', 'tm', 'em', 'rocci']:
             with io.FileIO(join(DRM4G_DIR, 'etc', 'openssh_%s.conf' % manager), 'w') as conf_file:
