@@ -51,20 +51,9 @@ if 'bash' in user_shell:
 else:
     user_shell='.profile' #maybe for zsh it should be ~/.zprofile
 
-def get_long_description():
-    readme_file = 'README'
-    if not os.path.isfile(readme_file):
-        return ''
-    # Try to transform the README from Markdown to reStructuredText.
-    try:
-        import pandoc
-        pandoc.core.PANDOC_PATH = 'pandoc'
-        doc = pandoc.Document()
-        doc.markdown = open(readme_file).read()
-        description = doc.rst
-    except Exception:
-        description = open(readme_file).read()
-    return description
+# read the contents of your README file
+with open(path.join(here, 'README'), encoding='utf-8') as f:
+    long_description = f.read()
 
 def yes_no_choice( message,  default = 'y') :
     """
@@ -185,7 +174,8 @@ setup(
     url='https://meteo.unican.es/trac/wiki/DRM4G',
     license='European Union Public License 1.1',
     description='DRM4G is an open platform for DCIs.',
-    long_description = get_long_description(),
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     classifiers=[
         "Intended Audience :: Science/Research",
         "Programming Language :: Python",
