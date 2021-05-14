@@ -35,7 +35,7 @@ if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]=
 # Default values used in DRM4G package.#
 ########################################
 HOME              = os.environ.get( 'HOME' )
-DRM4G_DIR         = os.environ[ 'GW_LOCATION' ] = join ( os.environ.get( 'DRM4G_DIR' , HOME ), '.drm4g' )
+DRM4G_DIR         = os.environ[ 'GW_LOCATION' ] = os.environ.get("DRM4G_DIR", "%s/.drm4g" %(HOME))
 DRM4G_CONFIG_FILE = join( DRM4G_DIR , 'etc' , 'resources.conf' )
 DRM4G_LOGGER      = join( DRM4G_DIR , 'etc' , 'logger.conf')
 DRM4G_DAEMON      = join( DRM4G_DIR , 'etc' , 'gwd.conf')
