@@ -18,8 +18,11 @@
 # permissions and limitations under the Licence.
 #
 
+from setuptools import setup
 from setuptools import find_packages
 from setuptools.command.install import install
+from setuptools.command.build_ext import build_ext
+from setuptools.command.develop import develop
 import os
 import subprocess
 import glob
@@ -31,18 +34,17 @@ import drm4g
 if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,3)):
   exit( 'The version number of Python has to be >= 2.6 or >= 3.3' )
 
-here = os.path.abspath(path.dirname(__file__))
-
+here = os.path.abspath(os.path.dirname(__file__))
+gridway_src=os.path.join( here, "gridway-5.8")
+  
 # read the contents of your README file
 with open(os.path.join(here, 'README'), encoding='utf-8') as f:
   long_description = f.read()
 
-def build(self):
-  gridway_src=os.path.join( here, "gridway-5.8")
+def build():
   current_path = os.getcwd()
-  self.prefix_option()
   
-  if not os.path.exists(gridway) :
+  if not os.path.exists(gridway_src) :
       raise Exception("The specified directory %s doesn't exist" % gridway_src)
   os.chdir( gridway_src )
   
@@ -55,11 +57,20 @@ def build(self):
     raise Exception("make failed")
   os.chdir( current_path )
 
+class build_ext_wrapper(build_ext):
+  def build_extensions(self):
+    build()
+    build_ext.build_extensions(self)
 
-class build_wrapper(install):
+class install_wrapper(install):
   def run(self):
     build()
     install.run(self)
+
+class develop_wrapper(develop):
+  def run(self):
+    build()
+    develop.run(self)
 
 bin_scripts = glob.glob(os.path.join('bin', '*'))
 bin_scripts.append('LICENSE')
@@ -70,10 +81,17 @@ setup(
   include_package_data=True,
   package_data={'drm4g' : ['conf/*.conf', 'conf/job_template.default', 'conf/*.sh']},
   data_files=[('bin', [
-    'gridway-5.8/src/cmds/gwuser', 'gridway-5.8/src/cmds/gwacct', 'gridway-5.8/src/cmds/gwwait', 
-    'gridway-5.8/src/cmds/gwhost', 'gridway-5.8/src/cmds/gwhistory', 'gridway-5.8/src/cmds/gwsubmit', 
-    'gridway-5.8/src/cmds/gwps', 'gridway-5.8/src/cmds/gwkill', 'gridway-5.8/src/gwd/gwd', 
-    'gridway-5.8/src/scheduler/gw_flood_scheduler', 'gridway-5.8/src/scheduler/gw_sched'])],
+    'gridway-5.8/src/cmds/gwuser',
+    'gridway-5.8/src/cmds/gwacct',
+    'gridway-5.8/src/cmds/gwwait',
+    'gridway-5.8/src/cmds/gwhost',
+    'gridway-5.8/src/cmds/gwhistory',
+    'gridway-5.8/src/cmds/gwsubmit',
+    'gridway-5.8/src/cmds/gwps',
+    'gridway-5.8/src/cmds/gwkill',
+    'gridway-5.8/src/gwd/gwd',
+    'gridway-5.8/src/scheduler/gw_flood_scheduler',
+    'gridway-5.8/src/scheduler/gw_sched'])],
   version=drm4g.__version__,
   author='Santander Meteorology Group (UC-CSIC)',
   author_email='antonio.cofino@unican.es',
@@ -99,6 +117,8 @@ setup(
   install_requires=['fabric', 'docopt', 'openssh-wrapper'],
   scripts=bin_scripts,
   cmdclass={
-    'install': build_wrapper,
+    'build_ext' : build_ext_wrapper,
+    'install'   : install_wrapper,
+    'develop'   : develop_wrapper,
   },
 )
