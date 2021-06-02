@@ -83,6 +83,7 @@ class build_ext_wrapper(build_ext):
 
 class install_wrapper(install):
   def run(self):
+    build()
     install.run(self)
 
 class develop_wrapper(develop):
