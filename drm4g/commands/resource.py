@@ -36,7 +36,7 @@ Commands:
     destroy                 Delete all virtual machines
 """
 
-from drm4g                import logger
+from drm4g                import console_logger
 from drm4g.core.configure import Configuration
 from drm4g.commands       import Daemon, Resource
 
@@ -62,5 +62,5 @@ def run( arg ) :
             else :
                 resource.list()
     except Exception as err :
-        logger.error( str( err ) )
+        console_logger.error( str( err ) )
 

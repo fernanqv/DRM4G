@@ -25,13 +25,15 @@ import socket
 import logging
 from datetime                   import timedelta, datetime
 from os.path                    import join, basename, expanduser
+from utils                      import load_json, read_key, is_ip_private
 from drm4g.utils.importlib      import import_module
 from drm4g.managers.rocci       import CloudSetup
-from utils                      import load_json, read_key, is_ip_private
-from drm4g                      import ( COMMUNICATORS,
-                                         REMOTE_JOBS_DIR,
-                                         REMOTE_VOS_DIR,
-                                         DRM4G_DIR )
+from drm4g.communicators        import REMOTE_JOBS_DIR
+from drm4g                      import ( 
+                                       COMMUNICATORS,
+                                       REMOTE_VOS_DIR,
+                                       DRM4G_DIR 
+                                       )
 
 logger = logging.getLogger(__name__)
 

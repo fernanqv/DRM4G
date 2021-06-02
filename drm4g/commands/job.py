@@ -66,7 +66,7 @@ Job field information:
 """
 
 from os.path              import join, exists
-from drm4g                import DRM4G_DIR, logger
+from drm4g                import DRM4G_DIR, console_logger, DRM4G_DIR_VAR 
 from drm4g.commands       import exec_cmd, Daemon
 
 def run( arg ) :
@@ -86,8 +86,7 @@ def run( arg ) :
             cmd = 'gwhistory %s' % ( arg['<job_id>'][ 0 ] )
         elif arg['log']:
             directory = join(
-                              DRM4G_DIR ,
-                              'var' ,
+                              DRM4G_DIR_VAR  ,
                               '%d00-%d99' % ( int(int(float(arg['<job_id>'][0]))/100) , int(int(float(arg['<job_id>'][0]))/100) ) ,
                               arg['<job_id>'][0] ,
                               'job.log'
@@ -98,8 +97,8 @@ def run( arg ) :
         else :
             cmd = 'gwkill -9 %s' % ( ' '.join( arg['<job_id>'] ) )
         out , err = exec_cmd( cmd )
-        logger.info( out )
+        console_logger.info( out )
         if err :
-            logger.info( err )
+            console_logger.info( err )
     except Exception as err :
-        logger.error( str( err ) )
+        console_logger.error( str( err ) )

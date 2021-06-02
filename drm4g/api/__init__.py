@@ -22,7 +22,7 @@ import os
 import sys
 import logging
 from os.path             import join, exists
-from drm4g               import DRM4G_DIR
+from drm4g               import DRM4G_DIR, DRM4G_DIR_VAR 
 from drm4g.utils.command import exec_cmd
 
 
@@ -325,7 +325,7 @@ class DRM4G( object ):
         @param job_id: job identifier
         @type  job_id: integer
         """
-        job_log = join( DRM4G_DIR, 'var', '%d00-%d99' % ( job_id/100, job_id/100 ), str( job_id ) , 'job.log' )
+        job_log = join(DRM4G_DIR_VAR , '%d00-%d99' % ( job_id/100, job_id/100 ), str( job_id ) , 'job.log' )
         if not exists( job_log ) :
             raise Exception( 'There is not a log available for this job.' )
         try :

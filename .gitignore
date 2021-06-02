@@ -34,3 +34,4 @@ gridway-5.8/src/drmaa/.libs/libdrmaa.so.0.0.0
 gridway-5.8/src/gwd/gwd
 gridway-5.8/src/scheduler/gw_flood_scheduler
 gridway-5.8/src/scheduler/gw_sched
+.ignore

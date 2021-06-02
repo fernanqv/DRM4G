@@ -19,8 +19,13 @@
 #
 
 import logging
-from drm4g import REMOTE_JOBS_DIR, SSH_PORT
+from drm4g import DRM4G_DIR
+from os.path import join
 
+REMOTE_JOBS_DIR = join( DRM4G_DIR , 'jobs') #TODO: TO BE DEPRECATED
+SSH_PORT = 22                               #TODO: TO BE DEPRECATED
+SSH_CONNECT_TIMEOUT = 120 # seconds          TODO: TO BE DEPRECATED
+SFTP_CONNECTIONS = 3                        #TODO: TO BE DEPRECATED
 
 logger  = logging.getLogger(__name__)
 

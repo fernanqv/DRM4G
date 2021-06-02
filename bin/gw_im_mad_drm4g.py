@@ -19,10 +19,9 @@
 # permissions and limitations under the Licence.
 #
 
-from drm4g             import DRM4G_LOGGER, DRM4G_DIR
 from drm4g.core.im_mad import GwImMad
 from optparse import OptionParser
-import sys, traceback, logging
+import sys, traceback
 
 def main():
     parser = OptionParser(description = 'Information manager MAD',
@@ -30,16 +29,12 @@ def main():
             usage = 'Usage: %prog')
     options, args = parser.parse_args()
     try:
-        try:
-            logging.config.fileConfig(DRM4G_LOGGER, {"DRM4G_DIR": DRM4G_DIR})
-        except :
-            pass
         GwImMad().processLine()
     except KeyboardInterrupt as e:
         sys.exit(-1)
     except Exception as e:
         traceback.print_exc(file=sys.stdout)
-        exit( 'Caught exception: %s: %s' % (e.__class__, str(e)) )
+        exit('Caught exception: %s: %s' % (e.__class__, str(e)))
 
 
 if __name__ == '__main__':

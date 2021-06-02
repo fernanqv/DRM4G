@@ -105,7 +105,7 @@ class GwImMad (object):
             self.logger.error( err , exc_info=1 )
         if output:
             self.message.stdout( out )
-        self.logger.debug( out , exc_info=1 )
+        self.logger.debug( out )
 
     def do_MONITOR(self, args, output=True):
         """
@@ -130,7 +130,7 @@ class GwImMad (object):
             self.logger.error( err , exc_info=1 )
         if output:
             self.message.stdout(out)
-        self.logger.debug( out , exc_info=1 )
+        self.logger.debug( out )
 
     def do_FINALIZE(self, args):
         """

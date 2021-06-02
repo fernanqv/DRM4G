@@ -22,11 +22,14 @@ import os
 import pickle
 import logging
 from drm4g.utils.importlib import import_module
-from drm4g                 import ( DRM4G_CONFIG_FILE,
-                                    COMMUNICATORS,
-                                    RESOURCE_MANAGERS,
-                                    REMOTE_JOBS_DIR,
-                                    DRM4G_DIR )
+from drm4g.communicators   import REMOTE_JOBS_DIR
+from drm4g                 import ( 
+                                  DRM4G_DIR,
+                                  DRM4G_RESOURCES_CONF,
+                                  COMMUNICATORS,
+                                  RESOURCE_MANAGERS,
+                                  )
+
 try :
     import configparser
 except ImportError :
@@ -43,23 +46,23 @@ class Configuration(object):
     """
     Configuration class provides facilities to:
 
-    * parse DRM4G_CONFIG_FILE resources
+    * parse DRM4G_RESOURCES_CONF resources
     * check key resources
     * instantiate objects such as communicators or managers
 
     """
     def __init__(self):
         self.resources  = dict()
-        if not os.path.exists( DRM4G_CONFIG_FILE ):
-            assert DRM4G_CONFIG_FILE, "resources.conf does not exist, please provide one"
-        self.init_time = os.stat( DRM4G_CONFIG_FILE ).st_mtime
+        if not os.path.exists( DRM4G_RESOURCES_CONF ):
+            assert DRM4G_RESOURCES_CONF, "resources.conf does not exist, please provide one"
+        self.init_time = os.stat( DRM4G_RESOURCES_CONF ).st_mtime
 
     def check_update(self):
         """
         It checks if DRM4G file configuration has been updated.
         """
-        if os.stat(DRM4G_CONFIG_FILE).st_mtime != self.init_time:
-            self.init_time = os.stat(DRM4G_CONFIG_FILE).st_mtime
+        if os.stat(DRM4G_RESOURCES_CONF).st_mtime != self.init_time:
+            self.init_time = os.stat(DRM4G_RESOURCES_CONF).st_mtime
             return True
         else:
             return False
@@ -68,15 +71,15 @@ class Configuration(object):
         """
         Read the configuration file.
         """
-        logger.debug("Reading file '%s' ..." % DRM4G_CONFIG_FILE)
+        logger.debug("Reading file '%s' ..." % DRM4G_RESOURCES_CONF)
         try:
             try:
-                conf_file   = open(DRM4G_CONFIG_FILE, 'r')
+                conf_file   = open(DRM4G_RESOURCES_CONF, 'r')
                 parser = configparser.RawConfigParser()
                 try:
-                    parser.readfp( conf_file , DRM4G_CONFIG_FILE )
+                    parser.readfp( conf_file , DRM4G_RESOURCES_CONF )
                 except Exception as err:
-                    output = "Configuration file '%s' is unreadable or malformed: %s" % ( DRM4G_CONFIG_FILE , str( err ) )
+                    output = "Configuration file '%s' is unreadable or malformed: %s" % ( DRM4G_RESOURCES_CONF , str( err ) )
                     logger.error( output )
 
                 for sectname in parser.sections():
@@ -115,7 +118,7 @@ class Configuration(object):
                     logger.debug("Resource '%s' defined by: %s.",
                              sectname, ', '.join([("%s=%s" % (k,v)) for k,v in sorted(self.resources[name].items())]))
             except Exception as err:
-                output = "Error reading '%s' file: %s" % (DRM4G_CONFIG_FILE, str(err))
+                output = "Error reading '%s' file: %s" % (DRM4G_RESOURCES_CONF, str(err))
                 logger.error( output )
         finally:
             conf_file.close()

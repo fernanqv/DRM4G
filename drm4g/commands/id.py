@@ -56,7 +56,7 @@ Commands:
 
 from drm4g.core.configure import Configuration
 from drm4g.commands       import Daemon, Agent, Proxy
-from drm4g                import logger
+from drm4g                import console_logger
 
 def run( arg ) :
     try :
@@ -105,4 +105,4 @@ def run( arg ) :
             if lrms == 'cream' or lrms == 'rocci' :
                 proxy.check( )
     except Exception as err :
-        logger.error( str( err ) )
+        console_logger.error( str( err ) )

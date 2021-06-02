@@ -35,9 +35,8 @@ import re
 import socket
 import drm4g.commands
 import drm4g.communicators
-from drm4g.communicators    import ComException, logger
+from drm4g.communicators    import ComException, logger, SSH_CONNECT_TIMEOUT, SFTP_CONNECTIONS
 from drm4g.utils.url        import urlparse
-from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT
 
 
 class Communicator(drm4g.communicators.Communicator):
