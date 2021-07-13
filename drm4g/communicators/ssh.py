@@ -131,7 +131,7 @@ class Communicator(drm4g.communicators.Communicator):
             else:
                 raise
 
-    def execCommand(self , command , input = None ):
+    def execCommand(self , command , input=""):
         self.connect()
         with self._lock :
             channel = self._trans.open_session()
@@ -139,10 +139,10 @@ class Communicator(drm4g.communicators.Communicator):
         channel.exec_command( command )
         if input :
             for line in input.split( ):
-                channel.makefile( 'wb' , -1 ).write( '%s\n' % line )
-                channel.makefile( 'wb' , -1 ).flush( )
-        stdout = ''.join( channel.makefile( 'rb' , -1 ).readlines( ) )
-        stderr = ''.join( channel.makefile_stderr( 'rb' , -1).readlines( ) )
+                channel.makefile( 'w').write( '%s\n' % line )
+                channel.makefile( 'w' ).flush( )
+        stdout = ''.join( channel.makefile( 'r').readlines( ) )
+        stderr = ''.join( channel.makefile_stderr( 'r').readlines( ) )
         if channel :
             channel.close( )
         return stdout , stderr
