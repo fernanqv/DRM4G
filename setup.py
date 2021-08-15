@@ -28,10 +28,11 @@ import subprocess
 import glob
 import sys
 import stat
+from pprint import pprint
 
 #To ensure a script runs with a minimal version requirement of the Python interpreter
 #assert sys.version_info >= (2,5)
-if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,3)):
+if sys.version_info<(3,6):
   exit( 'The version number of Python has to be >= 2.6 or >= 3.3' )
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -74,36 +75,44 @@ gw_files = ('bin',
       gridway_src + '/src/scheduler/gw_sched',
     ])
 
-#from pprint import pprint
 #pprint(vars(self))
 class build_ext_wrapper(build_ext):
   def run(self):
+    print("[running build_ext_wrapper.run() ...]")
+    if(self.verbose):
+      pprint(vars(self))
     build()
     build_ext.run(self)
 
 class install_wrapper(install):
   def run(self):
+    print("[running install_wrapper.run() ...]")
+    if(self.verbose):
+      pprint(vars(self))
     build()
     install.run(self)
 
 class develop_wrapper(develop):
   def run(self):
+    print("[running develop_wrapper.run() ...]")
     develop.run(self)
-    pprint(vars(self))
+    if(self.verbose):
+      pprint(vars(self))
     for filename in gw_files[1]:
       dst = os.path.join(self.script_dir, os.path.basename(filename))
       if(os.path.lexists(dst)):
         if(self.verbose):
-          print("Removing %s" % dst)
+          print("[removing %s]" % dst)
         os.remove(dst)
       src = os.path.abspath(filename)
-      if(self.verbose):
-        print("Creating symlink: %s -> %s" % (dst, src))
-      os.symlink(src,dst)
+      if(not self.uninstall):
+        if(self.verbose):
+          print("[creating symlink: %s -> %s]" % (dst, src))
+        os.symlink(src,dst)
 
 
 bin_scripts = glob.glob(os.path.join('bin', '*'))
-bin_scripts.append('LICENSE')
+#bin_scripts.append('LICENSE')
 
 # FROM: https://github.com/jbweston/miniver
 def get_version_and_cmdclass(package_name):
@@ -118,15 +127,16 @@ version, cmdclass = get_version_and_cmdclass('drm4g')
 
 setup(
   name='drm4g',
+  version=version,
+  python_requires=">=3.6",
   packages=find_packages(),
   include_package_data=True,
   package_data={'drm4g' : ['conf/*.conf', 'conf/job_template.default', 'conf/*.sh']},
   data_files = [gw_files],
-  version=version,
   author='Santander Meteorology Group (UC-CSIC)',
   author_email='antonio.cofino@unican.es',
   url='https://github.com/SantanderMetGroup/DRM4G',
-  project_url = {
+  project_urls = {
     'Documentation' : 'https://meteo.unican.es/trac/wiki/DRM4G'           ,
     'Source'        : 'https://github.com/SantanderMetGroup/DRM4G'        ,
     'Tracker'       : 'https://github.com/SantanderMetGroup/DRM4G/issues' ,
@@ -139,18 +149,18 @@ setup(
   long_description=long_description,
   long_description_content_type='text/markdown',
   classifiers=[
+    "Development Status :: 4 - Beta"
+    "Environment :: Console",
     "Intended Audience :: Science/Research",
-    "Programming Language :: Python",
+    "License :: OSI Approved :: European Union Public Licence 1.1 (EUPL 1.1)",
+    "Operating System :: POSIX",
     "Topic :: Scientific/Engineering",
     "Topic :: Office/Business :: Scheduling",
-    "Programming Language :: Python :: 2.6",
-    "Programming Language :: Python :: 2.7",
-    "Programming Language :: Python :: 3.3",
-    "Programming Language :: Python :: 3.4",
-    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python",
     "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
   ],
   install_requires=['fabric', 'docopt', 'openssh-wrapper','scp'],
   scripts=bin_scripts,
