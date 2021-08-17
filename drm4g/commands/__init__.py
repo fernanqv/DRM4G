@@ -26,6 +26,7 @@ import signal
 import getpass
 import subprocess
 import datetime
+import pprint
 
 from drm4g             import REMOTE_VOS_DIR, DRM4G_RESOURCES_CONF, DRM4G_DIR,console_logger, DRM4G_DIR_VAR
 #from drm4g.managers    import rocci
@@ -422,7 +423,7 @@ class Resource( object ):
         self.config.load()
         errors = self.config.check()
         if errors :
-            raise Exception( "Please, review your configuration file" )
+            raise Exception( "Please, review your configuration file:\n%s" % pprint.pformat(errors) )
 
 class Proxy( object ):
 

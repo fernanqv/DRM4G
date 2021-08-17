@@ -63,4 +63,7 @@ def run( arg ) :
                 resource.list()
     except Exception as err :
         console_logger.error( str( err ) )
+#TO BE UNCOMMENTED FOR TRACEBACK ERRORS
+#        import traceback, sys
+#        traceback.print_exc(file=sys.stdout)
 
