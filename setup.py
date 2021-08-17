@@ -36,7 +36,7 @@ if sys.version_info<(3,6):
   exit( 'The version number of Python has to be >= 2.6 or >= 3.3' )
 
 here = os.path.abspath(os.path.dirname(__file__))
-gridway_src=os.path.join( here, "gridway-5.8")
+gridway_src = "gridway-5.8"
   
 # read the contents of your README file
 with open(os.path.join(here, 'README'), encoding='utf-8') as f:
