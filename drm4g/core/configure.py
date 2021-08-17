@@ -240,7 +240,7 @@ class Configuration(object):
         communicators = dict()
         for name, resdict in list(self.resources.items()):
             try:
-                communicator              = _import_manager(COMMUNICATORS, resdict[ 'communicator' ] )
+                communicator              = self._import_manager(COMMUNICATORS, resdict[ 'communicator' ] )
                 com_object                = getattr( communicator , 'Communicator' ) ()
                 com_object.username       = resdict.get( 'username' )
                 com_object.frontend       = resdict.get( 'frontend' )
@@ -265,7 +265,7 @@ class Configuration(object):
         for name, resdict in list(self.resources.items()):
             try:
                 resources[name]             = dict()
-                manager                     = _import_manager(RESOURCE_MANAGERS, resdict[ 'lrms' ] )
+                manager                     = self._import_manager(RESOURCE_MANAGERS, resdict[ 'lrms' ] )
                 resource_object             = getattr( manager , 'Resource' ) ()
                 resource_object.name        = name
                 resource_object.features    = resdict
