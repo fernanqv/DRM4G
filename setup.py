@@ -51,29 +51,53 @@ def build():
   if(not os.path.isfile('config.log') or os.path.getmtime('config.log') <= os.path.getmtime('configure') ):
     st = os.stat('configure')
     os.chmod('configure', st.st_mode | stat.S_IEXEC)
-    exit_code = subprocess.call('./configure', shell=True)
+    os.makedirs('build',exist_ok=True)
+    buildPath = os.path.abspath('build')
+    exit_code = subprocess.call('./configure --prefix="%s"' % buildPath, shell=True)
     if exit_code:
       raise Exception("Configure failed - check config.log for more detailed information")
   
   exit_code = subprocess.call('make', shell=True)
   if exit_code:
     raise Exception("make failed")
+  exit_code = subprocess.call('make install', shell=True)
+  if exit_code:
+    raise Exception("make install failed")
+  exit_code = subprocess.call('make clean', shell=True)
+  if exit_code:
+    raise Exception("make clean failed")
   os.chdir( current_path )
 
 gw_files = ('bin',
     [
-      gridway_src + '/src/cmds/gwuser',
-      gridway_src + '/src/cmds/gwacct',
-      gridway_src + '/src/cmds/gwwait',
-      gridway_src + '/src/cmds/gwhost',
-      gridway_src + '/src/cmds/gwhistory',
-      gridway_src + '/src/cmds/gwsubmit',
-      gridway_src + '/src/cmds/gwps',
-      gridway_src + '/src/cmds/gwkill',
-      gridway_src + '/src/gwd/gwd',
-      gridway_src + '/src/scheduler/gw_flood_scheduler',
-      gridway_src + '/src/scheduler/gw_sched',
+      gridway_src + '/build/bin/gwuser',
+      gridway_src + '/build/bin/gwacct',
+      gridway_src + '/build/bin/gwwait',
+      gridway_src + '/build/bin/gwhost',
+      gridway_src + '/build/bin/gwhistory',
+      gridway_src + '/build/bin/gwsubmit',
+      gridway_src + '/build/bin/gwps',
+      gridway_src + '/build/bin/gwkill',
+      gridway_src + '/build/bin/gwd',
+      gridway_src + '/build/bin/gw_flood_scheduler',
+      gridway_src + '/build/bin/gw_sched',
     ])
+
+#OLD WAY
+#gw_files = ('bin',
+#    [
+#      gridway_src + '/src/cmds/gwuser',
+#      gridway_src + '/src/cmds/gwacct',
+#      gridway_src + '/src/cmds/gwwait',
+#      gridway_src + '/src/cmds/gwhost',
+#      gridway_src + '/src/cmds/gwhistory',
+#      gridway_src + '/src/cmds/gwsubmit',
+#      gridway_src + '/src/cmds/gwps',
+#      gridway_src + '/src/cmds/gwkill',
+#      gridway_src + '/src/gwd/gwd',
+#      gridway_src + '/src/scheduler/gw_flood_scheduler',
+#      gridway_src + '/src/scheduler/gw_sched',
+#    ])
 
 #pprint(vars(self))
 class build_ext_wrapper(build_ext):
