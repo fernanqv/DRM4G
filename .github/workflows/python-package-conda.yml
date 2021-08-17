@@ -51,14 +51,14 @@ jobs:
 #        conda install pytest
 #        pytest
 
-    - run: drm4g start
-    - run: drm4g resource
+    - run: SHELL=/bin/sh drm4g start
+    - run: SHELL=/bin/sh drm4g resource
     - run: echo "EXECUTABLE=/bin/date" > date.job
     - run: sleep 10
-    - run: drm4g job submit date.job
-    - run: drm4g resource
+    - run: SHELL=/bin/sh drm4g job submit date.job
+    - run: SHELL=/bin/sh drm4g resource
     - run: sleep 10
-    - run: drm4g job list 0    
+    - run: SHELL=/bin/sh drm4g job list 0    
     - run: sleep 50
-    - run: drm4g job list 0 
+    - run: SHELL=/bin/sh drm4g job list 0 
     - run: cat stdout.0
