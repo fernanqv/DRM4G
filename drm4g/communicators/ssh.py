@@ -35,9 +35,11 @@ import re
 import socket
 import drm4g.commands
 import drm4g.communicators
-from drm4g.communicators    import ComException, logger, SSH_CONNECT_TIMEOUT, SFTP_CONNECTIONS
+from drm4g.communicators    import ComException, SSH_CONNECT_TIMEOUT, SFTP_CONNECTIONS
 from drm4g.utils.url        import urlparse
 
+import logging
+logger  = logging.getLogger(__name__)
 
 class Communicator(drm4g.communicators.Communicator):
     """
@@ -166,13 +168,14 @@ class Communicator(drm4g.communicators.Communicator):
             if 'file://' in source_url :
                 from_dir = urlparse( source_url ).path
                 to_dir   = self._set_dir( urlparse( destination_url ).path )
+                logger.debug( "Putting '%s' -> '%s'" %  (from_dir, to_dir  ))
                 scp.put( from_dir , to_dir )
                 if execution_mode == 'X':
                     stdout, stderr = self.execCommand( "chmod +x %s" % to_dir )
             else:
                 from_dir = self._set_dir( urlparse( source_url ).path )
                 to_dir   = urlparse(destination_url).path
-                logger.warning( "%s , %s" %  (from_dir, to_dir  ))
+                logger.debug( "Getting '%s' -> '%s'" %  (from_dir, to_dir  ))
                 scp.get( from_dir, to_dir )
 
 

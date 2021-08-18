@@ -26,9 +26,11 @@ import re
 import socket
 import drm4g.commands
 import drm4g.communicators
-from drm4g.communicators    import ComException, logger, SFTP_CONNECTIONS
+from drm4g.communicators    import ComException, SFTP_CONNECTIONS
 from drm4g.utils.url        import urlparse
 
+import logging
+logger  = logging.getLogger(__name__)
 
 class Communicator(drm4g.communicators.Communicator):
     """

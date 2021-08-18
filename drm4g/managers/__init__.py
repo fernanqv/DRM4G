@@ -22,11 +22,12 @@ import sys
 import xml.dom.minidom
 import os
 import subprocess
-import logging
 import pickle
 
 
-logger = logging.getLogger(__name__)
+import logging
+logger  = logging.getLogger(__name__)
+
 
 def totalCores( cores ):
     return sum( [ int( core ) for core in cores.split( ',' ) ] )

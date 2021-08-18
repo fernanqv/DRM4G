@@ -22,12 +22,11 @@ import sys
 import subprocess
 import os
 import re
-import logging
 import drm4g.communicators
 from drm4g.communicators import ComException
 from drm4g.utils.url     import urlparse
 
-
+import logging
 logger  = logging.getLogger(__name__)
 
 import stat

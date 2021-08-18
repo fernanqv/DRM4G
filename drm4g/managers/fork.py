@@ -21,6 +21,9 @@
 import drm4g.managers
 from string import Template
 
+import logging
+logger  = logging.getLogger(__name__)
+
 
 SH = '/bin/bash'
 
