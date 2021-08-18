@@ -100,6 +100,16 @@ class Communicator(object):
         """
         pass
 
+    def checkoutLock(self, destination_url):
+        """
+        Check if URL it's locked. 
+
+        @param destination_url: url of the directory/file to check
+        @type destination_url: string
+        """
+        pass
+
+
     def close(self):
         """
         Close the connection.

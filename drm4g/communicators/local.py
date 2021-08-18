@@ -90,7 +90,7 @@ class Communicator(drm4g.communicators.Communicator):
             logger.error( output )
             raise ComException( output )
 
-    def checkOutLock(self, url):
+    def checkoutLock(self, url):
         to_dir = self._set_dir(urlparse(url).path)
         return os.path.isfile( '%s/.lock' % to_dir )
 
