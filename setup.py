@@ -42,6 +42,7 @@ gridway_src = "gridway-5.8"
 with open(os.path.join(here, 'README'), encoding='utf-8') as f:
   long_description = f.read()
 
+MAKE_CLEAN = False
 def build():
   current_path = os.getcwd()
   if not os.path.exists(gridway_src) :
@@ -63,9 +64,10 @@ def build():
   exit_code = subprocess.call('make install', shell=True)
   if exit_code:
     raise Exception("make install failed")
-  exit_code = subprocess.call('make clean', shell=True)
-  if exit_code:
-    raise Exception("make clean failed")
+  if MAKE_CLEAN:
+    exit_code = subprocess.call('make clean', shell=True)
+    if exit_code:
+      raise Exception("make clean failed")
   os.chdir( current_path )
 
 gw_files = ('bin',
