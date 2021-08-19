@@ -156,7 +156,7 @@ class GwTmMad (object):
                 com.rmDirectory(SRC_URL)
                 out = 'RMDIR %s - SUCCESS -' % (JID)
             else:
-                out = 'RMDIR %s ignored because lock exists - SUCCESS -' % (JID)
+                out = 'RMDIR %s - FAILURE Directory "%s" is locked' % (JID, SRC_URL)
         except Exception as err :
             out = 'RMDIR %s - FAILURE %s' % ( JID , str( err ) )
             self.logger.error( err , exc_info=1 )
