@@ -58,7 +58,7 @@ if exists( DRM4G_DIR ) is False  :
     logging.warning( "Creating '%s' directory" % acct_dir )
     os.makedirs( acct_dir )
     src_dir  = join ( abspath( dirname( __file__ ) ), 'conf' )
-    logging.warning( "Coping from '%s' to '%s'" % ( src_dir , DRM4G_DIR_ETC ) )
+    logging.warning( "Copying from '%s' to '%s'" % ( src_dir , DRM4G_DIR_ETC ) )
     copytree( src_dir , DRM4G_DIR_ETC )
 
 ##
