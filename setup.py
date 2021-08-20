@@ -32,7 +32,7 @@ from pprint import pprint
 
 #To ensure a script runs with a minimal version requirement of the Python interpreter
 #assert sys.version_info >= (2,5)
-if sys.version_info<(3,6):
+if sys.version_info<(3,5):
   exit( 'The version number of Python has to be >= 2.6 or >= 3.3' )
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -154,7 +154,7 @@ version, cmdclass = get_version_and_cmdclass('drm4g')
 setup(
   name='drm4g',
   version=version,
-  python_requires=">=3.6",
+  python_requires=">=3.5",
   packages=find_packages(),
   include_package_data=True,
   package_data={'drm4g' : ['conf/*.conf', 'conf/job_template.default', 'conf/*.sh']},
