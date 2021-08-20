@@ -228,7 +228,7 @@ class GwEmMad (object):
             else:
                 out = 'CANCEL %s FAILURE Job not submitted' % (JID)
         except Exception as err:
-            out = 'CANCEL %s FAILURE %s' % ( JID, str(e) )
+            out = 'CANCEL %s FAILURE %s' % ( JID, str(err) )
             self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
         self.logger.debug( out )
