@@ -69,7 +69,7 @@ class Communicator(drm4g.communicators.Communicator):
                             status_ssh_agent = agent._conn
                         except Exception as err :
                             logger.warning( "Probably you are using paramiko version <= 1.7.7.2 : %s " % err )
-                            status_ssh_agent = agent.conn
+                            status_ssh_agent = agent._conn
                         if not status_ssh_agent:
                             logger.warning( "'ssh-agent' is not running" )
                         else:
