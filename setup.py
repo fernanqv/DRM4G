@@ -21,183 +21,189 @@
 from setuptools import setup
 from setuptools import find_packages
 from setuptools.command.install import install
-from os import path
+from setuptools.command.build_ext import build_ext
+from setuptools.command.develop import develop
 import os
 import subprocess
 import glob
 import sys
-import ast
-import drm4g
+import stat
+from pprint import pprint
 
 #To ensure a script runs with a minimal version requirement of the Python interpreter
 #assert sys.version_info >= (2,5)
-if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,3)):
-    exit( 'The version number of Python has to be >= 2.6 or >= 3.3' )
+if sys.version_info<(3,5):
+  exit( 'The version number of Python has to be >= 3.5' )
 
-try: 
-    input = raw_input
-except NameError:
-    pass
-
-here = path.abspath(path.dirname(__file__))
-python_ver=sys.version[:3]
-user_shell=os.environ['SHELL']
-lib_dir=''
-path_dir=''
-
-#I consider bash a special case because of what is said here http://superuser.com/questions/49289/what-is-the-bashrc-file
-if 'bash' in user_shell:
-    user_shell='.bashrc'
-else:
-    user_shell='.profile' #maybe for zsh it should be ~/.zprofile
-
+here = os.path.abspath(os.path.dirname(__file__))
+gridway_src = "gridway-5.8"
+  
 # read the contents of your README file
-with open(path.join(here, 'README'), encoding='utf-8') as f:
-    long_description = f.read()
+with open(os.path.join(here, 'README'), encoding='utf-8') as f:
+  long_description = f.read()
 
-def yes_no_choice( message,  default = 'y') :
-    """
-    Ask for Yes/No questions
-    """
-    choices = 'y/n' if default.lower() in ( 'y', 'yes' ) else 'y/N'
-    values = ( 'y', 'yes', 'n', 'no' )
-    choice = ''
-    while not choice.strip().lower() in values:
-        choice = input("{} ({}) \n".format(message, choices))
-    return choice.strip().lower()
+MAKE_CLEAN = False
+def build():
+  current_path = os.getcwd()
+  if not os.path.exists(gridway_src) :
+      raise Exception("The specified directory %s doesn't exist" % gridway_src)
+  
+  #setting same mtime to gridway sources
+  mtime_ref = os.path.getmtime(gridway_src)
+  for root, dirs, files in os.walk(gridway_src):
+    for name in files + dirs:
+      os.utime(os.path.join(root, name), (mtime_ref, mtime_ref))
+  os.utime(gridway_src, (mtime_ref, mtime_ref))
+  #
 
-class Builder(object):
+  os.chdir( gridway_src )
+  #to avoid re-run configure each time.
+  if(not os.path.isfile('config.log') or os.path.getmtime('config.log') <= os.path.getmtime('configure') ):
+    st = os.stat('configure')
+    os.chmod('configure', st.st_mode | stat.S_IEXEC)
+    os.makedirs('build',exist_ok=True)
+    buildPath = os.path.abspath('build')
+    exit_code = subprocess.call('./configure --prefix="%s"' % buildPath, shell=True)
+    if exit_code:
+      raise Exception("Configure failed - check config.log for more detailed information")
+  
+  exit_code = subprocess.call('make', shell=True)
+  if exit_code:
+    raise Exception("make failed")
+  exit_code = subprocess.call('make install', shell=True)
+  if exit_code:
+    raise Exception("make install failed")
+  if MAKE_CLEAN:
+    exit_code = subprocess.call('make clean', shell=True)
+    if exit_code:
+      raise Exception("make clean failed")
+  os.chdir( current_path )
 
-    export_dir=sys.prefix
-    prefix_directory=''
-    arguments=str(sys.argv)
-    arguments=ast.literal_eval(arguments) #convert from string to list
+gw_files = ('bin',
+    [
+      gridway_src + '/build/bin/gwuser',
+      gridway_src + '/build/bin/gwacct',
+      gridway_src + '/build/bin/gwwait',
+      gridway_src + '/build/bin/gwhost',
+      gridway_src + '/build/bin/gwhistory',
+      gridway_src + '/build/bin/gwsubmit',
+      gridway_src + '/build/bin/gwps',
+      gridway_src + '/build/bin/gwkill',
+      gridway_src + '/build/bin/gwd',
+      gridway_src + '/build/bin/gw_flood_scheduler',
+      gridway_src + '/build/bin/gw_sched',
+    ])
 
-    def call(self, cmd):
-        return subprocess.call(cmd, shell=True)
+#OLD WAY
+#gw_files = ('bin',
+#    [
+#      gridway_src + '/src/cmds/gwuser',
+#      gridway_src + '/src/cmds/gwacct',
+#      gridway_src + '/src/cmds/gwwait',
+#      gridway_src + '/src/cmds/gwhost',
+#      gridway_src + '/src/cmds/gwhistory',
+#      gridway_src + '/src/cmds/gwsubmit',
+#      gridway_src + '/src/cmds/gwps',
+#      gridway_src + '/src/cmds/gwkill',
+#      gridway_src + '/src/gwd/gwd',
+#      gridway_src + '/src/scheduler/gw_flood_scheduler',
+#      gridway_src + '/src/scheduler/gw_sched',
+#    ])
 
-    def prefix_option(self):
-        #Going through the whole list since the options can be defined in different ways (--prefix=dir> or --prefix <dir>)
-        #Which is why I'm not using self.arguments.index('--prefix') to find it, since it doesn't check if it's a substring
-        #Could also do it with a while and make it stop if it finds '--prefix' or '--home'
-        for i in range(len(self.arguments)):
-            option=self.arguments[i]
-            #folder name can't contain '--prefix' or '--home'
-            if '--prefix' in option or '--home' in option:
-                #I'm working under the impression that the path passed on to prefix has to be an absolute path
-                #for the moment, if you use a relative path, gridway's binary files will be copied to a directory relative to where ./gridway-5.8 is
-                if '=' in option:
-                    self.export_dir=option[option.find('=')+1:]
-                    self.prefix_directory='--prefix '+self.export_dir
-                else:
-                    self.export_dir=self.arguments[i+1]
-                    self.prefix_directory='--prefix '+self.export_dir
+#pprint(vars(self))
+class build_ext_wrapper(build_ext):
+  def run(self):
+    print("[running build_ext_wrapper.run() ...]")
+    if(self.verbose):
+      pprint(vars(self))
+    build()
+    build_ext.run(self)
 
-                global lib_dir
-                global path_dir
-                if '--prefix' in option:
-                    lib_dir=os.path.join(self.export_dir,'lib/python{}/site-packages'.format(python_ver))
-                elif '--home' in option:
-                    lib_dir=os.path.join(self.export_dir,'lib/python')
+class install_wrapper(install):
+  def run(self):
+    print("[running install_wrapper.run() ...]")
+    if(self.verbose):
+      pprint(vars(self))
+    build()
+    install.run(self)
 
-                path_dir=os.path.join(self.export_dir,'bin')
-
-                try:
-                    os.makedirs(lib_dir)
-                except OSError:
-                    print('\nDirectory {} already exists'.format(lib_dir))
-
-                message="\nWe are about to modify your {} file.\n" \
-                    "If we don't you'll have to define the environment variables PATH and PYTHONPATH" \
-                    " or access your installation directory everytime you wish to execute DRM4G.\n" \
-                    "Should we proceed?".format(user_shell)
-
-                ans=yes_no_choice(message)
-                if ans[0]=='y':
-                    line_exists=False
-                    home=os.path.expanduser('~') #to ensure that it will find $HOME directory in all platforms
-                    python_export_line='export PYTHONPATH={}:$PYTHONPATH'.format(lib_dir)
-                    path_export_line='export PATH={}:$PATH'.format(path_dir)
-
-                    with open('{}/{}'.format(home,user_shell),'r') as f:
-                        for i in f.readlines():
-                            if python_export_line in i:
-                                line_exists=True
-
-                    if not line_exists :
-                        with open('{}/{}'.format(home,user_shell),'a') as f:
-                            f.write('\n'+python_export_line+'\n'+path_export_line+'\n')
-
-    def build(self):
-        gridway=path.join( here, "gridway-5.8")
-        current_path = os.getcwd()
-
-        self.prefix_option()
-        
-        if not path.exists(gridway) :
-            raise Exception("The specified directory %s doesn't exist" % gridway)
-
-        os.chdir( gridway )
-
-        exit_code = self.call( 'chmod +x ./configure && ./configure' )
-        if exit_code:
-            raise Exception("Configure failed - check config.log for more detailed information")
-        
-        exit_code = self.call('make')
-        if exit_code:
-            raise Exception("make failed")
-
-        os.chdir( current_path )
+class develop_wrapper(develop):
+  def run(self):
+    print("[running develop_wrapper.run() ...]")
+    develop.run(self)
+    if(self.verbose):
+      pprint(vars(self))
+    for filename in gw_files[1]:
+      dst = os.path.join(self.script_dir, os.path.basename(filename))
+      if(os.path.lexists(dst)):
+        if(self.verbose):
+          print("[removing %s]" % dst)
+        os.remove(dst)
+      src = os.path.abspath(filename)
+      if(not self.uninstall):
+        if(self.verbose):
+          print("[creating symlink: %s -> %s]" % (dst, src))
+        os.symlink(src,dst)
 
 
-class build_wrapper(install):
-    def run(self):
-        Builder().build()
-        install.run(self)
+bin_scripts = glob.glob(os.path.join('bin', '*'))
+#bin_scripts.append('LICENSE')
 
-bin_scripts= glob.glob(os.path.join('bin', '*'))
-bin_scripts.append('LICENSE')
+# FROM: https://github.com/jbweston/miniver
+def get_version_and_cmdclass(package_name):
+    import os
+    from importlib.util import module_from_spec, spec_from_file_location
+    spec = spec_from_file_location('version',
+                                   os.path.join(package_name, '_version.py'))
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.__version__, module.cmdclass
+version, cmdclass = get_version_and_cmdclass('drm4g')
 
 setup(
-    name='drm4g',
-    packages=find_packages(),
-    include_package_data=True,
-    package_data={'drm4g' : ['conf/*.conf', 'conf/job_template.default', 'conf/*.sh']},
-    data_files=[('bin', [
-        'gridway-5.8/src/cmds/gwuser', 'gridway-5.8/src/cmds/gwacct', 'gridway-5.8/src/cmds/gwwait', 
-        'gridway-5.8/src/cmds/gwhost', 'gridway-5.8/src/cmds/gwhistory', 'gridway-5.8/src/cmds/gwsubmit', 
-        'gridway-5.8/src/cmds/gwps', 'gridway-5.8/src/cmds/gwkill', 'gridway-5.8/src/gwd/gwd', 
-        'gridway-5.8/src/scheduler/gw_flood_scheduler', 'gridway-5.8/src/scheduler/gw_sched'])],
-    version=drm4g.__version__,
-    author='Santander Meteorology Group (UC-CSIC)',
-    author_email='antonio.cofino@unican.es',
-    url='https://meteo.unican.es/trac/wiki/DRM4G',
-    license='European Union Public License 1.1',
-    description='DRM4G is an open platform for DCIs.',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    classifiers=[
-        "Intended Audience :: Science/Research",
-        "Programming Language :: Python",
-        "Topic :: Scientific/Engineering",
-        "Topic :: Office/Business :: Scheduling",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-    ],
-    install_requires=['fabric', 'docopt', 'openssh-wrapper'],
-    scripts=bin_scripts,
-    cmdclass={
-        'install': build_wrapper,
-    },
-)
+  name='drm4g',
+  version=version,
+  python_requires=">=3.5",
+  packages=find_packages(),
+  include_package_data=True,
+  package_data={'drm4g' : ['conf/*.conf', 'conf/job_template.default', 'conf/*.sh']},
+  data_files = [gw_files],
+  author='Santander Meteorology Group (UC-CSIC)',
+  author_email='antonio.cofino@unican.es',
+  url='https://github.com/SantanderMetGroup/DRM4G',
+  project_urls = {
+    'Documentation' : 'https://meteo.unican.es/trac/wiki/DRM4G'           ,
+    'Source'        : 'https://github.com/SantanderMetGroup/DRM4G'        ,
+    'Tracker'       : 'https://github.com/SantanderMetGroup/DRM4G/issues' ,
+    'Download'      : 'https://pypi.org/project/drm4g/#files'             , 
+    'Twitter'       : 'https://twitter.com/SantanderMeteo'
 
-if lib_dir:
-    print('\n\033[93mTo finish with the installation, you have to add the following paths to your $PYTHONPATH and $PATH:\e[0m\n' \
-        '    export PYTHONPATH={}:$PYTHONPATH\n' \
-        '    export PATH={}:$PATH\033[0m'.format(lib_dir,path_dir))
+  },
+  license='European Union Public License 1.1',
+  description='Meta-scheduling framework for distributed computing infrastructures',
+  long_description=long_description,
+  long_description_content_type='text/markdown',
+  classifiers=[
+    "Development Status :: 4 - Beta"
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: European Union Public Licence 1.1 (EUPL 1.1)",
+    "Operating System :: POSIX",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Office/Business :: Scheduling",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+  ],
+  install_requires=['fabric', 'docopt', 'openssh-wrapper','scp'],
+  scripts=bin_scripts,
+  cmdclass={
+    'build_ext' : build_ext_wrapper,
+    'install'   : install_wrapper,
+    'develop'   : develop_wrapper,
+    'sdist'     : cmdclass['sdist'],
+    'build_py'  : cmdclass['build_py'],
+  },
+)

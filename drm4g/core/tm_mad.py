@@ -141,7 +141,7 @@ class GwTmMad (object):
             out = 'MKDIR %s - FAILURE %s' % ( JID , str( err ) )
             self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
-        self.logger.debug( out , exc_info=1 )
+        self.logger.debug( out )
 
     def do_RMDIR(self, args):
         """
@@ -152,16 +152,16 @@ class GwTmMad (object):
         OPERATION, JID, TID, EXE_MODE, SRC_URL, DST_URL = args.split()
         try:
             com = self._update_com( urlparse( SRC_URL ).host )
-            if not self.checkOutLock(SRC_URL):
+            if not com.checkoutLock(SRC_URL):
                 com.rmDirectory(SRC_URL)
                 out = 'RMDIR %s - SUCCESS -' % (JID)
             else:
-                out = 'RMDIR %s ignored because lock exists - SUCCESS -' % (JID)
+                out = 'RMDIR %s - FAILURE Directory "%s" is locked' % (JID, SRC_URL)
         except Exception as err :
             out = 'RMDIR %s - FAILURE %s' % ( JID , str( err ) )
             self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
-        self.logger.debug( out, exc_info=1 )
+        self.logger.debug( out )
 
     def do_CP(self, args):
         """
@@ -183,7 +183,7 @@ class GwTmMad (object):
             out = 'CP %s %s FAILURE %s' % ( JID , TID , str( err ) )
             self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
-        self.logger.debug(out , exc_info=1 )
+        self.logger.debug(out)
 
     methods = {'INIT'    : do_INIT,
                'START'   : do_START,

@@ -22,12 +22,11 @@ import sys
 import subprocess
 import os
 import re
-import logging
 import drm4g.communicators
 from drm4g.communicators import ComException
 from drm4g.utils.url     import urlparse
 
-
+import logging
 logger  = logging.getLogger(__name__)
 
 import stat
@@ -90,7 +89,7 @@ class Communicator(drm4g.communicators.Communicator):
             logger.error( output )
             raise ComException( output )
 
-    def checkOutLock(self, url):
+    def checkoutLock(self, url):
         to_dir = self._set_dir(urlparse(url).path)
         return os.path.isfile( '%s/.lock' % to_dir )
 

@@ -43,12 +43,10 @@ Host field information:
     MAXQ          Max. queued jobs.
 """
 
-from drm4g                import logger
+from drm4g                import console_logger
 from drm4g.commands       import exec_cmd, Daemon
 
 def run( arg ):
-    #if arg[ '--dbg' ] :
-    #    logger.setLevel(logging.DEBUG)
     try :
         daemon = Daemon()
         if not daemon.is_alive() :
@@ -57,9 +55,9 @@ def run( arg ):
         if arg[ '<hid>' ] :
             cmd = cmd + arg[ '<hid>' ]
         out , err = exec_cmd( cmd )
-        logger.info( out )
+        console_logger.info( out )
         if err :
-            logger.info( err )
+            console_logger.info( err )
     except Exception as err :
-        logger.error( str( err ) )
+        console_logger.error( str( err ) )
 

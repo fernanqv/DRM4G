@@ -19,10 +19,9 @@
 # permissions and limitations under the Licence.
 #
 
-from drm4g             import DRM4G_LOGGER, DRM4G_DIR
 from drm4g.core.tm_mad import GwTmMad
 from optparse import OptionParser
-import sys, traceback, logging
+import sys, traceback
 
 def main():
     parser = OptionParser(description = 'Transfer manager MAD',
@@ -30,10 +29,6 @@ def main():
             usage = 'Usage: %prog')
     options, args = parser.parse_args()
     try:
-        try:
-            logging.config.fileConfig(DRM4G_LOGGER, {"DRM4G_DIR": DRM4G_DIR})
-        except :
-            pass
         GwTmMad().processLine()
     except KeyboardInterrupt as e:
         sys.exit(-1)

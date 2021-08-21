@@ -23,7 +23,7 @@ import time
 import threading
 import logging
 from os.path                 import join, dirname
-from drm4g                   import REMOTE_JOBS_DIR
+from drm4g.communicators     import REMOTE_JOBS_DIR
 from drm4g.utils.rsl2        import Rsl2Parser
 from drm4g.utils.list        import List
 from drm4g.core.configure    import Configuration
@@ -135,7 +135,7 @@ class GwEmMad (object):
             out = 'SUBMIT %s FAILURE %s' % ( JID, str( err ) )
             self.logger.error( err , exc_info=1 )
         self.message.stdout(out)
-        self.logger.debug(out, exc_info=1 )
+        self.logger.debug(out)
 
     def do_FINALIZE(self, args):
         """
@@ -187,7 +187,7 @@ class GwEmMad (object):
             out = 'RECOVER %s FAILURE %s' % ( JID, str( err ) )
             self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
-        self.logger.debug( out, exc_info=1 )
+        self.logger.debug( out )
 
     def do_CALLBACK(self):
         """
@@ -228,7 +228,7 @@ class GwEmMad (object):
             else:
                 out = 'CANCEL %s FAILURE Job not submitted' % (JID)
         except Exception as err:
-            out = 'CANCEL %s FAILURE %s' % ( JID, str(e) )
+            out = 'CANCEL %s FAILURE %s' % ( JID, str(err) )
             self.logger.error( err , exc_info=1 )
         self.message.stdout( out )
         self.logger.debug( out )

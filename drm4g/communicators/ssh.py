@@ -35,10 +35,11 @@ import re
 import socket
 import drm4g.commands
 import drm4g.communicators
-from drm4g.communicators    import ComException, logger
+from drm4g.communicators    import ComException, SSH_CONNECT_TIMEOUT, SFTP_CONNECTIONS
 from drm4g.utils.url        import urlparse
-from drm4g                  import SFTP_CONNECTIONS, SSH_CONNECT_TIMEOUT
 
+import logging
+logger  = logging.getLogger(__name__)
 
 class Communicator(drm4g.communicators.Communicator):
     """
@@ -68,7 +69,7 @@ class Communicator(drm4g.communicators.Communicator):
                             status_ssh_agent = agent._conn
                         except Exception as err :
                             logger.warning( "Probably you are using paramiko version <= 1.7.7.2 : %s " % err )
-                            status_ssh_agent = agent.conn
+                            status_ssh_agent = agent._conn
                         if not status_ssh_agent:
                             logger.warning( "'ssh-agent' is not running" )
                         else:
@@ -132,7 +133,7 @@ class Communicator(drm4g.communicators.Communicator):
             else:
                 raise
 
-    def execCommand(self , command , input = None ):
+    def execCommand(self , command , input=""):
         self.connect()
         with self._lock :
             channel = self._trans.open_session()
@@ -140,10 +141,10 @@ class Communicator(drm4g.communicators.Communicator):
         channel.exec_command( command )
         if input :
             for line in input.split( ):
-                channel.makefile( 'wb' , -1 ).write( '%s\n' % line )
-                channel.makefile( 'wb' , -1 ).flush( )
-        stdout = ''.join( channel.makefile( 'rb' , -1 ).readlines( ) )
-        stderr = ''.join( channel.makefile_stderr( 'rb' , -1).readlines( ) )
+                channel.makefile( 'w').write( '%s\n' % line )
+                channel.makefile( 'w' ).flush( )
+        stdout = ''.join( channel.makefile( 'r').readlines( ) )
+        stderr = ''.join( channel.makefile_stderr( 'r').readlines( ) )
         if channel :
             channel.close( )
         return stdout , stderr
@@ -167,13 +168,14 @@ class Communicator(drm4g.communicators.Communicator):
             if 'file://' in source_url :
                 from_dir = urlparse( source_url ).path
                 to_dir   = self._set_dir( urlparse( destination_url ).path )
+                logger.debug( "Putting '%s' -> '%s'" %  (from_dir, to_dir  ))
                 scp.put( from_dir , to_dir )
                 if execution_mode == 'X':
                     stdout, stderr = self.execCommand( "chmod +x %s" % to_dir )
             else:
                 from_dir = self._set_dir( urlparse( source_url ).path )
                 to_dir   = urlparse(destination_url).path
-                logger.warning( "%s , %s" %  (from_dir, to_dir  ))
+                logger.debug( "Getting '%s' -> '%s'" %  (from_dir, to_dir  ))
                 scp.get( from_dir, to_dir )
 
 

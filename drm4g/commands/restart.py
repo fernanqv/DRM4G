@@ -29,7 +29,7 @@ Options:
 """
 
 #from time                 import sleep
-from drm4g                import logger
+from drm4g                import console_logger
 from drm4g.commands       import Daemon
 
 def run( arg ) :
@@ -39,5 +39,5 @@ def run( arg ) :
         #sleep( 2.0 )
         daemon.start()
     except Exception as err :
-        logger.error( str( err ) )
+        console_logger.error( str( err ) )
 

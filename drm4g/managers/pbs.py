@@ -22,6 +22,8 @@ import re
 import drm4g.managers
 from string import Template
 
+import logging
+logger  = logging.getLogger(__name__)
 
 # The programs needed by these utilities. If they are not in a location
 # accessible by PATH, specify their location here.
@@ -36,9 +38,9 @@ class Resource (drm4g.managers.Resource):
         out, err = self.Communicator.execCommand('%s -q %s' % (QSTAT, queue.Name))
         #output line --> Queue Memory CPU_Time Walltime Node Run Que Lm State
         try:
-            queueName, _, cpuTime, wallTime, _, _, _, lm = val.split()[0:8]
+            queueName, _, cpuTime, wallTime, _, _, _, lm = out.splitlines()[5].split()[0:8]
         except:
-            pass
+            logger.warning("Error parsing qstat: %s " % out)
         else:
             reTime = re.compile(r'(\d+):(\d+):\d+')
             if cpuTime != '--':

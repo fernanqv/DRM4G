@@ -1,5 +1,5 @@
 DRM4G is an open platform, based on GridWay, to define, submit,
-and manage computational jobs. DRM4G is a Python (2.6+, 3.3+)
+and manage computational jobs. DRM4G is a Python (3.5+)
 implementation that provides a single point of control for computing
 resources without installing any intermediate middlewares. As a result,
 a user is able to run the same job on laptops, desktops, workstations,

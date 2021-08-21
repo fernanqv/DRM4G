@@ -27,7 +27,7 @@ import drm4g.managers
 import drm4g.managers.fork
 from utils                  import load_json
 from os.path                import exists, join
-from drm4g                  import DRM4G_DIR, DRM4G_LOGGER, RESOURCE_MANAGERS
+from drm4g                  import DRM4G_DIR, DRM4G_LOGGER_CONF, RESOURCE_MANAGERS
 from drm4g.utils.importlib  import import_module
 try:
     from configparser       import SafeConfigParser
