@@ -33,8 +33,8 @@ import logging
 from os.path import dirname , join , expanduser , exists , abspath
 from  shutil import copytree
 
-if (sys.version_info[0]==2 and sys.version_info<=(2,5)) or (sys.version_info[0]==3 and sys.version_info<(3,3)):
-    exit( 'The version number of Python has to be >= 2.6 or >= 3.3' )
+if sys.version_info<(3,5):
+    exit( 'The version number of Python has to be >= 3.5' )
 
 ##############################################
 # Default values used in DRM4G ENV variables #

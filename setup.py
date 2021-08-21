@@ -33,7 +33,7 @@ from pprint import pprint
 #To ensure a script runs with a minimal version requirement of the Python interpreter
 #assert sys.version_info >= (2,5)
 if sys.version_info<(3,5):
-  exit( 'The version number of Python has to be >= 2.6 or >= 3.3' )
+  exit( 'The version number of Python has to be >= 3.5' )
 
 here = os.path.abspath(os.path.dirname(__file__))
 gridway_src = "gridway-5.8"
