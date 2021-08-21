@@ -47,6 +47,15 @@ def build():
   current_path = os.getcwd()
   if not os.path.exists(gridway_src) :
       raise Exception("The specified directory %s doesn't exist" % gridway_src)
+  
+  #setting same mtime to gridway sources
+  mtime_ref = os.path.getmtime(gridway_src)
+  for root, dirs, files in os.walk(gridway_src):
+    for name in files + dirs:
+      os.utime(os.path.join(root, name), (mtime_ref, mtime_ref))
+  os.utime(gridway_src, (mtime_ref, mtime_ref))
+  #
+
   os.chdir( gridway_src )
   #to avoid re-run configure each time.
   if(not os.path.isfile('config.log') or os.path.getmtime('config.log') <= os.path.getmtime('configure') ):
