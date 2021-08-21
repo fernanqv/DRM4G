@@ -184,7 +184,7 @@ setup(
   long_description=long_description,
   long_description_content_type='text/markdown',
   classifiers=[
-    "Development Status :: 4 - Beta"
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: European Union Public Licence 1.1 (EUPL 1.1)",
