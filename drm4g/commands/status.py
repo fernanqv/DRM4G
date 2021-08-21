@@ -33,7 +33,9 @@ from drm4g.commands       import Daemon, Agent
 def run( arg ) :
     try:
         Daemon().status()
-        Agent().status()
+        agent = Agent()
+        if agent.is_alive():
+          agent.status()
     except Exception as err :
         console_logger.error( str( err ) )
 

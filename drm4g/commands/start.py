@@ -29,12 +29,11 @@ Options:
 """
 
 from drm4g                import console_logger
-from drm4g.commands       import Daemon #, Agent
+from drm4g.commands       import Daemon
 
 def run( arg ) :
     try:
         Daemon().start()
-        #Agent().start()
     except Exception as err :
         console_logger.error( str( err ) )
 
