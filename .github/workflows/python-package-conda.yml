@@ -28,12 +28,12 @@ jobs:
       uses: actions/setup-python@v2
       with:
           python-version: ${{ matrix.python-version }}
-    - name: Add conda to system path
-      run: |	
-        # $CONDA is an environment variable pointing to the root of the miniconda directory	
-        echo $CONDA/bin >> $GITHUB_PATH
+#    - name: Add conda to system path
+#      run: |	
+#        # $CONDA is an environment variable pointing to the root of the miniconda directory	
+#        echo $CONDA/bin >> $GITHUB_PATH
 #    - run: sudo apt-get install openssh-server -y; echo |ssh-keygen -t rsa;ls ~/.ssh;echo "valva"; cp ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys;ls ~/.ssh; ssh -i ~/.ssh/id_rsa -oStrictHostKeyChecking=no localhost pwd
-    - run: conda install pycrypto docopt sqlalchemy python-dateutil
+#    - run: conda install pycrypto docopt sqlalchemy python-dateutil
     - run: pip install -e .
 #    - name: Install dependencies
 #      run: |
