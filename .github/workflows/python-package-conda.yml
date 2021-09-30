@@ -28,28 +28,40 @@ jobs:
       uses: actions/setup-python@v2
       with:
           python-version: ${{ matrix.python-version }}
-#    - name: Add conda to system path
-#      run: |	
-#        # $CONDA is an environment variable pointing to the root of the miniconda directory	
-#        echo $CONDA/bin >> $GITHUB_PATH
+    - name: Ensure ssh is installed
+      run: sudo apt update; sudo apt -y install openssh-server
+    - name: Check config
+      run: |
+        cat > sshd_config <<EOF
+          SyslogFacility AUTHPRIV
+          PermitRootLogin yes
+          AuthorizedKeysFile	.ssh/authorized_keys
+          PasswordAuthentication yes
+          ChallengeResponseAuthentication no
+          UsePAM yes
+          UseDNS no
+          X11Forwarding no
+          PrintMotd no
+        EOF
+        sudo mv sshd_config /etc/ssh/sshd_config
+        sudo systemctl restart ssh
+    - name: Create ssh key
+      run: >
+        ssh-keygen -t rsa -b 4096 -N '' -f ~/.ssh/id_rsa
+    - name: Add key to auth file
+      run: >
+        cat ~/.ssh/id_rsa.pub | tee -a ~/.ssh/authorized_keys
+    - name: Ensure the owner of the key is correct
+      run: |
+        chmod 600 ~/.ssh/authorized_keys
+        chmod 700 ~/.ssh
+        sudo chmod -c 0755 ~/
+        ls -la ~/.ssh
+    - name: Test SSH connection to localhost
+      run: >
+        ssh -vvv -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no $(whoami)@localhost
 #    - run: sudo apt-get install openssh-server -y; echo |ssh-keygen -t rsa;ls ~/.ssh;echo "valva"; cp ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys;ls ~/.ssh; ssh -i ~/.ssh/id_rsa -oStrictHostKeyChecking=no localhost pwd
-#    - run: conda install pycrypto docopt sqlalchemy python-dateutil
     - run: pip install -e .
-#    - name: Install dependencies
-#      run: |
-#        conda env update --file environment.yml --name base
-#    - name: Lint with flake8
-#      run: |
-#        conda install flake8
-#        # stop the build if there are Python syntax errors or undefined names
-#        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-#        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-#        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-#    - name: Test with pytest
-#      run: |
-#        conda install pytest
-#        pytest
-
     - run: drm4g start
     - run: drm4g resource
     - run: echo "EXECUTABLE=/bin/date" > date.job
