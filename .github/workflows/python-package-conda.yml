@@ -61,6 +61,7 @@ jobs:
       run: >
         ssh -vvv -i ~/.ssh/id_rsa -o BatchMode=yes -o StrictHostKeyChecking=no $(whoami)@localhost
 #    - run: sudo apt-get install openssh-server -y; echo |ssh-keygen -t rsa;ls ~/.ssh;echo "valva"; cp ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys;ls ~/.ssh; ssh -i ~/.ssh/id_rsa -oStrictHostKeyChecking=no localhost pwd
+    - run: whoami
     - run: pip install -e .
     - run: drm4g start
     - run: drm4g resource
