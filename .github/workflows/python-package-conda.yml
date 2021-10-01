@@ -73,3 +73,15 @@ jobs:
     - run: sleep 50
     - run: drm4g job list 0 
     - run: cat stdout.0
+    - run: drm4g stop
+    - run: cp ~/.drm4g/etc/resources_ssh.conf ~/.drm4g/etc/resources.conf
+    - run: drm4g start
+    - run: sleep 30; drm4g resource check
+    - run: drm4g job submit date.job
+    - run: drm4g resource
+    - run: sleep 10
+    - run: drm4g job list 1   
+    - run: sleep 50
+    - run: drm4g job list 1 
+    - run: cat stdout.1
+    
