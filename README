@@ -5,4 +5,4 @@ resources without installing any intermediate middlewares. As a result,
 a user is able to run the same job on laptops, desktops, workstations,
 clusters, supercomputers, on any grid and cloud.
 
-For additional information, see http://meteo.unican.es/trac/wiki/DRM4G .
+For additional information, see https://github.com/SantanderMetGroup/DRM4G/wiki .

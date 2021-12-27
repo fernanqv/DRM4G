@@ -351,7 +351,7 @@ int gw_job_environment(gw_job_t *job)
                     job->max_walltime = strdup(var);
                 } else if (strcmp("MEMORY", job->template.environment[i][GW_ENV_VAR]) == 0)
                 {
-                    job->min_memory = atoi(var);
+                    job->max_memory = atoi(var);
                 } else if (strcmp("PPN", job->template.environment[i][GW_ENV_VAR]) == 0)
                 {
                     job->processes_per_node = atoi(var);

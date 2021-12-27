@@ -97,20 +97,25 @@ class Job (drm4g.managers.Job):
             raise drm4g.managers.JobException(' '.join(err.split('\n')))
 
     def jobTemplate(self, parameters):
+        
+        # Dynamic directives
         args  = '#!/bin/bash\n'
         args += '#PBS -N JID_%s\n' % (parameters['environment']['GW_JOB_ID'])
+        args += '#PBS -v %s\n' % (','.join(['%s=%s' %(k, v) for k, v in list(parameters['environment'].items())]))
+        args += '#PBS -o $stdout\n'
+        args += '#PBS -e $stderr\n'
+
+        # Conditional directives
         if 'project' in parameters :
             args += '#PBS -P $project\n'
         if parameters['queue'] != 'default':
             args += '#PBS -q $queue\n'
-        args += '#PBS -o $stdout\n'
-        args += '#PBS -e $stderr\n'
         if 'maxWallTime' in parameters :
             args += '#PBS -l walltime=$maxWallTime\n'
         if 'maxCpuTime' in parameters :
             args += '#PBS -l cput=$maxCpuTime\n'
         if 'maxMemory' in parameters :
-            args += '#PBS -l vmem=$maxMemoryMB\n'
+            args += '#PBS -l vmem=${maxMemory}MB\n'
         if 'ppn' in parameters and 'nodes' in parameters :
             args += '#PBS -l nodes=$nodes:ppn=$ppn\n'
         elif 'ppn' in parameters :
@@ -120,8 +125,8 @@ class Job (drm4g.managers.Job):
             args += '#PBS -l nodes=%d:ppn=$ppn\n' % (node_count)
         else:
             args += '#PBS -l nodes=$count\n'
-        args += '#PBS -v %s\n' % (','.join(['%s=%s' %(k, v) for k, v in list(parameters['environment'].items())]))
-        args += '\n'
+
+        # Wrapper content
         args += '$executable\n'
         return Template(args).safe_substitute(parameters)
 

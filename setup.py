@@ -172,7 +172,7 @@ setup(
   author_email='antonio.cofino@unican.es',
   url='https://github.com/SantanderMetGroup/DRM4G',
   project_urls = {
-    'Documentation' : 'https://meteo.unican.es/trac/wiki/DRM4G'           ,
+    'Documentation' : 'https://github.com/SantanderMetGroup/DRM4G/wiki'           ,
     'Source'        : 'https://github.com/SantanderMetGroup/DRM4G'        ,
     'Tracker'       : 'https://github.com/SantanderMetGroup/DRM4G/issues' ,
     'Download'      : 'https://pypi.org/project/drm4g/#files'             , 
