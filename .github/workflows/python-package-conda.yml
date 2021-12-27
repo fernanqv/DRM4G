@@ -65,11 +65,12 @@ jobs:
     - run: pip install -e .
     - run: drm4g start
     - run: drm4g resource
-    - run: echo "EXECUTABLE=/bin/date" > date.job
+    - run: (echo "EXECUTABLE=/bin/date" & echo "ENVIRONMENT = WALLTIME = 03:00:00, MEMORY = 10000") > date.job
     - run: sleep 10
     - run: drm4g job submit date.job
     - run: drm4g resource
     - run: sleep 10
+    - run: cat ~/.drm4g/var/000-099/0/job.rsl.0
     - run: drm4g job list 0    
     - run: sleep 50
     - run: drm4g job list 0 
