@@ -18,12 +18,12 @@
 # permissions and limitations under the Licence.
 #
 
-import sys
-from os.path     import dirname, abspath, join, expanduser, exists
+from os.path     import expanduser, exists
+import re
+import threading
+
 import fabric
 
-import re
-import socket
 import drm4g.commands
 import drm4g.communicators
 from drm4g.communicators    import ComException, SFTP_CONNECTIONS
@@ -36,8 +36,8 @@ class Communicator(drm4g.communicators.Communicator):
     """
     Create a SSH session to remote resources.
     """
-    _lock = __import__('threading').Lock()
-    _sem = __import__('threading').Semaphore(SFTP_CONNECTIONS)
+    _lock = threading.Lock()
+    _sem = threading.Semaphore(SFTP_CONNECTIONS)
     _conn = None
 
     def connect(self):

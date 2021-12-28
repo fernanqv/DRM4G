@@ -45,8 +45,8 @@ class Communicator(drm4g.communicators.Communicator):
     """
     Create a SSH session to remote resources.
     """
-    _lock       = __import__('threading').Lock()
-    _sem        = __import__('threading').Semaphore(SFTP_CONNECTIONS)
+    _lock       = threading.Lock()
+    _sem        = threading.Semaphore(SFTP_CONNECTIONS)
     _trans      = None
 
     socket_dir=None

@@ -22,6 +22,7 @@ import sys
 import subprocess
 import os
 import re
+import threading
 import drm4g.communicators
 from drm4g.communicators import ComException
 from drm4g.utils.url     import urlparse
@@ -36,7 +37,7 @@ class Communicator(drm4g.communicators.Communicator):
     """
     Interact with local resources using shell commands
     """
-    _lock = __import__('threading').Lock()
+    _lock = threading.Lock()
 
     def connect(self):
         logger.debug( "Your are using the local communicator" )

@@ -69,7 +69,7 @@ class Worker(Thread):
                     try:
                         func(*args, **kargs)
                     except :
-                        traceback.print_exc(file=sys.stdout)
+                        traceback.print_exc(file=sys.stdout) #TODO: Review as logging
             except Exception:
                 pass
 
@@ -99,5 +99,5 @@ class ThreadPool:
                     threads_active += 1
                 self.tasks.put((func, args, kargs))
             except :
-                traceback.print_exc(file=sys.stdout)
+                traceback.print_exc(file=sys.stdout) #TODO: Review as logging
 
