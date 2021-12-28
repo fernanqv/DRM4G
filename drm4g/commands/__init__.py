@@ -29,7 +29,6 @@ import datetime
 import pprint
 
 from drm4g             import REMOTE_VOS_DIR, DRM4G_RESOURCES_CONF, DRM4G_DIR,console_logger, DRM4G_DIR_VAR
-#from drm4g.managers    import rocci
 from drm4g.core.im_mad import GwImMad
 from os.path           import expanduser, join, dirname, exists, basename, expandvars
 

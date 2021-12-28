@@ -18,35 +18,33 @@
 # permissions and limitations under the Licence.
 #
 
-import sys
-from os.path     import dirname, abspath, join, expanduser, exists
-
-try:
-    sys.path.insert( 0, join( dirname( dirname ( abspath( __file__ ) ) ), 'utils' ) )
-    from paramiko.transport     import Transport
-    from paramiko.agent         import Agent
-    from paramiko.dsskey        import DSSKey
-    from paramiko.rsakey        import RSAKey
-    from scp                    import SCPClient
-except Exception as e:
-    exit( 'Caught exception: %s' % str(e) )
-
 import re
 import socket
+import logging
+import threading
+
+from io                     import StringIO
+from os.path                import expanduser, exists
+
+from paramiko.transport     import Transport
+from paramiko.agent         import Agent
+from paramiko.dsskey        import DSSKey
+from paramiko.rsakey        import RSAKey
+from scp                    import SCPClient
+
 import drm4g.commands
 import drm4g.communicators
 from drm4g.communicators    import ComException, SSH_CONNECT_TIMEOUT, SFTP_CONNECTIONS
 from drm4g.utils.url        import urlparse
 
-import logging
 logger  = logging.getLogger(__name__)
 
 class Communicator(drm4g.communicators.Communicator):
     """
     Create a SSH session to remote resources.
     """
-    _lock       = __import__('threading').Lock()
-    _sem        = __import__('threading').Semaphore(SFTP_CONNECTIONS)
+    _lock       = threading.Lock()
+    _sem        = threading.Semaphore(SFTP_CONNECTIONS)
     _trans      = None
 
     def connect(self):
@@ -86,8 +84,7 @@ class Communicator(drm4g.communicators.Communicator):
                             raise ComException( output )
                         for pkey_class in (RSAKey, DSSKey):
                             try :
-                                if 'PRIVATE KEY' in self.private_key :
-                                    import StringIO
+                                if 'PRIVATE KEY' in self.private_key : #TODO: Review this case
                                     key  = pkey_class.from_private_key( StringIO.StringIO ( self.private_key.strip( "'" ) ) )
                                 else :
                                     key  = pkey_class.from_private_key_file( private_key_path )

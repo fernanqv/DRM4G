@@ -23,7 +23,7 @@ import xml.dom.minidom
 import os
 import subprocess
 import pickle
-
+import threading
 
 import logging
 logger  = logging.getLogger(__name__)
@@ -120,7 +120,7 @@ class Job (object):
         self.Communicator = None
         self.JobId        = None
         self._status      = None
-        self._lock        = __import__('threading').Lock()
+        self._lock        = threading.Lock()
 
     def setStatus(self, status):
         with self._lock :
