@@ -35,7 +35,7 @@ def run( arg ) :
         Daemon().status()
         agent = Agent()
         if agent.is_alive():
-          agent.status()
+            agent.status()
     except Exception as err :
         console_logger.error( str( err ) )
 

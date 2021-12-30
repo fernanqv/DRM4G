@@ -60,4 +60,3 @@ def run( arg ):
             console_logger.info( err )
     except Exception as err :
         console_logger.error( str( err ) )
-

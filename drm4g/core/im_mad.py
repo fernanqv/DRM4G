@@ -157,13 +157,14 @@ class GwImMad (object):
             while True:
                 input = sys.stdin.readline().split()
                 self.logger.debug(' '.join(input))
-                OPERATION = input[0].upper()
-                if len(input) == 4 and OPERATION in self.methods:
-                    self.methods[OPERATION](self, ' '.join(input))
-                else:
-                    out = 'WRONG COMMAND'
-                    self.message.stdout(out)
-                    self.logger.debug(out)
+                if len(input)>0:
+                    OPERATION = input[0].upper()
+                    if len(input) == 4 and OPERATION in self.methods:
+                        self.methods[OPERATION](self, ' '.join(input))
+                    else:
+                        out = 'WRONG COMMAND'
+                        self.message.stdout(out)
+                        self.logger.debug(out)
         except Exception as err:
             self.logger.warning( str ( err ) , exc_info=1 )
 

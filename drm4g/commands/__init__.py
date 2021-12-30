@@ -32,10 +32,6 @@ from drm4g             import REMOTE_VOS_DIR, DRM4G_RESOURCES_CONF, DRM4G_DIR,co
 from drm4g.core.im_mad import GwImMad
 from os.path           import expanduser, join, dirname, exists, basename, expandvars
 
-
-PY2 = sys.version_info[0] == 2
-
-
 def process_is_runnig( pid ):
     """
     Check is a process is running given a file
@@ -70,10 +66,7 @@ def yes_no_choice( message ,  default = 'y' ) :
     Ask for Yes/No questions
     """
     choices = 'Y/n' if default.lower() in ( 'y', 'yes' ) else 'y/N'
-    if PY2 :
-        choice = raw_input( "%s (%s) " % ( message, choices ) )
-    else :
-        choice = input( "%s (%s) " % ( message, choices ) )
+    choice = input( "%s (%s) " % ( message, choices ) )
     values = ( 'y', 'yes', '' ) if default == 'y' else ( 'y', 'yes' )
     return choice.strip().lower() in values
 
@@ -528,4 +521,3 @@ class Proxy( object ):
         console_logger.info( out )
         if err :
             console_logger.info( err )
-

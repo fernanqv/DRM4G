@@ -35,3 +35,5 @@ gridway-5.8/src/gwd/gwd
 gridway-5.8/src/scheduler/gw_flood_scheduler
 gridway-5.8/src/scheduler/gw_sched
 .ignore
+gridway-5.8/build
+gridway-5.8/build_nodebug
