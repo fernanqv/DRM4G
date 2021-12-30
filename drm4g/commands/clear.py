@@ -40,4 +40,3 @@ def run( arg ) :
         daemon.clear()
     except Exception as err :
         console_logger.error( str( err ) )
-

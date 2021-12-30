@@ -18,13 +18,10 @@
 # permissions and limitations under the Licence.
 #
 
-import os
-import sys
 import logging
 from os.path             import join, exists
-from drm4g               import DRM4G_DIR, DRM4G_DIR_VAR 
+from drm4g               import DRM4G_DIR_VAR
 from drm4g.utils.command import exec_cmd
-
 
 class Job( object ):
     """
@@ -40,10 +37,11 @@ class Job( object ):
         @param job_name: Name of job
         @type  job_name: string
         """
-        if not type( job_name ) == str :
-            raise Exception( 'Expected a string for job name' )
-        else:
+        if isinstance( job_name, str ) :
             self.args[ 'NAME' ] = job_name
+        else:
+            raise Exception( 'Expected a string for job name' )
+
 
     def get_name(self):
         """
@@ -58,10 +56,11 @@ class Job( object ):
         @param executable: Executable
         @type  executable: string
         """
-        if not type( executable ) == str :
-            raise Exception( 'Expected a string for executable' )
-        else :
+        if isinstance(executable, str ):
             self.args[ 'EXECUTABLE' ] =  executable
+        else:
+            raise Exception( 'Expected a string for executable' )
+
 
     def get_executable(self):
         """
@@ -76,10 +75,10 @@ class Job( object ):
         @param arguments: Executable arguments
         @type  arguments: string
         """
-        if not type( arguments ) == str :
-            raise Exception( 'Expected a string for arguments' )
-        else:
+        if isinstance( arguments, str ):
             self.args[ 'ARGUMENTS' ] = arguments
+        else:
+            raise Exception( 'Expected a string for arguments' )
 
     def get_arguments(self):
         """
@@ -94,10 +93,10 @@ class Job( object ):
         @param environment: Executable arguments
         @type  environment: dictionary
         """
-        if not type( environment ) == dict :
-            raise Exception( 'Expected a dictionary for environment' )
-        else:
+        if isinstance( environment, dict):
             self.args[ 'ENVIRONMENT' ] = environment
+        else:
+            raise Exception( 'Expected a dictionary for environment' )
 
     def get_environment(self):
         """
@@ -113,9 +112,9 @@ class Job( object ):
         @param files: Input sandbox files
         @type  files: String or list of strings
         """
-        if type( files ) == list :
+        if isinstance( files, list):
             self.args[ 'INPUT_FILES' ] = files
-        elif type( files ) == str :
+        elif isinstance( files, str):
             self.args[ 'INPUT_FILES' ] = [files]
         else:
             raise Exception( 'Expected a string or a list for input files' )
@@ -134,9 +133,9 @@ class Job( object ):
         @param files: Output sandbox files
         @type  files: String or list of strings
         """
-        if type( files ) == list :
+        if isinstance( files, list):
             self.args[ 'OUTPUT_FILES' ] = files
-        elif type( files ) == str :
+        elif isinstance( files, str) :
             self.args[ 'OUTPUT_FILES' ] = [files]
         else:
             raise Exception( 'Expected a string or a list for input files' )
@@ -154,10 +153,10 @@ class Job( object ):
         @param stdin_file: input file
         @type  stdin_file: string
         """
-        if not type( stdin_file ) == str :
-            raise Exception( 'Expected a string for stdin file' )
-        else:
+        if isinstance( stdin_file, str):
             self.args[ 'STDIN_FILE' ] = stdin_file
+        else:
+            raise Exception( 'Expected a string for stdin file' )
 
     def get_stdin_file(self):
         """
@@ -172,10 +171,10 @@ class Job( object ):
         @param stdout_file: output file
         @type  stdout_file: string
         """
-        if not type( stdout_file ) == str :
-            raise Exception( 'Expected a string for stdout file' )
-        else:
+        if isinstance( stdout_file, str) :
             self.args[ 'STDOUT_FILE' ] = stdout_file
+        else:
+            raise Exception( 'Expected a string for stdout file' )
 
     def get_stdout_file(self):
         """
@@ -190,10 +189,10 @@ class Job( object ):
         @param stderr_file: error file
         @type  stderr_file: string
         """
-        if not type( stderr_file ) == str :
-            raise Exception( 'Expected a string for error file' )
-        else:
+        if isinstance( stderr_file, str):
             self.args[ 'STDERR_FILE' ] = stderr_file
+        else:
+            raise Exception( 'Expected a string for error file' )
 
     def get_stderr_file(self):
         """
@@ -210,10 +209,10 @@ class Job( object ):
         @param requirements: requirement expression
         @type  requirements: string
         """
-        if not type( requirements ) == str :
-            raise Exception( 'Expected a string for requirements' )
-        else:
+        if isinstance( requirements, str):
             self.args[ 'REQUIREMENTS' ] = requirements
+        else:
+            raise Exception( 'Expected a string for requirements' )
 
     def get_requirements(self):
         """
@@ -228,9 +227,9 @@ class Job( object ):
         @param np: number of process
         @type  np: string or integer
         """
-        if type( np ) == int :
+        if isinstance( np, int):
             self.args[ 'NP' ] = str(np)
-        elif type( np ) == str :
+        elif isinstance( np, str):
             self.args[ 'NP' ] = np
         else:
             raise Exception( 'Expected a string or a ingeter for np' )
@@ -243,21 +242,21 @@ class Job( object ):
 
     def set_template_file(self, file ):
         """
-        Number of process.
+        Set template file name.
 
-        @param file: number of process
+        @param file: filename
         @type  file: string
         """
-        if not type( file ) == str :
-            raise Exception( 'Expected a string for fime template' )
-        else :
+        if isinstance( file, str):
             self.template_file = file
+        else :
+            raise Exception( 'Expected a string for fime template' )
 
     def get_template_file(self):
         """
         Get template file.
         """
-        if not self.template_file :
+        if self.template_file :
             return './template.job'
         else :
             return self.template_file
@@ -266,15 +265,15 @@ class Job( object ):
         """
         Create string template.
         """
-        str = ''
+        tmpstr = ''
         for key, val in list(self.args.items()) :
             if key == 'ENVIRONMENT':
-                str = str + '%s = %s\n' % ( key, ','.join( "%s %s" % (k,v) for k,v in list(key.items()) ) )
+                tmpstr = tmpstr + '%s = %s\n' % ( key, ','.join( "%s %s" % (k,v) for k,v in list(key.items()) ) )
             elif key in ( 'INPUT_FILES', 'OUTPUT_FILES' ):
-                str = str + '%s = %s\n' % ( key, ','.join( val ) )
+                tmpstr = tmpstr + '%s = %s\n' % ( key, ','.join( val ) )
             else :
-                str = str + "%s = %s\n" % ( key, val )
-        return str
+                tmpstr = tmpstr + "%s = %s\n" % ( key, val )
+        return tmpstr
 
     def create_file(self, string_template ):
         """
@@ -314,7 +313,8 @@ class DRM4G( object ):
                                                job.get_template_file() )
         code, out = exec_cmd( cmd )
         logging.debug( out )
-        if code : raise Exception( out )
+        if code:
+            raise Exception( out )
         job_id = int( out[ 8: ] )
         return job_id
 
@@ -361,7 +361,8 @@ class DRM4G( object ):
         """
         cmd = "gwkill %s %d" % ( '-9' if hard else '', job_id )
         code, out = exec_cmd( cmd )
-        if code : raise Exception( "Error canceling job %d" % job_id )
+        if code :
+            raise Exception( "Error canceling job %d" % job_id )
 
     def set_priority(self, job_id, priority = 0):
         """
@@ -374,6 +375,5 @@ class DRM4G( object ):
         """
         cmd = "gwkill -9 -p %d %d" % ( priority, job_id )
         code, out = exec_cmd( cmd )
-        if code : raise Exception( "Error updating priority for job %d" % job_id )
-
-
+        if code:
+            raise Exception( "Error updating priority for job %d" % job_id )

@@ -19,24 +19,24 @@
 #
 
 """
-Configure DRM4G's daemon, scheduler and console_logger parameters.
+Configure DRM4G's daemon, scheduler and logger parameters.
 
 Usage:
-   drm4g conf ( daemon | sched | console_logger ) [ options ]
+   drm4g conf ( daemon | sched | logger ) [ options ]
 
 Options:
    -d --debug    Debug mode
 """
 
 import os
-from drm4g  import DRM4G_GWD_CONF, DRM4G_console_logger_CONF, DRM4G_SCHED_CONF, console_logger
+from drm4g  import DRM4G_GWD_CONF, DRM4G_LOGGER_CONF, DRM4G_SCHED_CONF, console_logger
 
 def run( arg ) :
     if arg[ 'daemon' ] :
         conf_file = DRM4G_GWD_CONF
-    elif arg[ 'console_logger' ]:
-        conf_file = DRM4G_console_logger_CONF
+    elif arg[ 'logger' ]:
+        conf_file = DRM4G_LOGGER_CONF
     else :
         conf_file = DRM4G_SCHED_CONF
-    console_logger.debug( "Editing '%s' file" % conf_file )
+    console_logger.debug( "Editing '%s' file", conf_file )
     os.system( "%s %s" % ( os.environ.get('EDITOR', 'nano') , conf_file ) )

@@ -20,12 +20,6 @@
 
 __all__ = ["communicators", "core", "managers", "utils", "commands", "api"]
 
-from ._version import __version__
-del _version
-
-#__version__  = '2.6.15'
-__author__   = 'Valvanuz Fernández-Quiruelas, Markel Garcia, Carlos Blanco, Antonio Minondo and Antonio S. Cofino (@cofinoa)'
-
 import sys
 import os
 import logging.config
@@ -33,32 +27,35 @@ import logging
 from os.path import dirname , join , expanduser , exists , abspath
 from  shutil import copytree
 
-if sys.version_info<(3,5):
-    exit( 'The version number of Python has to be >= 3.5' )
+from ._version import __version__
+
+__author__   = 'Valvanuz Fernández-Quiruelas, Markel Garcia, Carlos Blanco, Antonio Minondo and Antonio S. Cofino (@cofinoa)'
+
+assert sys.version_info >= (3, 5), "The version number of Python has to be >= 3.5"
 
 ##############################################
 # Default values used in DRM4G ENV variables #
 ##############################################
-HOME                 = expanduser(os.environ.get( 'HOME', '~' ))
-DRM4G_DIR            = expanduser(os.environ.get( 'DRM4G_DIR'           , join( HOME     , '.drm4g' )))
-DRM4G_DIR_VAR        = expanduser(os.environ.get( 'DRM4G_DIR_VAR'       , join( DRM4G_DIR, 'var' )))
-DRM4G_DIR_ETC        = expanduser(os.environ.get( 'DRM4G_DIR_ETC'       , join( DRM4G_DIR, 'etc' )))
-DRM4G_RESOURCES_CONF = expanduser(os.environ.get( 'DRM4G_RESOURCES_CONF', join( DRM4G_DIR_ETC, 'resources.conf' )))
-DRM4G_LOGGER_CONF    = expanduser(os.environ.get( 'DRM4G_LOGGER_CONF'   , join( DRM4G_DIR_ETC, 'logger.conf')))
-DRM4G_GWD_CONF       = expanduser(os.environ.get( 'DRM4G_GWD_CONF'      , join( DRM4G_DIR_ETC, 'gwd.conf')))
-DRM4G_SCHED_CONF     = expanduser(os.environ.get( 'DRM4G_SCHED_CONF'    , join( DRM4G_DIR_ETC, 'sched.conf')))
+HOME                 = expanduser(os.environ.get( 'HOME'                 , '~' ))
+DRM4G_DIR            = expanduser(os.environ.get( 'DRM4G_DIR'            , join( HOME          , '.drm4g'         )))
+DRM4G_DIR_VAR        = expanduser(os.environ.get( 'DRM4G_DIR_VAR'        , join( DRM4G_DIR     , 'var'            )))
+DRM4G_DIR_ETC        = expanduser(os.environ.get( 'DRM4G_DIR_ETC'        , join( DRM4G_DIR     , 'etc'            )))
+DRM4G_RESOURCES_CONF = expanduser(os.environ.get( 'DRM4G_RESOURCES_CONF' , join( DRM4G_DIR_ETC , 'resources.conf' )))
+DRM4G_LOGGER_CONF    = expanduser(os.environ.get( 'DRM4G_LOGGER_CONF'    , join( DRM4G_DIR_ETC , 'logger.conf'    )))
+DRM4G_GWD_CONF       = expanduser(os.environ.get( 'DRM4G_GWD_CONF'       , join( DRM4G_DIR_ETC , 'gwd.conf'       )))
+DRM4G_SCHED_CONF     = expanduser(os.environ.get( 'DRM4G_SCHED_CONF'     , join( DRM4G_DIR_ETC , 'sched.conf'     )))
 
 #ENV variable shouldn't be used outside of GWD and its components. 
 os.environ[ 'GW_LOCATION' ] = DRM4G_DIR
 
 #Populate and prepare DRM4G_DIR
 if exists( DRM4G_DIR ) is False  :
-    logging.warning( "Creating a DRM4G local configuration in '%s'" %  DRM4G_DIR )
+    logging.warning( "Creating a DRM4G local configuration in '%s'", DRM4G_DIR )
     acct_dir = join ( DRM4G_DIR_VAR, 'acct' )
-    logging.warning( "Creating '%s' directory" % acct_dir )
+    logging.warning( "Creating '%s' directory", acct_dir )
     os.makedirs( acct_dir )
     src_dir  = join ( abspath( dirname( __file__ ) ), 'conf' )
-    logging.warning( "Copying from '%s' to '%s'" % ( src_dir , DRM4G_DIR_ETC ) )
+    logging.warning( "Copying from '%s' to '%s'", src_dir , DRM4G_DIR_ETC )
     copytree( src_dir , DRM4G_DIR_ETC )
 
 ##
@@ -90,5 +87,3 @@ RESOURCE_MANAGERS = {
     "neptuno"      : "drm4g.managers.neptuno",
     #"rocci"        : "drm4g.managers.rocci",
 }
-
-

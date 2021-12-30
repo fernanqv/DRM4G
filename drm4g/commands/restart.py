@@ -28,7 +28,6 @@ Options:
    -d --debug    Debug mode.
 """
 
-#from time                 import sleep
 from drm4g                import console_logger
 from drm4g.commands       import Daemon
 
@@ -36,7 +35,6 @@ def run( arg ) :
     try:
         daemon = Daemon()
         daemon.stop()
-        #sleep( 2.0 )
         daemon.start()
     except Exception as err :
         console_logger.error( str( err ) )
