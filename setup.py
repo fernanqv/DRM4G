@@ -157,7 +157,6 @@ setup(
       'Tracker'       : 'https://github.com/SantanderMetGroup/DRM4G/issues' ,
       'Download'      : 'https://pypi.org/project/drm4g/#files'             , 
       'Twitter'       : 'https://twitter.com/SantanderMeteo'
-
     },
     license='European Union Public License 1.1',
     description='Meta-scheduling framework for distributed computing infrastructures',
