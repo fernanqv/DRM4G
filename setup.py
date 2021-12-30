@@ -146,7 +146,7 @@ setup(
     python_requires=">=3.5",
     packages=find_packages(),
     include_package_data=True,
-    package_data={'drm4g' : ['conf/*.conf', 'conf/job_template.default', 'conf/*.sh']},
+    package_data={'drm4g' : ['conf/*']},
     data_files = [gw_files],
     author='Santander Meteorology Group (UC-CSIC)',
     author_email='antonio.cofino@unican.es',

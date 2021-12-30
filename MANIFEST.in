@@ -1,3 +1,11 @@
 recursive-include gridway-5.8 *
+
+prune gridway-5.8/build*
+prune gridway-5.8/examples/drmaa/*
+prune gridway-5.8/src/drmaa/.libs
+
+global-exclude gwacct gwhistory gwhost gwkill gwps gwsubmit gwuser gwwait gwd gw_flood_scheduler gw_sched
+recursive-exclude gridway-5.8 *.o *.lo a.out .dirstamp Makefile config.log config.status
+
 recursive-include extras *
 recursive-include drm4g/conf *
