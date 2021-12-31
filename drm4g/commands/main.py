@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright 2021 Santander Meteorology Group (UC-CSIC)
 #
@@ -46,11 +45,11 @@ drm4g commands are:
 
 See 'drm4g <command> --help' for more information on a specific command.
 """
-import sys
+
 from difflib import get_close_matches
 import logging
 import drm4g
-from docopt import docopt
+from drm4g.commands.docopt import docopt
 
 commands_list = [
     'start',
@@ -75,7 +74,7 @@ def get_similar_commands(name):
 class CommandError(Exception):
     """Raised when there is an error in command-line arguments"""
 
-if __name__ == "__main__":
+def main():
     args = docopt( __doc__, version = drm4g.__version__ , options_first = True )
     cmd_name = args['<command>']
     argv = [ cmd_name ] + args[ '<args>' ]
@@ -92,4 +91,4 @@ if __name__ == "__main__":
             msg = msg + " - maybe you meant '%s'" % guess
         else:
             msg = msg + " - see 'drm4g --help'"
-        sys.exit(msg)
+        return msg
