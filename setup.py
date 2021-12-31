@@ -123,8 +123,6 @@ class develop_wrapper(develop):
                     print("[creating symlink: %s -> %s]" % (dst, src))
                 os.symlink(src,dst)
 
-bin_scripts = glob.glob(os.path.join('bin', '*'))
-
 # FROM: https://github.com/jbweston/miniver
 def get_version_and_cmdclass(package_name):
     spec = spec_from_file_location(
@@ -176,9 +174,17 @@ setup(
       "Programming Language :: Python :: 3.7",
       "Programming Language :: Python :: 3.8",
       "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
     ],
-    install_requires=[ 'docopt', 'paramiko>=2.4', 'scp', 'fabric', 'openssh-wrapper' ],
-    scripts=bin_scripts,
+    install_requires=[ 'paramiko>=2.4', 'scp', 'fabric', 'openssh-wrapper' ],
+    entry_points = {
+      'console_scripts': [
+          'drm4g=drm4g.commands.main:main',
+          'gw_im_mad_drm4g.py=drm4g.core.im_mad:main',
+          'gw_em_mad_drm4g.py=drm4g.core.em_mad:main',
+          'gw_tm_mad_drm4g.py=drm4g.core.tm_mad:main',
+        ],    
+    },
     cmdclass={
       'build_ext' : build_ext_wrapper,
       'install'   : install_wrapper,

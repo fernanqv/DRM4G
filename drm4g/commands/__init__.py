@@ -28,7 +28,7 @@ import subprocess
 import datetime
 import pprint
 
-from drm4g             import REMOTE_VOS_DIR, DRM4G_RESOURCES_CONF, DRM4G_DIR,console_logger, DRM4G_DIR_VAR
+from drm4g             import REMOTE_VOS_DIR, DRM4G_RESOURCES_CONF, console_logger, DRM4G_DIR_VAR
 from drm4g.core.im_mad import GwImMad
 from os.path           import expanduser, join, dirname, exists, basename, expandvars
 
@@ -50,7 +50,7 @@ def exec_cmd( cmd , stdin=subprocess.PIPE, stdout=subprocess.PIPE,
     """
     Execute shell commands
     """
-    console_logger.debug( "Executing command ... " + cmd )
+    console_logger.debug( "Executing command ... %s", cmd )
     cmd_to_exec = subprocess.Popen(  cmd ,
                                   shell=True ,
                                   stdin=subprocess.PIPE,
@@ -94,7 +94,7 @@ class Agent( object ):
             if match :
                 console_logger.debug( "  OK" )
                 self.agent_env = match.groupdict()
-                console_logger.debug( '  Agent pid: %s'  % self.agent_env['SSH_AGENT_PID'])
+                console_logger.debug( '  Agent pid: %s', self.agent_env['SSH_AGENT_PID'])
             else:
                 console_logger.error( err )
                 raise Exception( '  Cannot determine agent data from output: %s' % out )
@@ -116,7 +116,7 @@ class Agent( object ):
 
     def is_alive( self ):
         if not exists( self.agent_file ) :
-            console_logger.debug("  '%s' does not exist" % ( self.agent_file ) )
+            console_logger.debug("  '%s' does not exist", self.agent_file )
             return False
         else :
             if process_is_runnig( self.agent_file ):
@@ -125,7 +125,7 @@ class Agent( object ):
                 return False
 
     def get_agent_env( self ):
-        console_logger.debug("Reading '%s' file" % ( self.agent_file ) )
+        console_logger.debug("Reading '%s' file", self.agent_file )
         with open( self.agent_file , 'r' ) as f:
             lines = f.readlines()
         self.agent_env['SSH_AGENT_PID'] = lines[0].strip()
@@ -139,24 +139,24 @@ class Agent( object ):
         return env
 
     def add_key( self, lifetime ):
-        console_logger.info("--> Add '%s' into ssh-agent for %s hours" % ( self.private_key , lifetime ) )
-        out , err = exec_cmd( 'ssh-add -t %sh %s' % ( lifetime , self.private_key ),
+        console_logger.info("--> Add '%s' into ssh-agent for %s hours", self.private_key , lifetime )
+        _ , err = exec_cmd( 'ssh-add -t %sh %s' % ( lifetime , self.private_key ),
                   stdin=sys.stdin, env=self.update_agent_env() )
         mo = re.compile(r'.* (\d*) .*').search( err )
         if mo :
-            console_logger.info( " Lifetime set to " + str( datetime.timedelta( seconds=int( mo.group(1) ) ) ) )
+            console_logger.info( " Lifetime set to %s", str( datetime.timedelta( seconds=int( mo.group(1) ) ) ) )
         else :
             console_logger.info( err )
 
     def delete_key( self ):
-        console_logger.info('--> Remove key %s' % self.private_key )
-        out , err = exec_cmd( 'ssh-add -d %s' % self.private_key,
+        console_logger.info('--> Remove key %s', self.private_key )
+        _ , err = exec_cmd( 'ssh-add -d %s' % self.private_key,
                               stdin=sys.stdin, stdout=sys.stdout, env=self.update_agent_env() )
         if err :
             console_logger.info( err )
 
     def copy_key( self ):
-        console_logger.info("--> Copying '%s' to ~/.ssh/authorized_keys file on '%s'" % ( self.private_key, self.frontend ) )
+        console_logger.info("--> Copying '%s' to ~/.ssh/authorized_keys file on '%s'", self.private_key, self.frontend )
 
         private_key_path = expanduser(self.private_key)
         public_key_path = expanduser(self.public_key)
@@ -180,9 +180,8 @@ class Agent( object ):
         ' cat > ~/temp_pub_key && grep -q -f temp_pub_key ~/.ssh/authorized_keys || cat temp_pub_key >> ~/.ssh/authorized_keys &&' \
         ' chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh && rm temp_pub_key"' % (public_key_path, self.user, self.frontend)
 
-        #answer = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) #does not work
         answer = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out,err = answer.communicate()
+        _ , err = answer.communicate()
 
         if err:
             if "grep" in err:
@@ -190,16 +189,16 @@ class Agent( object ):
             else:
                 console_logger.info( err )
                 raise Exception(err)
-        console_logger.info( "The copy of the public key %s has been successful" % public_key_path )
+        console_logger.info( "The copy of the public key %s has been successful", public_key_path )
 
     def list_key( self ):
-        console_logger.info("--> Display '%s' key" % self.private_key )
-        out , err = exec_cmd( 'ssh-add -L' , env=self.update_agent_env() )
+        console_logger.info("--> Display '%s' key", self.private_key )
+        out , _ = exec_cmd( 'ssh-add -L' , env=self.update_agent_env() )
         match = re.search( '.*%s' % basename( self.private_key ) , out )
         if match :
             console_logger.info( match.group() )
         else :
-            console_logger.info( " The private key '%s' is not available anymore" % self.private_key )
+            console_logger.info( " The private key '%s' is not available anymore", self.private_key )
 
     def stop( self ):
         console_logger.info( 'Stopping ssh-agent ... ' )
@@ -212,7 +211,7 @@ class Agent( object ):
             else :
                 console_logger.info( "  OK" )
         else:
-            console_logger.warn( '  WARNING: ssh-agent is already stopped' )
+            console_logger.warning( '  WARNING: ssh-agent is already stopped' )
         try:
             os.remove( self.agent_file )
         except :
@@ -267,12 +266,12 @@ class Daemon( object ):
                     for process in processes_to_kill:
                         try:
                             cmd = "ps ho pid --ppid %s" % (process)
-                            out , err = exec_cmd( cmd )
+                            out , _ = exec_cmd( cmd )
                             processes_to_kill = [line.lstrip() for line in out.splitlines()] + processes_to_kill
                             processes_to_kill.remove(process)
                             os.kill( int(process), signal.SIGTERM )
-                        except OSError as err:
-                            if "No such process" in err:
+                        except OSError as exc:
+                            if "No such process" in str(exc):
                                 continue
                             raise
             while self.is_alive() :
@@ -280,7 +279,7 @@ class Daemon( object ):
             try:
                 os.remove(self.gwd_pid)
             except OSError:
-                console_logger.error("  '%s' does not exist" % self.gwd_pid)
+                console_logger.error("  '%s' does not exist", self.gwd_pid)
             console_logger.info( "  OK" )
         else:
             console_logger.info("  WARNING: daemon is already stopped")
@@ -311,18 +310,18 @@ class Resource( object ):
         Creates a virtual machine with the information given through the resources.conf and cloudsetup.json files
         """
         self.check( )
-        for resname, resdict in self.config.resources.items():
-            if resdict[ 'lrms' ] in ['rocci']:
-                rocci.manage_instances('start', resname, resdict)
+        #for resname, resdict in self.config.resources.items():
+        #    if resdict[ 'lrms' ] in ['rocci']:
+        #        rocci.manage_instances('start', resname, resdict)
 
     def destroy_vms(self):
         """
         Destroy running virtual machines
         """
         self.check( )
-        for resname, resdict in self.config.resources.items():
-            if resdict[ 'lrms' ] in ['rocci']:
-                rocci.manage_instances('stop', resname, resdict)
+        #for resname, resdict in self.config.resources.items():
+        #    if resdict[ 'lrms' ] in ['rocci']:
+        #        rocci.manage_instances('stop', resname, resdict)
 
     def update_hosts(self):
         """
@@ -332,7 +331,7 @@ class Resource( object ):
             GwImMad().do_DISCOVER("discover - - -", False)
             #GwImMad().do_MONITOR("monitor 2 %s -" % resname)#, False)
         except Exception as err:
-            console_logger.error( "Could not update hosts:\n%s" % str(err))
+            console_logger.error( "Could not update hosts:\n%s", str(err))
 
     def list_resources(self):
         """
@@ -342,14 +341,14 @@ class Resource( object ):
         self.check( )
         console_logger.info("Resources:")
         for resname, resdict in self.config.resources.items():
-            console_logger.info("    "+str(resname))
-            console_logger.info("        communicator:  "+str(resdict['communicator']))
+            console_logger.info("     %s", str(resname))
+            console_logger.info("        communicator:  %s", str(resdict['communicator']))
             if 'username' in resdict.keys():
-                console_logger.info("        username:      "+str(resdict['username']))
-            console_logger.info("        frontend:      "+str(resdict['frontend']))
+                console_logger.info("        username:      %s", str(resdict['username']))
+            console_logger.info("        frontend:      %s", str(resdict['frontend']))
             if 'private_key' in resdict.keys():
-                console_logger.info("        private key:   "+str(resdict['private_key']))
-            console_logger.info("        lrms:          "+str(resdict['lrms']))
+                console_logger.info("        private key:   %s", str(resdict['private_key']))
+            console_logger.info("        lrms:          %s", str(resdict['lrms']))
 
     def check_frontends( self ) :
         """
@@ -366,18 +365,18 @@ class Resource( object ):
                     #     communicator.parent_module = 'im'
                     #     communicator.configfile = join(DRM4G_DIR, 'etc', 'openssh_im.conf')
                     communicator.connect()
-                    console_logger.info( "Resource '%s' :" % ( resname ) )
-                    console_logger.info( "--> The front-end '%s' is accessible\n" % communicator.frontend )
-                except Exception as err :
-                    console_logger.error( "Resource '%s' :" % ( resname ) )
-                    console_logger.error( "--> The front-end '%s' is not accessible\n" % communicator.frontend )
+                    console_logger.info( "Resource '%s' :", resname )
+                    console_logger.info( "--> The front-end '%s' is accessible\n", communicator.frontend )
+                except Exception :
+                    console_logger.error( "Resource '%s' :", resname )
+                    console_logger.error( "--> The front-end '%s' is not accessible\n", communicator.frontend )
 
     def edit( self ) :
         """
         Edit resources file.
         """
-        console_logger.debug( "Editing '%s' file" % DRM4G_RESOURCES_CONF )
-        os.system( "%s %s" % ( os.environ.get('EDITOR', 'nano') , DRM4G_RESOURCES_CONF ) )
+        console_logger.debug( "Editing '%s' file", DRM4G_RESOURCES_CONF )
+        os.system( "%s %s",  os.environ.get('EDITOR', 'nano') , DRM4G_RESOURCES_CONF )
         self.check( )
 
     def list( self ) :
@@ -385,7 +384,7 @@ class Resource( object ):
         Check if the resource.conf file has been configured well and list the resources available.
         """
         self.check( )
-        console_logger.info( "\033[1;4m%-20.20s%-20.20s\033[0m" % ('RESOURCE', 'STATE' ) )
+        console_logger.info( "\033[1;4m%-20.20s%-20.20s\033[0m", 'RESOURCE', 'STATE' )
         for resname, resdict in sorted( self.config.resources.items() ) :
             # To ignore VMs created by the DRM4G, since they should appear as hosts, not resources
             if '_' in resname:
@@ -396,7 +395,7 @@ class Resource( object ):
                 state = 'enabled'
             else :
                 state = 'disabled'
-            console_logger.info( "%-20.20s%s" % ( resname, state ) )
+            console_logger.info( "%-20.20s%s", resname, state )
 
     def features( self ) :
         """
@@ -404,9 +403,9 @@ class Resource( object ):
         """
         self.check( )
         for resname, resdict in sorted( self.config.resources.items() ) :
-            console_logger.info( "Resource '%s' :" % ( resname ) )
+            console_logger.info( "Resource '%s' :", resname )
             for key , val in sorted( resdict.items() ) :
-                console_logger.info( " --> '%s' : '%s'" % ( key, val ) )
+                console_logger.info( " --> '%s' : '%s'", key, val )
 
     def check( self ) :
         """
@@ -433,9 +432,9 @@ class Proxy( object ):
                                                                         "GT_PROXY_MODE=rfc " if self.resource[ "lrms" ] == "rocci" else "" )
 
     def create( self , proxy_lifetime ):
-        console_logger.info("--> Creating '%s' directory to store the proxy ... " % REMOTE_VOS_DIR )
+        console_logger.info("--> Creating '%s' directory to store the proxy ... ", REMOTE_VOS_DIR )
         cmd = "mkdir -p %s" % REMOTE_VOS_DIR
-        console_logger.debug( "Executing command ... " + cmd )
+        console_logger.debug( "Executing command ... %s", cmd )
         out, err = self.communicator.execCommand( cmd )
         if not err :
             console_logger.info("--> Create a local proxy credential ... ")
@@ -445,7 +444,7 @@ class Proxy( object ):
                                                                                                          proxy_lifetime ,
                                                                                                          proxy_lifetime
                                                                                                          )
-            console_logger.debug( "Executing command ... " + cmd )
+            console_logger.debug( "Executing command ... %s", cmd )
             out , err = self.communicator.execCommand( cmd , input = grid_passwd )
             console_logger.info( out )
             if err :
@@ -460,48 +459,48 @@ class Proxy( object ):
         else :
             dir_certificate   = dirname( certificate )
             base_certificate  = basename( certificate )
-            console_logger.info( "--> Converting '%s' key to pem format ... " % base_certificate )
+            console_logger.info( "--> Converting '%s' key to pem format ... ", base_certificate )
             cmd = "openssl pkcs12 -nocerts -in %s -out %s" % ( certificate, join( dir_certificate, 'userkey.pem' ) )
-            out , err = exec_cmd( cmd, stdin=sys.stdin, stdout=sys.stdout )
+            _ , err = exec_cmd( cmd, stdin=sys.stdin, stdout=sys.stdout )
             if "invalid password" in err :
                 raise Exception( err )
-            console_logger.info( "--> Converting '%s' certificate to pem format ... " % base_certificate )
+            console_logger.info( "--> Converting '%s' certificate to pem format ... ", base_certificate )
             cmd = "openssl pkcs12 -clcerts -nokeys -in %s -out %s" % ( certificate, join( dir_certificate, 'usercert.pem' ) )
-            out , err = exec_cmd( cmd , stdin=sys.stdin, stdout=sys.stdout )
+            _ , err = exec_cmd( cmd , stdin=sys.stdin, stdout=sys.stdout )
             if "invalid password" in err :
                 raise Exception( err )
             console_logger.debug( "--> Creating '~/.globus' directory ... " )
             cmd = "mkdir -p ~/.globus"
-            console_logger.debug( "Executing command ... " + cmd )
-            out, err = self.communicator.execCommand( cmd )
+            console_logger.debug( "Executing command ... %s", cmd )
+            _ , err = self.communicator.execCommand( cmd )
             if err :
                 raise Exception( err )
             for file in [ 'userkey.pem' , 'usercert.pem' ] :
                 cmd = "rm -rf $HOME/.globus/%s" % file
-                console_logger.debug( "Executing command ... " + cmd )
-                out, err = self.communicator.execCommand( cmd )
+                console_logger.debug( "Executing command ... %s", cmd )
+                _ , err = self.communicator.execCommand( cmd )
                 if err :
                     raise Exception( err )
-                console_logger.info( "--> Copying '%s' to '%s' ..." % ( file , self.resource.get( 'frontend' ) ) )
+                console_logger.info( "--> Copying '%s' to '%s' ...", file , self.resource.get( 'frontend' )  )
                 self.communicator.copy( 'file://%s'  % join( dir_certificate, file ) ,
                                         'ssh://_/%s' % join( '.globus' , file ) )
             console_logger.info( "--> Modifying userkey.pem permissions ... " )
             cmd = "chmod 400 $HOME/.globus/userkey.pem"
-            console_logger.debug( "Executing command ... " + cmd )
-            out, err = self.communicator.execCommand( cmd )
+            console_logger.debug( "Executing command ... %s", cmd )
+            _ , err = self.communicator.execCommand( cmd )
             if err :
                 raise Exception( err )
             console_logger.info( "--> Modifying usercert.pem permissions ... " )
             cmd = "chmod 644 $HOME/.globus/usercert.pem"
-            console_logger.debug( "Executing command ... " + cmd )
-            out, err = self.communicator.execCommand( cmd )
+            console_logger.debug( "Executing command ... %s", cmd )
+            _ , err = self.communicator.execCommand( cmd )
             if err :
                 raise Exception( err )
 
     def check( self ):
         console_logger.info( "--> Display information about the proxy certificate" )
         cmd = self.prefix + "grid-proxy-info"
-        console_logger.debug( "Executing command ... " + cmd )
+        console_logger.debug( "Executing command ... %s", cmd )
         out, err = self.communicator.execCommand( cmd )
         console_logger.info( out )
         if err :
@@ -510,13 +509,13 @@ class Proxy( object ):
     def destroy( self ):
         console_logger.info( "--> Remove grid credentials" )
         cmd = self.prefix + "myproxy-destroy"
-        console_logger.debug( "Executing command ... " + cmd )
+        console_logger.debug( "Executing command ... %s", cmd )
         out , err = self.communicator.execCommand( cmd )
         console_logger.info( out )
         if err :
             console_logger.info( err )
         cmd = self.prefix + "grid-proxy-destroy"
-        console_logger.debug( "Executing command ... " + cmd )
+        console_logger.debug( "Executing command ... %s", cmd )
         out , err = self.communicator.execCommand( cmd )
         console_logger.info( out )
         if err :
