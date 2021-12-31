@@ -26,8 +26,7 @@ import stat
 from pprint import pprint
 
 from importlib.util import module_from_spec, spec_from_file_location
-from setuptools import setup
-from setuptools import find_packages
+from setuptools import setup, Extension, find_packages
 from setuptools.command.install import install
 from setuptools.command.build_ext import build_ext
 from setuptools.command.develop import develop
@@ -185,6 +184,12 @@ setup(
           'gw_tm_mad_drm4g.py=drm4g.core.tm_mad:main',
         ],    
     },
+    ext_modules=[
+        Extension(
+            name='drm4g.gridway',
+            sources=[]
+        )
+    ],
     cmdclass={
       'build_ext' : build_ext_wrapper,
       'install'   : install_wrapper,
