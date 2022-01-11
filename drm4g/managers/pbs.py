@@ -115,7 +115,7 @@ class Job (drm4g.managers.Job):
         if 'maxCpuTime' in parameters :
             args += '#PBS -l cput=$maxCpuTime\n'
         if 'maxMemory' in parameters :
-            args += '#PBS -l vmem=${maxMemory}MB\n'
+            args += '#PBS -l mem=${maxMemory}MB\n'
         if 'ppn' in parameters and 'nodes' in parameters :
             args += '#PBS -l nodes=$nodes:ppn=$ppn\n'
         elif 'ppn' in parameters :
