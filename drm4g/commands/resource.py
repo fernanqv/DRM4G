@@ -54,10 +54,11 @@ def run( arg ) :
                 raise Exception( 'DRM4G is stopped.' )
             elif arg[ 'check' ] :
                 resource.check_frontends( )
-            elif arg[ 'create' ] :
-                resource.create_vms()
-            elif arg[ 'destroy' ] :
-                resource.destroy_vms( )
+            #OLD VM actions
+            #elif arg[ 'create' ] :
+            #    resource.create_vms()
+            #elif arg[ 'destroy' ] :
+            #    resource.destroy_vms( )
             elif arg[ '--all' ] :
                 resource.list_resources( )
             else :
