@@ -257,9 +257,9 @@ class Job( object ):
         Get template file.
         """
         if self.template_file :
-            return './template.job'
-        else :
             return self.template_file
+        else :
+            return './template.job'
 
     def create_template(self):
         """

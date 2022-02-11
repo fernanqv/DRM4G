@@ -18,15 +18,15 @@
 # permissions and limitations under the Licence.
 #
 
-try :
-    import Queue as queue
-except :
-    import queue
+import queue
 import sys
 import traceback
 from threading        import Thread
 from threading        import Lock
 
+# TODO: Better integration with loggers
+import logging
+logging.basicConfig(filename='dynamic.log',level=logging.ERROR)
 
 """
 Use example
@@ -68,8 +68,9 @@ class Worker(Thread):
                 else:
                     try:
                         func(*args, **kargs)
-                    except :
-                        traceback.print_exc(file=sys.stdout) #TODO: Review as logging
+                    except Exception as e :
+                        logging.debug(e, exc_info=True)
+                        sys.exit(1)
             except Exception:
                 pass
 
@@ -98,6 +99,7 @@ class ThreadPool:
                     Worker(self.tasks)
                     threads_active += 1
                 self.tasks.put((func, args, kargs))
-            except :
-                traceback.print_exc(file=sys.stdout) #TODO: Review as logging
+            except Exception as e :
+                logging.debug(e, exc_info=True)
+                sys.exit(1)
 

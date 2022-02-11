@@ -95,4 +95,8 @@ jobs:
     - run: sleep 50
     - run: drm4g job list 1 
     - run: cat stdout.1
+
+    - name: Test python API
+      run: >
+        python extras/examples/test_api.py
     
