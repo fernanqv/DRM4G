@@ -19,6 +19,13 @@
             "program": "drm4g/__main__.py",
             "console": "integratedTerminal",
             "args": ["resource"]
+        },
+        {
+            "name": "test_api",
+            "type": "python",
+            "request": "launch",
+            "program": "extras/examples/test_api.py",
+            "console": "integratedTerminal"
         }
     ]
 }
