@@ -9,3 +9,6 @@ recursive-exclude gridway-5.8 *.o *.lo a.out .dirstamp Makefile config.log confi
 
 recursive-include extras *
 recursive-include drm4g/conf *
+
+include LICENSE
+include README
