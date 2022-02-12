@@ -1,8 +1,7 @@
-#
 # Copyright 2021 Santander Meteorology Group (UC-CSIC)
 #
-# Licensed under the EUPL, Version 1.1 only (the 
-# "Licence"); 
+# Licensed under the EUPL, Version 1.1 only (the
+# "Licence");
 # You may not use this work except in compliance with the
 # Licence.
 # You may obtain a copy of the Licence at:
@@ -20,7 +19,6 @@
 
 import os
 import subprocess
-import glob
 import sys
 import stat
 from pprint import pprint
@@ -34,30 +32,31 @@ from setuptools.command.develop import develop
 #To ensure a script runs with a minimal version requirement of the Python interpreter
 assert sys.version_info >= (3, 5), "The version number of Python has to be >= 3.5"
 
-here = os.path.abspath(os.path.dirname(__file__))
-gridway_src = "gridway-5.8"
-  
+HERE_PATH = os.path.abspath(os.path.dirname(__file__))
+GRIDWAY_SRC = "gridway-5.8"
 MAKE_CLEAN = False
+
 def build():
     current_path = os.getcwd()
-    if not os.path.exists(gridway_src) :
-        raise Exception("The specified directory %s doesn't exist" % gridway_src)
+    if not os.path.exists(GRIDWAY_SRC) :
+        raise Exception("The specified directory %s doesn't exist" % GRIDWAY_SRC)
 
     #setting same mtime to gridway sources
-    mtime_ref = os.path.getmtime(gridway_src)
-    for root, dirs, files in os.walk(gridway_src):
+    mtime_ref = os.path.getmtime(GRIDWAY_SRC)
+    for root, dirs, files in os.walk(GRIDWAY_SRC):
         for name in files + dirs:
             os.utime(os.path.join(root, name), (mtime_ref, mtime_ref))
-    os.utime(gridway_src, (mtime_ref, mtime_ref))
+    os.utime(GRIDWAY_SRC, (mtime_ref, mtime_ref))
 
-    os.chdir( gridway_src )
+    os.chdir( GRIDWAY_SRC )
     #to avoid re-run configure each time.
-    if(not os.path.isfile('config.log') or os.path.getmtime('config.log') <= os.path.getmtime('configure') ):
-        st = os.stat('configure')
-        os.chmod('configure', st.st_mode | stat.S_IEXEC)
-        os.makedirs('build',exist_ok=True)
-        buildPath = os.path.abspath('build')
-        exit_code = subprocess.call('./configure --prefix="%s"' % buildPath, shell=True)
+    if(not os.path.isfile('config.log') or
+           os.path.getmtime('config.log') <= os.path.getmtime('configure') ):
+        os_st = os.stat('configure')
+        os.chmod('configure', os_st.st_mode | stat.S_IEXEC)
+        os.makedirs('build',exist_ok = True)
+        build_path = os.path.abspath('build')
+        exit_code = subprocess.call('./configure --prefix="%s"' % build_path, shell=True)
         if exit_code:
             raise Exception("Configure failed - check config.log for more detailed information")
 
@@ -73,19 +72,19 @@ def build():
             raise Exception("make clean failed")
     os.chdir( current_path )
 
-gw_files = ('bin',
+GW_FILES = ('bin',
     [
-      gridway_src + '/build/bin/gwuser',
-      gridway_src + '/build/bin/gwacct',
-      gridway_src + '/build/bin/gwwait',
-      gridway_src + '/build/bin/gwhost',
-      gridway_src + '/build/bin/gwhistory',
-      gridway_src + '/build/bin/gwsubmit',
-      gridway_src + '/build/bin/gwps',
-      gridway_src + '/build/bin/gwkill',
-      gridway_src + '/build/bin/gwd',
-      gridway_src + '/build/bin/gw_flood_scheduler',
-      gridway_src + '/build/bin/gw_sched',
+      GRIDWAY_SRC + '/build/bin/gwuser',
+      GRIDWAY_SRC + '/build/bin/gwacct',
+      GRIDWAY_SRC + '/build/bin/gwwait',
+      GRIDWAY_SRC + '/build/bin/gwhost',
+      GRIDWAY_SRC + '/build/bin/gwhistory',
+      GRIDWAY_SRC + '/build/bin/gwsubmit',
+      GRIDWAY_SRC + '/build/bin/gwps',
+      GRIDWAY_SRC + '/build/bin/gwkill',
+      GRIDWAY_SRC + '/build/bin/gwd',
+      GRIDWAY_SRC + '/build/bin/gw_flood_scheduler',
+      GRIDWAY_SRC + '/build/bin/gw_sched',
     ])
 
 class build_ext_wrapper(build_ext):
@@ -103,14 +102,14 @@ class install_wrapper(install):
             pprint(vars(self))
         build()
         install.run(self)
-  
+
 class develop_wrapper(develop):
     def run(self):
         print("[running develop_wrapper.run() ...]")
         develop.run(self)
         if self.verbose:
             pprint(vars(self))
-        for filename in gw_files[1]:
+        for filename in GW_FILES[1]:
             dst = os.path.join(self.script_dir, os.path.basename(filename))
             if os.path.lexists(dst):
                 if self.verbose:
@@ -134,32 +133,31 @@ def get_version_and_cmdclass(package_name):
 version, cmdclass = get_version_and_cmdclass('drm4g')
 
 # read the contents of your README file
-with open(os.path.join(here, 'README'), encoding='utf-8') as f:
+with open(os.path.join(HERE_PATH, 'README'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='drm4g',
-    version=version,
-    python_requires=">=3.5",
-    packages=find_packages(),
-    include_package_data=True,
-    package_data={'drm4g' : ['conf/*']},
-    data_files = [gw_files],
-    author='Santander Meteorology Group (UC-CSIC)',
-    author_email='antonio.cofino@unican.es',
-    url='https://github.com/SantanderMetGroup/DRM4G',
+    name = 'drm4g',
+    version = version,
+    python_requires = ">=3.5",
+    packages = find_packages(),
+    include_package_data = True,
+    package_data = {'drm4g' : ['conf/*']},
+    data_files = [GW_FILES],
+    author = 'Santander Meteorology Group (UC-CSIC)',
+    author_email = 'antonio.cofino@unican.es',
+    url = 'https://github.com/SantanderMetGroup/DRM4G',
     project_urls = {
-      'Documentation' : 'https://github.com/SantanderMetGroup/DRM4G/wiki'           ,
+      'Documentation' : 'https://github.com/SantanderMetGroup/DRM4G/wiki'   ,
       'Source'        : 'https://github.com/SantanderMetGroup/DRM4G'        ,
       'Tracker'       : 'https://github.com/SantanderMetGroup/DRM4G/issues' ,
-      'Download'      : 'https://pypi.org/project/drm4g/#files'             , 
+      'Download'      : 'https://pypi.org/project/drm4g/#files'             ,
       'Twitter'       : 'https://twitter.com/SantanderMeteo'
     },
-    license='European Union Public License 1.1',
-    description='Meta-scheduling framework for distributed computing infrastructures',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    classifiers=[
+    description = 'Meta-scheduling framework for distributed computing infrastructures',
+    long_description = long_description,
+    long_description_content_type = 'text/markdown',
+    classifiers = [
       "Development Status :: 4 - Beta",
       "Environment :: Console",
       "Intended Audience :: Science/Research",
@@ -175,22 +173,22 @@ setup(
       "Programming Language :: Python :: 3.9",
       "Programming Language :: Python :: 3.10",
     ],
-    install_requires=[ 'paramiko>=2.4', 'scp', 'fabric', 'openssh-wrapper' ],
+    install_requires = [ 'paramiko>=2.4', 'scp', 'fabric', 'openssh-wrapper' ],
     entry_points = {
       'console_scripts': [
           'drm4g=drm4g.commands.main:main',
           'gw_im_mad_drm4g.py=drm4g.core.im_mad:main',
           'gw_em_mad_drm4g.py=drm4g.core.em_mad:main',
           'gw_tm_mad_drm4g.py=drm4g.core.tm_mad:main',
-        ],    
+        ],
     },
-    ext_modules=[
+    ext_modules = [
         Extension(
-            name='drm4g.gridway',
-            sources=[]
+            name = 'drm4g.gridway',
+            sources = []
         )
     ],
-    cmdclass={
+    cmdclass = {
       'build_ext' : build_ext_wrapper,
       'install'   : install_wrapper,
       'develop'   : develop_wrapper,
