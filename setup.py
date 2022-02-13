@@ -173,7 +173,7 @@ setup(
       "Programming Language :: Python :: 3.9",
       "Programming Language :: Python :: 3.10",
     ],
-    install_requires = [ 'paramiko>=2.4', 'scp', 'fabric', 'openssh-wrapper' ],
+    install_requires = [ 'paramiko>=2.4', 'scp', 'fabric' ],
     entry_points = {
       'console_scripts': [
           'drm4g=drm4g.commands.main:main',
