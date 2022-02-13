@@ -35,7 +35,7 @@ from drm4g.commands         import Agent
 from drm4g.communicators    import SSH_CONNECT_TIMEOUT, SFTP_CONNECTIONS
 from drm4g                  import DRM4G_DIR, DRM4G_DIR_VAR 
 from drm4g.utils.url        import urlparse
-from openssh_wrapper import SSHConnection
+from .openssh_wrapper import SSHConnection
 
 import logging
 logger  = logging.getLogger(__name__)
